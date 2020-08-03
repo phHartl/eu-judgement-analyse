@@ -55,7 +55,7 @@ header_value = header(
 # We need to use a raw request here (https://stackoverflow.com/questions/57730340/how-to-fix-str-object-has-no-attribute-keys-in-python-zeep-module)
 with client.settings(raw_response=True):
     response = client.service.doQuery(
-        expertQuery="<![CDATA[SELECT TI, TE, IX, I1, I2, VS , MO, CO, DI, DN, AU, DC, DC_ALTLABEL, CT, CC, RJ, RJ_NEW,  ECLI, DTA, DD,  PD,  AJ,  LB, AP, DF, CD, PR, LP_DOSSIER_TIT, LP_CC, LP_DC, LP_DC_ALTLABEL, LP_LEGAL_BASIS WHERE DTS_SUBDOM = EU_CASE_LAW AND ((COMPOSE = ENG) WHEN (EMBEDDED_MANIFESTATION-TYPE = html OR xhtml)) AND CASE_LAW_SUMMARY = false AND (DTT=C? AND DTS = 6) AND (FM_CODED = JUDG)]]>",
+        expertQuery="<![CDATA[SELECT TI, TE, IX, I1, I2, VS , MO, CO, DI, DN, AU, CT, RJ, RJ_NEW,  ECLI, DD,  AJ,  LB, AP, DF, CD, PR WHERE DTS_SUBDOM = EU_CASE_LAW AND CASE_LAW_SUMMARY = false AND (DTT=C? AND DTS = 6) AND (FM_CODED = JUDG)]]>",
         page=1,
         pageSize=2,
         searchLanguage="en",
