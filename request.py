@@ -8,7 +8,6 @@ import requests
 import configparser
 import io
 import json
-import xmltodict
 
 from plugin import prevent_escaping_characters_in_cdata
 
@@ -51,6 +50,11 @@ header_value = header(
     }
 )
 
+def print_simple_value_tags(metadata_root, tag):
+    if(metadata_root.find(tag) is not None):
+        print(metadata_root.find(tag).value.string)
+
+
 # Excute the query - zeep automatically generates an object with the doQuery property defined by eur-lex
 # We need to use a raw request here (https://stackoverflow.com/questions/57730340/how-to-fix-str-object-has-no-attribute-keys-in-python-zeep-module)
 with client.settings(raw_response=True):
@@ -62,20 +66,73 @@ with client.settings(raw_response=True):
         _soapheaders=[header_value],
     )
 
-# Traverse xml with beautifulSoup and get html tags to build a structure on our own?
-# root = bs(response.content, "lxml")
-# response_file = open("response.txt", "w+")
-# response_file.write(str(root.prettify()))
+# Traverse xml with beautifulSoup - prints all relevant tags for our analysis into the command line
+# TODO: Insert each string into dictionary which later on gets inserted into our mongo database
+root = bs(response.content, "lxml", from_encoding = 'UTF-8')
+for element in root.find_all('result'):
+    # ID
+    print(element.reference.string.split(":")[1])
+    # Fulltext
+    # print(element.content.content_url.drecontent.string)
+    metadata_root = element.content.notice
+    # Decisions on cost
+    print_simple_value_tags(metadata_root, 'manifestation_case-law_costs_decisions')
+    # Law grounds
+    print_simple_value_tags(metadata_root, 'manifestation_case-law_grounds')
+    # Operative part
+    print_simple_value_tags(metadata_root, 'manifestation_case-law_operative_part')
+    # Parties
+    print_simple_value_tags(metadata_root, 'manifestation_case-law_parties')
+    # ID CELEX
+    print_simple_value_tags(metadata_root, 'id_celex')
 
-# Or convert response to one huge dict and use this to get information?
-data_dict = xmltodict.parse(response.content)
-results_dict = data_dict["S:Envelope"]["S:Body"]["searchResults"]["result"]
+    # Author
+    if(metadata_root.find('work_created_by_agent') is not None):
+        print(metadata_root.find('work_created_by_agent').find_all('identifier'))
 
-# Simple implementation to write every result to a separate .json - however empty tags are not returned by the API so we need to modify this dic in the future
-counter = 0
-for result in results_dict:
-    json_data = json.dumps(results_dict[counter], indent=4)
-    with open("data_" + str(counter) +".json", "w") as json_file:
-        json_file.write(json_data)
-        json_file.close()
-    counter += 1
+    # Subject matter
+    if(metadata_root.find('resource_legal_is_about_subject-matter') is not None):
+        print(metadata_root.find('resource_legal_is_about_subject-matter').find_all('identifier'))
+        print(metadata_root.find('resource_legal_is_about_subject-matter').find_all('preflabel'))
+    
+     # Case law directory code
+    if(metadata_root.find('case-law_is_about_concept.memberlist') is not None):
+        print(metadata_root.find('case-law_is_about_concept.memberlist').find_all('identifier'))
+        print(metadata_root.find('case-law_is_about_concept.memberlist').find_all('preflabel'))
+
+    # Case affecting
+    if(metadata_root.find('case-law_confirms_resource_legal') is not None):
+        print(metadata_root.find('case-law_confirms_resource_legal').find_all('identifier'))
+    # ECLI
+    print_simple_value_tags(metadata_root, 'ecli')
+    # Date
+    print_simple_value_tags(metadata_root, 'work_date_document')
+    
+    # Case affecting
+    if(metadata_root.find('case-law_confirms_resource_legal') is not None):
+        print(metadata_root.find('case-law_confirms_resource_legal').find_all('identifier'))
+
+    # Applicant
+    if(metadata_root.find('case-law_requested_by_agent') is not None):
+        print(metadata_root.find('case-law_requested_by_agent').find_all('identifier'))
+        print(metadata_root.find('case-law_requested_by_agent').find_all('preflabel'))
+
+    # Defendant
+    if(metadata_root.find('case-law_defended_by_agent') is not None):
+        print(metadata_root.find('case-law_defended_by_agent').find_all('identifier'))
+        print(metadata_root.find('case-law_defended_by_agent').find_all('preflabel'))
+
+     # Affected by case
+    if(metadata_root.find_all(['resource_legal_preliminary_question-submitted_by_communication_case', 'resource_legal_preliminary_question-submitted_by_communication_case_new', 'resource_legal_interpretation_requested_by_case-law']) is not None):
+        for element in metadata_root.find_all(['resource_legal_preliminary_question-submitted_by_communication_case', 'resource_legal_preliminary_question-submitted_by_communication_case_new', 'resource_legal_interpretation_requested_by_case-law']):
+                if(element is not None):
+                    print(element.find_all('identifier'))
+
+    # Type of procedure
+    if(metadata_root.find('case-law_has_type_procedure_concept_type_procedure') is not None):
+        print(metadata_root.find('case-law_has_type_procedure_concept_type_procedure').find_all('identifier'))
+        print(metadata_root.find('case-law_has_type_procedure_concept_type_procedure').find_all('preflabel'))
+
+
+response_file = open("response.txt", "w+")
+response_file.write(str(root.prettify()))
