@@ -63,9 +63,9 @@ with client.settings(raw_response=True):
     )
 
 # Traverse xml with beautifulSoup and get html tags to build a structure on our own?
-root = bs(response.content, "lxml")
-response_file = open("response.txt", "w+")
-response_file.write(str(root.prettify()))
+# root = bs(response.content, "lxml")
+# response_file = open("response.txt", "w+")
+# response_file.write(str(root.prettify()))
 
 # Or convert response to one huge dict and use this to get information?
 data_dict = xmltodict.parse(response.content)

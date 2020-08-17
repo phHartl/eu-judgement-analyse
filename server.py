@@ -1,11 +1,13 @@
-from flask import render_template
-import connexion
+from mongo import get_docs_by_date
+from flask import render_template, Flask, request
+from flask_pymongo import PyMongo
 
 # Create the application instance
-app = connexion.App(__name__, specification_dir='./')
-
-# Read the swagger.yml file to configure the endpoints
-app.add_api('swagger.yml')
+app = Flask(__name__)
+app.config["MONGO_URI"] = "mongodb://localhost:27017/test_database"
+mongo = PyMongo(app)
+db = mongo.db
+collection = mongo.db.judgements
 
 
 # Create a URL route in our application for "/"
@@ -19,6 +21,13 @@ def home():
     return render_template('home.html')
 
 
+@app.route('/api/data', methods=['GET'])
+def query():
+    # args = request.args
+    # print(args)
+    return get_docs_by_date()
+    
+
 # If we're running in stand alone mode, run the application
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='127.0.0.1', port=5000, debug=True)

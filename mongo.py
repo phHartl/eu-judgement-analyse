@@ -58,35 +58,36 @@ def get_docs_by_date():
     # end = datetime.strptime(end, '%d/%m/%y %H:%M:%S')
     cursor = collection.find({'year': {'$lt': end, '$gte': start}})
     cursor = dumps(cursor, separators=(',', ': '))
-    return cursor.replace('/', r'\/')
+    return cursor
 
 
 # test shit
-init_db()
-try:
-    db.judgements.insert_one({"x": 1})
-    print("NOT good; the insert above should have failed.")
+def test():
+    init_db()
+    try:
+        db.judgements.insert_one({"x": 1})
+        print("NOT good; the insert above should have failed.")
 
-except:
-    print("OK. Expected exception:", sys.exc_info())
+    except:
+        print("OK. Expected exception:", sys.exc_info())
 
-try:
-    for x in range(1, 10):
-        rnd_date = random.randrange(2000, 2010, 1)
-        okdoc = {"name": "test", "year": datetime.datetime(rnd_date, 1, 1), "content": {
-            "test1": "test",
-            "test2": "test",
-            "test3": 1964
-        }}
-        insert_doc(collection, okdoc)
-        print("All good.")
+    try:
+        for x in range(1, 10):
+            rnd_date = random.randrange(2000, 2010, 1)
+            okdoc = {"name": "test", "year": datetime.datetime(rnd_date, 1, 1), "content": {
+                "test1": "test",
+                "test2": "test",
+                "test3": 1964
+            }}
+            insert_doc(collection, okdoc)
+            print("All good.")
 
-except:
-    print("exc:", sys.exc_info())
+    except:
+        print("exc:", sys.exc_info())
 
-start = datetime.datetime(2000, 1, 1)
-end = datetime.datetime(2005, 1, 1)
-for doc in db.judgements.find({'year': {'$lt': end, '$gte': start}}):
-    print(doc)
-# test shit
-print(get_docs_by_date())
+    start = datetime.datetime(2000, 1, 1)
+    end = datetime.datetime(2005, 1, 1)
+    for doc in db.judgements.find({'year': {'$lt': end, '$gte': start}}):
+        print(doc)
+    # test shit
+    print(get_docs_by_date())
