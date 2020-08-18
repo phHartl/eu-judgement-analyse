@@ -7,6 +7,8 @@ import configparser
 import io
 import json
 import datetime
+import functools
+import timeit
 
 from plugin import prevent_escaping_characters_in_cdata
 from request_parser import parse_response_for_mongo, response_to_file, parse_response_for_mongo_xml
@@ -62,14 +64,11 @@ with client.settings(raw_response=True):
     )
 
 # Benchmark section:
-start = datetime.datetime.now()
+
 # response_to_file(response)
-parse_response_for_mongo(response)
-finish = datetime.datetime.now()
-print("Dictionary:")
-print((finish - start).microseconds / (1000 * 100))
-start = datetime.datetime.now()
-parse_response_for_mongo_xml(response)
-finish = datetime.datetime.now()
-print("XML:")
-print((finish - start).microseconds / (1000 * 100))
+t1 = timeit.Timer(functools.partial(parse_response_for_mongo, response))
+print(t1.timeit(100))
+
+t2 = timeit.Timer(functools.partial(parse_response_for_mongo_xml, response))
+print(t2.timeit(100))
+

@@ -6,7 +6,7 @@ import json
 import unicodedata
 
 parse_counter = 0
-DEBUG = 1
+DEBUG = 0
 
 def extract_ids(data):
     list_id = []
@@ -40,7 +40,6 @@ def extract_ids(data):
     
     # remove duplicates
     filtered_list_id = list(set(list_id))
-    print(filtered_list_id)
     return filtered_list_id
 
 
@@ -178,9 +177,10 @@ def parse_response_for_mongo_xml(response):
     parsed_responses = []
     for element in root.find_all('result'):
         parsed_responses.append(parse_to_mongo_format_xml(element))
-    print('CELEX Numbers of documents parsed:')
-    for data in parsed_responses:
-        print(data['celex'])
+    if DEBUG:
+        print('CELEX Numbers of documents parsed:')
+        for data in parsed_responses:
+            print(data['celex'])
     
 
 # XML Implementation:
