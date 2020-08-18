@@ -10,7 +10,7 @@ import io
 import json
 
 from plugin import prevent_escaping_characters_in_cdata
-from request_parser import parse_to_mongo_format
+from request_parser import parse_response_for_mongo, response_to_file
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -63,7 +63,9 @@ with client.settings(raw_response=True):
         searchLanguage="en",
         _soapheaders=[header_value],
     )
-parse_to_mongo_format(response)
+
+response_to_file(response)
+parse_response_for_mongo(response)
 
 root = bs(response.content, "lxml", from_encoding = 'UTF-8')
 response_file = open("response.txt", "w+", encoding='UTF8')
