@@ -7,11 +7,12 @@ import unicodedata
 import os
 
 parse_counter = 0
-DEBUG = 0
+DEBUG = 1
+DEBUG_TAG = 'ecli'
 
 def extract_data(data):
     list_data = []
-    
+
     # iterate over the data tree recursively, depending on whether the current data is an OrderedDict or a list
     # distinguish between aiming for a VALUE or an IDENTIFIER
     def recursive_crawl(data):
@@ -41,11 +42,9 @@ def extract_data(data):
                 print("Recursive crawl: Object is neither type 'list' nor 'OrderedDict'")
                 print(data)
 
-
     recursive_crawl(data)
-    
-    # remove duplicates
-    filtered_list_data = list(set(list_data))
+
+    filtered_list_data = list(set(list_data)) # remove duplicates
     return filtered_list_data
 
 
@@ -104,8 +103,10 @@ def parse_to_json(response):
     # there is no text for non-english documents
     content_url = response.get('content').get('CONTENT_URL')
     if content_url:
-        mongo_dict["text"] = response.get("content").get("CONTENT_URL").get("DRECONTENT")
-
+        if isinstance(content_url, list):
+            mongo_dict["text"] = content_url[0].get('DRECONTENT')
+        else:
+            mongo_dict['text'] = content_url.get('DRECONTENT')
     # check every tag that could be empty in a judgment file; avoids get() on NoneTypes
     manifestation = response.get('content').get('NOTICE').get('MANIFESTATION')   
     if manifestation:
@@ -196,13 +197,13 @@ def parse_response_for_mongo(response):
     for response in results_dict:
         parsed_responses.append(parse_to_json(response))
     
-    # print()
-    # print('Directories Numbers of documents parsed:')
-    # print()
-    # i = 0
-    # for data in parsed_responses:
-    #     print('Document #', i, ': ', data['celex'])
-    #     i += 1
+    print()
+    print('Data parsed:')
+    print()
+    i = 0
+    for data in parsed_responses:
+        print('Document #', i, ': ', data[DEBUG_TAG])
+        i += 1
 
 def parse_response_for_mongo_xml(response):
     root = bs(response.content, "lxml", from_encoding = 'UTF-8')

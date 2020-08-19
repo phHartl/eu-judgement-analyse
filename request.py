@@ -58,12 +58,12 @@ with client.settings(raw_response=True):
     response = client.service.doQuery(
         expertQuery="<![CDATA[SELECT TI, TE, IX, I1, I2, VS , MO, CO, DI, DN, AU, CT, RJ, RJ_NEW, ECLI, DD, AJ, LB, AP, DF, CD, PR WHERE DTS_SUBDOM = EU_CASE_LAW AND CASE_LAW_SUMMARY = false AND (DTT=C? AND DTS = 6) AND (FM_CODED = JUDG)]]>",
         page=1,
-        pageSize=100,
+        pageSize=10,
         searchLanguage="en",
         _soapheaders=[header_value],
     )
 
-# response_to_file(response)
+response_to_file(response)
 parse_response_for_mongo(response)
 
 # Benchmark section:
