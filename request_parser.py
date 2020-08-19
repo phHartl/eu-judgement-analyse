@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup as bs
 import xmltodict
 import json
 import unicodedata
+import os
 
 parse_counter = 0
 DEBUG = 0
@@ -53,9 +54,13 @@ def response_to_file(response):
     results_dict = data_dict["S:Envelope"]["S:Body"]["searchResults"]["result"]
 
     counter = 0
+    json_dump_directory = os.path.dirname(__file__) + '/json_dumps/'
+    if not os.path.exists(json_dump_directory):
+        os.mkdir(json_dump_directory)
+
     for result in results_dict:
         json_data = json.dumps(results_dict[counter], indent=4)
-        with open("data_" + str(counter) +".json", "w") as json_file:
+        with open(json_dump_directory + 'data_' + str(counter) +'.json', 'w') as json_file:
             json_file.write(json_data)
             json_file.close()
         counter += 1
