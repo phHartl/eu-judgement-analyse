@@ -213,5 +213,6 @@ fabric.properties
 
 config.ini
 /json_dumps
+/parse_dumps
 data_*
 response.txt

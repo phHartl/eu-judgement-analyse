@@ -9,6 +9,7 @@ import os
 parse_counter = 0
 DEBUG = 1
 DEBUG_TAG = 'ecli'
+CREATE_PARSING_DUMP = 1
 
 def extract_data(data):
     list_data = []
@@ -63,6 +64,17 @@ def response_to_file(response):
             json_file.write(json_data)
             json_file.close()
         counter += 1
+
+
+def parse_result_to_file(dict, parse_counter):
+    json_dump_directory = os.path.dirname(__file__) + '/parse_dumps/'
+    if not os.path.exists(json_dump_directory):
+        os.mkdir(json_dump_directory)
+
+    json_data = json.dumps(dict, indent=4)
+    with open(json_dump_directory + 'parse_' + str(parse_counter) +'.json', 'w') as json_file:
+        json_file.write(json_data)
+        json_file.close()
 
 
 def parse_to_json(response):
@@ -185,6 +197,10 @@ def parse_to_json(response):
     inverse = response.get('content').get('NOTICE').get('INVERSE')
     if inverse:
         mongo_dict['affected_by_case'] = inverse.get('RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
+
+
+    if CREATE_PARSING_DUMP:
+        parse_result_to_file(mongo_dict, parse_counter)
 
     parse_counter += 1
     return mongo_dict
