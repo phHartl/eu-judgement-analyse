@@ -8,25 +8,29 @@ import unicodedata
 parse_counter = 0
 DEBUG = 0
 
-def extract_ids(data):
-    list_id = []
+def extract_data(data):
+    list_data = []
     
+    # iterate over the data tree recursively, depending on whether the current data is an OrderedDict or a list
+    # distinguish between aiming for a VALUE or an IDENTIFIER
     def recursive_crawl(data):
         if isinstance(data, OrderedDict):
             for key, value in data.items():
-                if isinstance(value, OrderedDict):  # skip non-complex dict entries
+                # data with the 'VALUE' key is usually singular.
+                # however duplicates can occur, encapsulating each in an OrderedDict, hence why we use the recursion here as well. 
+                if key == 'VALUE':
+                    list_data.append(value)
+                elif isinstance(value, OrderedDict):  # skip non-complex dict entries
 
                     # individual people IDs are inside ['URI'] OrderedDicts.
                     # cellar numbers can be a possible result and are filtered
                     # any remaining None's get filtered
-                    if True:
-                        if value.get('URI'):
-                            list_id.append(value.get('URI').get('IDENTIFIER'))
-                        elif value.get('TYPE') != 'cellar':
-                            if value.get('IDENTIFIER'):
-                                list_id.append(value.get('IDENTIFIER'))
-
-                                        
+                    if value.get('URI'):
+                        list_data.append(value.get('URI').get('IDENTIFIER'))
+                    elif value.get('TYPE') != 'cellar':
+                        if value.get('IDENTIFIER'):
+                            list_data.append(value.get('IDENTIFIER'))
+                
         elif isinstance(data, list):
             for item in data:
                 if(isinstance(item, OrderedDict)):  # skip non-complex entries, which hold unneeded info. prevents calling data.values() on a list item
@@ -34,13 +38,14 @@ def extract_ids(data):
         else:
             if(DEBUG):
                 print("Recursive crawl: Object is neither type 'list' nor 'OrderedDict'")
+                print(data)
 
 
     recursive_crawl(data)
     
     # remove duplicates
-    filtered_list_id = list(set(list_id))
-    return filtered_list_id
+    filtered_list_data = list(set(list_data))
+    return filtered_list_data
 
 
 def response_to_file(response):
@@ -81,7 +86,7 @@ def parse_to_json(response):
             "case_law_directory": None,
             "ecli": None,
             "date": None,
-            "case affecting": None, 
+            "case_affecting": None, 
             "applicant": None,        
             "defendant": None,
             "affected_by_case": None,
@@ -89,7 +94,6 @@ def parse_to_json(response):
     }
 
 
-    # assign values to variables if present, otherwise assign 'None'
     mongo_dict["reference"] = response.get("reference").split(':')[1]
     
     # there is no text for non-english documents
@@ -106,51 +110,70 @@ def parse_to_json(response):
 
         parties = manifestation.get('MANIFESTATION_CASE-LAW_PARTIES')
         if parties:
-            mongo_dict['parties'] = parties.get('VALUE')
+            mongo_dict['parties'] = extract_data(parties)
 
         grounds = manifestation.get('MANIFESTATION_CASE-LAW_GROUNDS')
         if grounds:
-            mongo_dict['grounds'] = grounds.get('VALUE')
+            mongo_dict['grounds'] = extract_data(grounds)
 
         costs = manifestation.get('MANIFESTATION_CASE-LAW_COSTS_DECISIONS')
         if costs:
-            mongo_dict['decisions_on_costs'] = costs.get('VALUE')
+            mongo_dict['decisions_on_costs'] = extract_data(costs)
 
         operative = manifestation.get('MANIFESTATION_CASE-LAW_OPERATIVE_PART')
         if operative:
-            mongo_dict['operative_part'] = operative.get('VALUE')
+            mongo_dict['operative_part'] = extract_data(operative)
     
     work = response.get('content').get('NOTICE').get('WORK')
     if work:
-        mongo_dict['celex'] = work.get('ID_CELEX').get('VALUE')
-        mongo_dict['ecli'] = work.get('ECLI').get('VALUE')
-        mongo_dict['date'] = work.get('WORK_DATE_DOCUMENT').get('VALUE')
+        celex = work.get('ID_CELEX')
+        if celex:
+            mongo_dict['celex'] = extract_data(celex)
+
+        date = work.get('WORK_DATE_DOCUMENT')
+        if date:
+            mongo_dict['date'] = extract_data(date)
+
+        ecli = work.get('ECLI')
+        if ecli:
+            mongo_dict['ecli'] = extract_data(ecli)
 
         author_data = work.get('WORK_CREATED_BY_AGENT')
         if author_data:
-            mongo_dict['author'] = extract_ids(author_data)
+            mongo_dict['author'] = extract_data(author_data)
 
         subject_matter = work.get('RESOURCE_LEGAL_IS_ABOUT_SUBJECT-MATTER')
         if subject_matter:
-            mongo_dict['subject_matter'] = extract_ids(subject_matter)
+            mongo_dict['subject_matter'] = extract_data(subject_matter)
+
+        case_affecting = work.get('CASE-LAW_CONFIRMS_RESOURCE_LEGAL')
+        if case_affecting:
+            mongo_dict['case_affecting'] = extract_data(case_affecting)
         
         requested_by_agent = work.get('CASE-LAW_REQUESTED_BY_AGENT')
         if requested_by_agent:
-            mongo_dict['applicant'] = extract_ids(requested_by_agent)
+            mongo_dict['applicant'] = extract_data(requested_by_agent)
 
-        defended_by_agent = work.get('CASE-LAW_DEFENDED_BY_AGENT') or None
+        defended_by_agent = work.get('CASE-LAW_DEFENDED_BY_AGENT')
         if defended_by_agent:
-            mongo_dict['defendant'] = extract_ids(defended_by_agent)
+            mongo_dict['defendant'] = extract_data(defended_by_agent)
 
         procedure_type = work.get('CASE-LAW_HAS_TYPE_PROCEDURE_CONCEPT_TYPE_PROCEDURE')
         if procedure_type:
-            mongo_dict['procedure_type'] = extract_ids(procedure_type)
+            mongo_dict['procedure_type'] = extract_data(procedure_type)
 
+        # specific .get() for list/dict distinction for this tag.
+        # handle outside generic recursive function
         memberlist = work.get('CASE-LAW_IS_ABOUT_CONCEPT.MEMBERLIST')
-        if memberlist:
+        if memberlist and not isinstance(memberlist, list):
             concept = memberlist.get('CASE-LAW_IS_ABOUT_CONCEPT')
             if concept:
-                mongo_dict['case_law_directory'] = extract_ids(concept)
+                mongo_dict['case_law_directory'] = extract_data(concept)
+        elif memberlist:
+            print('memberlist list')
+            for item in memberlist: # no 'if concept', memberlist is definitely not empty
+                mongo_dict['case_law_directory'] = extract_data(item.get('CASE-LAW_IS_ABOUT_CONCEPT'))
+
 
 
     inverse = response.get('content').get('NOTICE').get('INVERSE')
@@ -168,9 +191,13 @@ def parse_response_for_mongo(response):
     for response in results_dict:
         parsed_responses.append(parse_to_json(response))
     
-    # print('CELEX Numbers of documents parsed:')
+    # print()
+    # print('Directories Numbers of documents parsed:')
+    # print()
+    # i = 0
     # for data in parsed_responses:
-    #     print(data['celex'])
+    #     print('Document #', i, ': ', data['celex'])
+    #     i += 1
 
 def parse_response_for_mongo_xml(response):
     root = bs(response.content, "lxml", from_encoding = 'UTF-8')

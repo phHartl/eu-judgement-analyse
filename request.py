@@ -63,12 +63,13 @@ with client.settings(raw_response=True):
         _soapheaders=[header_value],
     )
 
-# Benchmark section:
-
 # response_to_file(response)
-t1 = timeit.Timer(functools.partial(parse_response_for_mongo, response))
-print(t1.timeit(100))
+parse_response_for_mongo(response)
 
-t2 = timeit.Timer(functools.partial(parse_response_for_mongo_xml, response))
-print(t2.timeit(100))
+# Benchmark section:
+# t1 = timeit.Timer(functools.partial(parse_response_for_mongo, response))
+# print(t1.timeit(100))
+
+# t2 = timeit.Timer(functools.partial(parse_response_for_mongo_xml, response))
+# print(t2.timeit(100))
 
