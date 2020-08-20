@@ -216,3 +216,7 @@ config.ini
 /parse_dumps
 data_*
 response.txt
+
+# Webapp
+webapp/node_modules
+webapp/.idea
