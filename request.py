@@ -5,13 +5,13 @@ from zeep import xsd
 import requests
 import configparser
 import io
-import json
 import datetime
 import functools
 import timeit
 
 from plugin import prevent_escaping_characters_in_cdata
-from request_parser import parse_response_for_mongo, response_to_file, parse_response_for_mongo_xml
+from request_parser import parse_response_for_mongo
+from request_parser_xml_alternative import parse_response_for_mongo_xml
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -63,8 +63,7 @@ with client.settings(raw_response=True):
         _soapheaders=[header_value],
     )
 
-# response_to_file(response)
-parse_response_for_mongo(response)
+parse_response_for_mongo(response, debug_mode = False, save_responses = True, save_parses = True)
 
 # Benchmark section:
 # t1 = timeit.Timer(functools.partial(parse_response_for_mongo, response))
