@@ -5,12 +5,12 @@ Currently all values are stored as string[], since most of them seem to have a s
 key | value-type | description
 ----|------------|------------
 _id | string | MongoDB UID
-reference | string[] | Cellar API reference number
-text | string[] | Full text of the judgment
-keywords | string[] |
+reference | string | Cellar API reference number
+text | string | Full text of the judgment
+keywords | string |
 parties | string[] | Parties involved in the judgment
-subject | string[] | Subject of the case
-endorsements | string[] |
+subject | string | Subject of the case
+endorsements | string |
 grounds | string[] | Legal grounds
 decisions_on_costs | string[] |
 operative_part | string[] | 
