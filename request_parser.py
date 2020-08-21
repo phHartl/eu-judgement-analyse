@@ -180,12 +180,13 @@ def parse_to_json(response):
     return mongo_dict
 
 
-def parse_response_for_mongo(response, debug_mode = False, save_parses = False, save_responses = False):
+def parse_response_for_mongo(response, debug_mode = False, dump_mode = None):
     data_dict = xmltodict.parse(response.content)
     results_dict = data_dict["S:Envelope"]["S:Body"]["searchResults"]["result"]
 
-    if save_responses:
+    if dump_mode == 'response' or dump_mode == 'all':
         dump_to_files(results_dict, dump_type='response')
+
     if debug_mode:
         global DEBUG
         DEBUG = 1
@@ -194,7 +195,7 @@ def parse_response_for_mongo(response, debug_mode = False, save_parses = False, 
     for response in results_dict:
         parsed_responses.append(parse_to_json(response))
 
-    if save_parses:
+    if dump_mode == 'parse' or dump_mode == 'all':
         dump_to_files(parsed_responses, dump_type='parse')
 
     if DEBUG:
