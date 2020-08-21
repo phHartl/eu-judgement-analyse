@@ -7,8 +7,8 @@ import unicodedata
 import os
 
 parse_counter = 0
-DEBUG = 0
-DEBUG_TAG = 'ecli'
+DEBUG = 1
+DEBUG_TAG = 'affected_by_case'
 CREATE_PARSING_DUMP = 0
 
 def extract_data(data):
@@ -41,7 +41,6 @@ def extract_data(data):
         else:
             if(DEBUG):
                 print("Recursive crawl: Object is neither type 'list' nor 'OrderedDict'")
-                print(data)
 
     recursive_crawl(data)
 
@@ -172,7 +171,6 @@ def parse_to_json(response):
 
 
         # the following tags usually contain more than one value. keep them as lists
-
         author_data = work.get('WORK_CREATED_BY_AGENT')
         if author_data:
             mongo_dict['author'] = extract_data(author_data)
@@ -200,7 +198,12 @@ def parse_to_json(response):
 
     inverse = response.get('content').get('NOTICE').get('INVERSE')
     if inverse:
-        mongo_dict['affected_by_case'] = inverse.get('RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
+        affected_by_case = inverse.get('RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
+        if affected_by_case:
+            for key,value in affected_by_case.items():
+                if key != 'SAMEAS':
+                    print('PARSING ERROR: Element missed in affected_by_case')
+            mongo_dict['affected_by_case'] = extract_data(affected_by_case.get('SAMEAS'))
 
 
     if CREATE_PARSING_DUMP:
