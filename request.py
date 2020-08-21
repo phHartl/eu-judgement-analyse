@@ -63,7 +63,7 @@ with client.settings(raw_response=True):
         _soapheaders=[header_value],
     )
 
-response_to_file(response)
+# response_to_file(response)
 parse_response_for_mongo(response)
 
 # Benchmark section:

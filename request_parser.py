@@ -7,9 +7,9 @@ import unicodedata
 import os
 
 parse_counter = 0
-DEBUG = 1
+DEBUG = 0
 DEBUG_TAG = 'ecli'
-CREATE_PARSING_DUMP = 1
+CREATE_PARSING_DUMP = 0
 
 def extract_data(data):
     list_data = []
@@ -112,6 +112,8 @@ def parse_to_json(response):
 
     mongo_dict["reference"] = response.get("reference").split(':')[1]
     
+    # check every tag that could be empty in a judgment file; avoids get() on NoneTypes
+    #
     # there is no text for non-english documents
     content_url = response.get('content').get('CONTENT_URL')
     if content_url:
@@ -119,7 +121,7 @@ def parse_to_json(response):
             mongo_dict["text"] = content_url[0].get('DRECONTENT')
         else:
             mongo_dict['text'] = content_url.get('DRECONTENT')
-    # check every tag that could be empty in a judgment file; avoids get() on NoneTypes
+            
     manifestation = response.get('content').get('NOTICE').get('MANIFESTATION')   
     if manifestation:
         mongo_dict["keywords"] = manifestation.get('MANIFESTATION_CASE-LAW_KEYWORDS')
@@ -128,33 +130,48 @@ def parse_to_json(response):
 
         parties = manifestation.get('MANIFESTATION_CASE-LAW_PARTIES')
         if parties:
-            mongo_dict['parties'] = extract_data(parties)
+            mongo_dict['parties'] = extract_data(parties)[0]    # list with length 1, use only the first value
 
         grounds = manifestation.get('MANIFESTATION_CASE-LAW_GROUNDS')
         if grounds:
-            mongo_dict['grounds'] = extract_data(grounds)
+            mongo_dict['grounds'] = extract_data(grounds)[0]
 
         costs = manifestation.get('MANIFESTATION_CASE-LAW_COSTS_DECISIONS')
         if costs:
-            mongo_dict['decisions_on_costs'] = extract_data(costs)
+            mongo_dict['decisions_on_costs'] = extract_data(costs)[0]
 
         operative = manifestation.get('MANIFESTATION_CASE-LAW_OPERATIVE_PART')
         if operative:
-            mongo_dict['operative_part'] = extract_data(operative)
+            mongo_dict['operative_part'] = extract_data(operative)[0]
     
     work = response.get('content').get('NOTICE').get('WORK')
     if work:
         celex = work.get('ID_CELEX')
         if celex:
-            mongo_dict['celex'] = extract_data(celex)
+            mongo_dict['celex'] = extract_data(celex)[0]
 
         date = work.get('WORK_DATE_DOCUMENT')
         if date:
-            mongo_dict['date'] = extract_data(date)
+            mongo_dict['date'] = extract_data(date)[0]
 
         ecli = work.get('ECLI')
         if ecli:
-            mongo_dict['ecli'] = extract_data(ecli)
+            mongo_dict['ecli'] = extract_data(ecli)[0]
+
+
+        # specific .get() for list/dict distinction for this tag.
+        # handle outside generic recursive function
+        memberlist = work.get('CASE-LAW_IS_ABOUT_CONCEPT.MEMBERLIST')
+        if memberlist and not isinstance(memberlist, list):
+            concept = memberlist.get('CASE-LAW_IS_ABOUT_CONCEPT')
+            if concept:
+                mongo_dict['case_law_directory'] = extract_data(concept)
+        elif memberlist:
+            for item in memberlist: # no 'if concept', memberlist is definitely not empty
+                mongo_dict['case_law_directory'] = extract_data(item.get('CASE-LAW_IS_ABOUT_CONCEPT'))
+
+
+        # the following tags usually contain more than one value. keep them as lists
 
         author_data = work.get('WORK_CREATED_BY_AGENT')
         if author_data:
@@ -180,19 +197,6 @@ def parse_to_json(response):
         if procedure_type:
             mongo_dict['procedure_type'] = extract_data(procedure_type)
 
-        # specific .get() for list/dict distinction for this tag.
-        # handle outside generic recursive function
-        memberlist = work.get('CASE-LAW_IS_ABOUT_CONCEPT.MEMBERLIST')
-        if memberlist and not isinstance(memberlist, list):
-            concept = memberlist.get('CASE-LAW_IS_ABOUT_CONCEPT')
-            if concept:
-                mongo_dict['case_law_directory'] = extract_data(concept)
-        elif memberlist:
-            print('memberlist list')
-            for item in memberlist: # no 'if concept', memberlist is definitely not empty
-                mongo_dict['case_law_directory'] = extract_data(item.get('CASE-LAW_IS_ABOUT_CONCEPT'))
-
-
 
     inverse = response.get('content').get('NOTICE').get('INVERSE')
     if inverse:
@@ -212,14 +216,17 @@ def parse_response_for_mongo(response):
     parsed_responses = []
     for response in results_dict:
         parsed_responses.append(parse_to_json(response))
+
+    if DEBUG:
+        print()
+        print('Data parsed:')
+        print()
+
+        i = 0
+        for data in parsed_responses:
+            print('Document #', i, ': ', data[DEBUG_TAG])
+            i += 1
     
-    print()
-    print('Data parsed:')
-    print()
-    i = 0
-    for data in parsed_responses:
-        print('Document #', i, ': ', data[DEBUG_TAG])
-        i += 1
 
 def parse_response_for_mongo_xml(response):
     root = bs(response.content, "lxml", from_encoding = 'UTF-8')
