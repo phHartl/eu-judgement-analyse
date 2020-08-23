@@ -12,50 +12,21 @@ collection = client.test_database.judgements
 
 
 def init_db():
-    db.judgements.drop()
-    db.create_collection("judgements", )  # Force create!
-
-    #  $jsonSchema expression type is prefered.  New since v3.6 (2017):
-    vexpr = {"$jsonSchema":
-        {
-            "bsonType": "object",
-            "required": ["name", "year", "content"],
-            "properties": {
-                "title": {
-                    "bsonType": "string",
-                    "description": "must be a string and is required"
-                },
-                "year": {
-                    "bsonType": "date",
-                    "description": "must be an datetime and is required"
-                },
-                "content": {
-                    "bsonType": "object",
-                    "description": "must be a object and is required"
-                }
-            }
-        }
-    }
-
-    cmd = OrderedDict([('collMod', 'judgements'),
-                       ('validator', vexpr),
-                       ('validationLevel', 'moderate')])
-
-    db.command(cmd)
-
-
-def insert_doc(coll, doc):
-    if not isinstance(doc, list):
-        coll.insert_one(doc)
+    collist = db.list_collection_names()
+    if "judgements" in collist:
+        print("Collection exists already")
     else:
-        coll.insert_many(doc)
+        db.create_collection("judgements", )
+    # Force create!
+
+
+def insert_docs(docs):
+    collection.insert_many(docs)
 
 
 def get_docs_by_date():
     start = datetime.datetime(2000, 1, 1)
     end = datetime.datetime(2005, 1, 1)
-    # start = datetime.strptime(start, '%d/%m/%y %H:%M:%S')
-    # end = datetime.strptime(end, '%d/%m/%y %H:%M:%S')
     cursor = collection.find({'year': {'$lt': end, '$gte': start}})
     cursor = dumps(cursor, separators=(',', ': '))
     return cursor
@@ -91,3 +62,5 @@ def test():
         print(doc)
     # test shit
     print(get_docs_by_date())
+
+init_db()
