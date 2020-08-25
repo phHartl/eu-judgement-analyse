@@ -4,8 +4,7 @@ import sys
 from collections import OrderedDict
 
 from bson.json_util import loads, dumps
-from pymongo import MongoClient
-
+from pymongo import MongoClient, errors
 client = MongoClient('localhost', 27017)
 db = client.test_database
 collection = client.test_database.judgements
@@ -17,11 +16,16 @@ def init_db():
         print("Collection exists already")
     else:
         db.create_collection("judgements", )
+        collection.create_index([('reference', -1)], unique=True)
     # Force create!
 
 
-def insert_docs(docs):
-    collection.insert_many(docs)
+def insert_doc(doc):
+    try:
+        collection.insert_one(doc)
+    except errors.DuplicateKeyError as e:
+        print("document exists already !!!")
+        print(e)
 
 
 def get_docs_by_date():
@@ -64,3 +68,4 @@ def test():
     print(get_docs_by_date())
 
 init_db()
+

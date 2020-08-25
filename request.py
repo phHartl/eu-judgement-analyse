@@ -7,7 +7,7 @@ import sys
 import timeit
 
 import requests
-from mongo import insert_docs
+from mongo import insert_doc
 from plugin import prevent_escaping_characters_in_cdata
 from request_parser import parse_response_for_mongo
 from request_parser_xml_alternative import parse_response_for_mongo_xml
@@ -90,7 +90,10 @@ def main():
 
     response = request_data(_pageSize, _page)
     docs = parse_response_for_mongo(response, debug_mode=_debug_mode, dump_mode=_dump_mode)
-    insert_docs(docs)
+    for doc in docs:
+        insert_doc(doc)
+
+
 
 
 if __name__ == '__main__':
