@@ -216,3 +216,5 @@ config.ini
 /response_dumps
 /parse_dumps
 response.txt
+/.vscode
+/.idea
