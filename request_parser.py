@@ -3,7 +3,7 @@ from datetime import datetime
 
 import xmltodict
 
-# from data_dump import dump_to_files
+from data_dump import dump_to_files
 
 DEBUG = 0
 DEBUG_TAG = 'affected_by_case'
