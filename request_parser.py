@@ -9,9 +9,9 @@ DEBUG = 0
 DEBUG_TAG = 'affected_by_case'
 parse_counter = 0
 
-
 def extract_data(data):
     list_data = []
+    id_label_dict = {}
 
     # iterate over the data tree recursively, depending on whether the current data is an OrderedDict or a list
     # distinguish between aiming for a VALUE or an IDENTIFIER
@@ -22,16 +22,21 @@ def extract_data(data):
                 # however duplicates can occur, encapsulating each in an OrderedDict, hence why we use the recursion here as well.
                 if key == 'VALUE':
                     list_data.append(value)
-                elif isinstance(value, OrderedDict):  # skip non-complex dict entries
-
-                    # individual people IDs are inside ['URI'] OrderedDicts.
-                    # cellar numbers can be a possible result and are filtered
-                    # any remaining None's get filtered
-                    if value.get('URI'):
-                        list_data.append(value.get('URI').get('IDENTIFIER'))
-                    elif value.get('TYPE') != 'cellar':
-                        if value.get('IDENTIFIER'):
-                            list_data.append(value.get('IDENTIFIER'))
+                elif key == 'IDENTIFIER':
+                    _id = value
+                    _label = data.get('PREFLABEL')
+                    id_label_dict[_id] = _label
+                elif key == 'SAMEAS':
+                    if isinstance(value, list):
+                        recursive_crawl(value)
+                elif key == 'URI':
+                    list_data.append(value.get('IDENTIFIER'))
+                elif isinstance(value, OrderedDict):
+                    recursive_crawl(value)
+                elif key == 'CASE-LAW_IS_ABOUT_CONCEPT':
+                    recursive_crawl(value)
+                elif key == 'NESTEDLIST':
+                    recursive_crawl(value)
 
         elif isinstance(data, list):
             for item in data:
@@ -44,8 +49,11 @@ def extract_data(data):
 
     recursive_crawl(data)
 
-    filtered_list_data = list(set(list_data))  # remove duplicates
-    return filtered_list_data
+    if id_label_dict:
+        return id_label_dict    # all {id : label} pairs
+    else:
+        filtered_list_data = list(set(list_data))  # remove duplicates
+        return filtered_list_data   # case_affecting and affected_by_case
 
 
 def parse_to_json(response):
@@ -94,18 +102,21 @@ def parse_to_json(response):
             mongo_dict['text'] = content_url.get('DRECONTENT')
 
     expression = response.get('content').get('NOTICE').get('EXPRESSION')
-
     if expression:
         title = expression.get("EXPRESSION_TITLE")
         if title:
+            # list with length 1, use only the first value
             mongo_dict['title'] = extract_data(title)[0]
 
     manifestation = response.get('content').get('NOTICE').get('MANIFESTATION')
     if manifestation:
-        mongo_dict['subject'] = manifestation.get(
-            '"MANIFESTATION_CASE-LAW_SUBJECT')
-        mongo_dict['endorsements'] = manifestation.get(
-            'MANIFESTATION_CASE-LAW_ENDORSEMENTS')
+        subject = manifestation.get('MANIFESTATION_CASE-LAW_SUBJECT')
+        if subject:
+            mongo_dict['subject'] = subject.get('VALUE')
+            
+        endorsements = manifestation.get('MANIFESTATION_CASE-LAW_ENDORSEMENTS')
+        if endorsements:
+            mongo_dict['endorsements'] = endorsements.get('VALUE')
 
         keywords = manifestation.get('MANIFESTATION_CASE-LAW_KEYWORDS')
         if keywords:
@@ -113,7 +124,6 @@ def parse_to_json(response):
 
         parties = manifestation.get('MANIFESTATION_CASE-LAW_PARTIES')
         if parties:
-            # list with length 1, use only the first value
             mongo_dict['parties'] = extract_data(parties)[0]
 
         grounds = manifestation.get('MANIFESTATION_CASE-LAW_GROUNDS')
@@ -143,19 +153,18 @@ def parse_to_json(response):
         if ecli:
             mongo_dict['ecli'] = extract_data(ecli)[0]
 
-        # specific .get() for list/dict distinction for this tag.
-        # handle outside generic recursive function
         memberlist = work.get('CASE-LAW_IS_ABOUT_CONCEPT.MEMBERLIST')
-        if memberlist and not isinstance(memberlist, list):
-            concept = memberlist.get('CASE-LAW_IS_ABOUT_CONCEPT')
-            if concept:
-                mongo_dict['case_law_directory'] = extract_data(concept)
-        elif memberlist:
-            for item in memberlist:  # no 'if concept', memberlist is definitely not empty
-                mongo_dict['case_law_directory'] = extract_data(
-                    item.get('CASE-LAW_IS_ABOUT_CONCEPT'))
+        if memberlist:
+            # MongoDB cannot handle dots in key-strings. replace them with commas
+            _temp_dict = extract_data(memberlist)
+            _dict_dots_replaced = {}
+            for key, value in _temp_dict.items():
+                if '.' in key:
+                    _dict_dots_replaced[key.replace('.', ',')] = value
+                else:
+                    _dict_dots_replaced[key] = value
+            mongo_dict['case_law_directory'] = _dict_dots_replaced
 
-        # the following tags usually contain more than one value. keep them as lists
         author_data = work.get('WORK_CREATED_BY_AGENT')
         if author_data:
             mongo_dict['author'] = extract_data(author_data)
@@ -186,11 +195,8 @@ def parse_to_json(response):
         affected_by_case = inverse.get(
             'RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
         if affected_by_case:
-            for key, value in affected_by_case.items():
-                if key != 'SAMEAS':
-                    print('PARSING ERROR: Element missed in affected_by_case')
-            mongo_dict['affected_by_case'] = extract_data(
-                affected_by_case.get('SAMEAS'))
+            print('AFFECTED BY CASE FOUND! check dump and backup file')
+            mongo_dict['affected_by_case'] = extract_data(affected_by_case)
 
     parse_counter += 1
     return mongo_dict

@@ -218,3 +218,5 @@ config.ini
 response.txt
 /.vscode
 /.idea
+
+dump_backup/

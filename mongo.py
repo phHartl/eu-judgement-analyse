@@ -9,6 +9,7 @@ client = MongoClient('localhost', 27017)
 db = client.test_database
 collection = client.test_database.judgements
 
+PRINT_DUPLICATE_ERRORS = 0
 
 def init_db():
     collist = db.list_collection_names()
@@ -24,8 +25,9 @@ def insert_doc(doc):
     try:
         collection.insert_one(doc)
     except errors.DuplicateKeyError as e:
-        print("document exists already !!!")
-        print(e)
+        if PRINT_DUPLICATE_ERRORS:
+            print("document exists already")
+            print(e)
 
 
 def get_docs_by_date():

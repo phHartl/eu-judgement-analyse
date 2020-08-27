@@ -14,7 +14,7 @@ from request_parser import parse_response_for_mongo
 from request_parser_xml_alternative import parse_response_for_mongo_xml
 
 
-WRITE_TO_FILE_DEBUG = 1
+WRITE_TO_FILE_DEBUG = 0
 
 config = configparser.ConfigParser()
 config.read("config.ini")
