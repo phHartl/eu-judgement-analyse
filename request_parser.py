@@ -19,7 +19,7 @@ def extract_data(data):
         if isinstance(data, OrderedDict):
             for key, value in data.items():
                 # data with the 'VALUE' key is usually singular.
-                # however duplicates can occur, encapsulating each in an OrderedDict, hence why we use the recursion here as well. 
+                # however duplicates can occur, encapsulating each in an OrderedDict, hence why we use the recursion here as well.
                 if key == 'VALUE':
                     list_data.append(value)
                 elif isinstance(value, OrderedDict):  # skip non-complex dict entries
@@ -102,8 +102,10 @@ def parse_to_json(response):
 
     manifestation = response.get('content').get('NOTICE').get('MANIFESTATION')
     if manifestation:
-        mongo_dict['subject'] = manifestation.get('"MANIFESTATION_CASE-LAW_SUBJECT')
-        mongo_dict['endorsements'] = manifestation.get('MANIFESTATION_CASE-LAW_ENDORSEMENTS')
+        mongo_dict['subject'] = manifestation.get(
+            '"MANIFESTATION_CASE-LAW_SUBJECT')
+        mongo_dict['endorsements'] = manifestation.get(
+            'MANIFESTATION_CASE-LAW_ENDORSEMENTS')
 
         keywords = manifestation.get('MANIFESTATION_CASE-LAW_KEYWORDS')
         if keywords:
@@ -111,7 +113,8 @@ def parse_to_json(response):
 
         parties = manifestation.get('MANIFESTATION_CASE-LAW_PARTIES')
         if parties:
-            mongo_dict['parties'] = extract_data(parties)[0]  # list with length 1, use only the first value
+            # list with length 1, use only the first value
+            mongo_dict['parties'] = extract_data(parties)[0]
 
         grounds = manifestation.get('MANIFESTATION_CASE-LAW_GROUNDS')
         if grounds:
@@ -149,7 +152,8 @@ def parse_to_json(response):
                 mongo_dict['case_law_directory'] = extract_data(concept)
         elif memberlist:
             for item in memberlist:  # no 'if concept', memberlist is definitely not empty
-                mongo_dict['case_law_directory'] = extract_data(item.get('CASE-LAW_IS_ABOUT_CONCEPT'))
+                mongo_dict['case_law_directory'] = extract_data(
+                    item.get('CASE-LAW_IS_ABOUT_CONCEPT'))
 
         # the following tags usually contain more than one value. keep them as lists
         author_data = work.get('WORK_CREATED_BY_AGENT')
@@ -172,18 +176,21 @@ def parse_to_json(response):
         if defended_by_agent:
             mongo_dict['defendant'] = extract_data(defended_by_agent)
 
-        procedure_type = work.get('CASE-LAW_HAS_TYPE_PROCEDURE_CONCEPT_TYPE_PROCEDURE')
+        procedure_type = work.get(
+            'CASE-LAW_HAS_TYPE_PROCEDURE_CONCEPT_TYPE_PROCEDURE')
         if procedure_type:
             mongo_dict['procedure_type'] = extract_data(procedure_type)
 
     inverse = response.get('content').get('NOTICE').get('INVERSE')
     if inverse:
-        affected_by_case = inverse.get('RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
+        affected_by_case = inverse.get(
+            'RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
         if affected_by_case:
             for key, value in affected_by_case.items():
                 if key != 'SAMEAS':
                     print('PARSING ERROR: Element missed in affected_by_case')
-            mongo_dict['affected_by_case'] = extract_data(affected_by_case.get('SAMEAS'))
+            mongo_dict['affected_by_case'] = extract_data(
+                affected_by_case.get('SAMEAS'))
 
     parse_counter += 1
     return mongo_dict
