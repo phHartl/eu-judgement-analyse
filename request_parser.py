@@ -12,6 +12,7 @@ parse_counter = 0
 
 def extract_data(data):
     list_data = []
+    id_label_dict = {}
 
     # iterate over the data tree recursively, depending on whether the current data is an OrderedDict or a list
     # distinguish between aiming for a VALUE or an IDENTIFIER
@@ -22,17 +23,18 @@ def extract_data(data):
                 # however duplicates can occur, encapsulating each in an OrderedDict, hence why we use the recursion here as well.
                 if key == 'VALUE':
                     list_data.append(value)
-                elif isinstance(value, OrderedDict):  # skip non-complex dict entries
-
-                    # individual people IDs are inside ['URI'] OrderedDicts.
-                    # cellar numbers can be a possible result and are filtered
-                    # any remaining None's get filtered
-                    if value.get('URI'):
-                        list_data.append(value.get('URI').get('IDENTIFIER'))
-                    elif value.get('TYPE') != 'cellar':
-                        if value.get('IDENTIFIER'):
-                            list_data.append(value.get('IDENTIFIER'))
-
+                elif key == 'IDENTIFIER':
+                    _id = value
+                    _label = data.get('PREFLABEL')
+                    id_label_dict[_id] = _label
+                elif key == 'SAMEAS':
+                    if isinstance(value, list):
+                        recursive_crawl(value)
+                elif key == 'URI':
+                    list_data.append(value.get('IDENTIFIER'))
+                elif isinstance(value, OrderedDict):
+                    recursive_crawl(value)
+                    
         elif isinstance(data, list):
             for item in data:
                 if (isinstance(item,
@@ -44,8 +46,11 @@ def extract_data(data):
 
     recursive_crawl(data)
 
-    filtered_list_data = list(set(list_data))  # remove duplicates
-    return filtered_list_data
+    if id_label_dict:
+        return id_label_dict
+    else:
+        filtered_list_data = list(set(list_data))  # remove duplicates
+        return filtered_list_data
 
 
 def parse_to_json(response):
@@ -166,6 +171,7 @@ def parse_to_json(response):
 
         case_affecting = work.get('CASE-LAW_CONFIRMS_RESOURCE_LEGAL')
         if case_affecting:
+            print('affecting case found')
             mongo_dict['case_affecting'] = extract_data(case_affecting)
 
         requested_by_agent = work.get('CASE-LAW_REQUESTED_BY_AGENT')
@@ -186,6 +192,7 @@ def parse_to_json(response):
         affected_by_case = inverse.get(
             'RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
         if affected_by_case:
+            print('AFFECTED BY CASE FOUND! check dump and backup file')
             for key, value in affected_by_case.items():
                 if key != 'SAMEAS':
                     print('PARSING ERROR: Element missed in affected_by_case')
