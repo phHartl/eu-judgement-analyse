@@ -18,11 +18,11 @@ operative_part | string |
 celex | string | CELEX number of the judgment
 ecli | string | European 5-part unique document identifier
 date | string | Adoption, signature or publication date (varies)
-author | string[] |
-subject_matter | string[] | Subject matter descriptors
-case_law_directory | string[] | Assigned case-law directory code
 case_affecting | string[] | CELEX numbers of acts quoted in the operative part
-applicant | string[] | Entity, who submitted the application
-defendant | string[] | Entity defending
 affected_by_case | string[] | CELEX numbers of decisions affecting the act
-procedure_type | string[] | Nature and outcome (where possible) of the proceedings
+author | {id : label} |
+subject_matter | {id : label} | Subject matter descriptors
+case_law_directory | {id : label} | Assigned case-law directory code
+applicant | {id : label} | Entity, who submitted the application
+defendant | {id : label}| Entity defending
+procedure_type | {id : label} | Nature and outcome (where possible) of the proceedings
