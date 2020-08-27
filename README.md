@@ -6,6 +6,7 @@ key | value-type | description
 ----|------------|------------
 _id | string | MongoDB UID
 reference | string | Cellar API reference number
+title | string | Document title
 text | string | Full text of the judgment
 keywords | string |
 parties | string | Parties involved in the judgment
