@@ -59,6 +59,7 @@ def parse_to_json(response):
 
     mongo_dict = {
         "reference": None,
+        "title": None,
         "text": None,
         "keywords": None,
         "parties": None,
@@ -91,6 +92,13 @@ def parse_to_json(response):
             mongo_dict["text"] = content_url[0].get('DRECONTENT')
         else:
             mongo_dict['text'] = content_url.get('DRECONTENT')
+
+    expression = response.get('content').get('NOTICE').get('EXPRESSION')
+
+    if expression:
+        title = expression.get("EXPRESSION_TITLE")
+        if title:
+            mongo_dict['title'] = extract_data(title)[0]
 
     manifestation = response.get('content').get('NOTICE').get('MANIFESTATION')
     if manifestation:

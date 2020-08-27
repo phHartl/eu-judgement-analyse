@@ -14,6 +14,8 @@ from request_parser_xml_alternative import parse_response_for_mongo_xml
 from zeep import Client
 from zeep import xsd
 
+WRITE_TO_FILE_DEBUG = 0
+
 config = configparser.ConfigParser()
 config.read("config.ini")
 
@@ -59,7 +61,7 @@ def request_data(_pageSize=10, _page=1):
     # We need to use a raw request here (https://stackoverflow.com/questions/57730340/how-to-fix-str-object-has-no-attribute-keys-in-python-zeep-module)
     with client.settings(raw_response=True):
         response = client.service.doQuery(
-            expertQuery="<![CDATA[SELECT TI, TE, IX, I1, I2, VS , MO, CO, DI, DN, AU, CT, RJ, RJ_NEW, ECLI, DD, AJ, LB, AP, DF, CD, PR WHERE DTS_SUBDOM = EU_CASE_LAW AND CASE_LAW_SUMMARY = false AND (DTT=C? AND DTS = 6) AND (FM_CODED = JUDG)]]>",
+            expertQuery="<![CDATA[SELECT TI_DISPLAY, TE, IX, I1, I2, VS , MO, CO, DI, DN, AU, CT, RJ, RJ_NEW,  ECLI, DD,  AJ,  LB, AP, DF, CD, PR WHERE DTS_SUBDOM = EU_CASE_LAW AND (EMBEDDED_MANIFESTATION-TYPE = html OR xhtml or pdf) AND CASE_LAW_SUMMARY = false AND (DTT=C? AND DTS = 6) AND (FM_CODED = JUDG) ORDER BY DN ASC]]>",
             page=_page,
             pageSize=_pageSize,
             searchLanguage="en",
@@ -92,6 +94,14 @@ def main():
     docs = parse_response_for_mongo(response, debug_mode=_debug_mode, dump_mode=_dump_mode)
     for doc in docs:
         insert_doc(doc)
+
+    if WRITE_TO_FILE_DEBUG:
+        from bs4 import BeautifulSoup as bs
+
+        root = bs(response.content, "lxml", from_encoding = 'UTF-8')
+        response_file = open("response.txt", "w+", encoding='UTF8')
+        response_file.write(str(root.prettify()))
+
 
 
 
