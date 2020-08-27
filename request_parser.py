@@ -110,8 +110,13 @@ def parse_to_json(response):
 
     manifestation = response.get('content').get('NOTICE').get('MANIFESTATION')
     if manifestation:
-        mongo_dict['subject'] = manifestation.get('MANIFESTATION_CASE-LAW_SUBJECT')
-        mongo_dict['endorsements'] = manifestation.get('MANIFESTATION_CASE-LAW_ENDORSEMENTS')
+        subject = manifestation.get('MANIFESTATION_CASE-LAW_SUBJECT')
+        if subject:
+            mongo_dict['subject'] = subject.get('VALUE')
+            
+        endorsements = manifestation.get('MANIFESTATION_CASE-LAW_ENDORSEMENTS')
+        if endorsements:
+            mongo_dict['endorsements'] = endorsements.get('VALUE')
 
         keywords = manifestation.get('MANIFESTATION_CASE-LAW_KEYWORDS')
         if keywords:
