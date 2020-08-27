@@ -8,7 +8,7 @@ from zeep import Client
 from zeep import xsd
 from bs4 import BeautifulSoup as bs
 
-# from mongo import insert_doc
+from mongo import insert_doc
 from plugin import prevent_escaping_characters_in_cdata
 from request_parser import parse_response_for_mongo
 from request_parser_xml_alternative import parse_response_for_mongo_xml
@@ -108,8 +108,8 @@ def main():
     docs = parse_response_for_mongo(
         response, debug_mode=_debug_mode, dump_mode=_dump_mode
     )
-    # for doc in docs:
-    #     insert_doc(doc)
+    for doc in docs:
+        insert_doc(doc)
 
     if WRITE_TO_FILE_DEBUG:
         from bs4 import BeautifulSoup as bs

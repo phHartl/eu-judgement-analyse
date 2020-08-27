@@ -9,7 +9,6 @@ DEBUG = 0
 DEBUG_TAG = 'affected_by_case'
 parse_counter = 0
 
-
 def extract_data(data):
     list_data = []
     id_label_dict = {}
@@ -34,7 +33,11 @@ def extract_data(data):
                     list_data.append(value.get('IDENTIFIER'))
                 elif isinstance(value, OrderedDict):
                     recursive_crawl(value)
-                    
+                elif key == 'CASE-LAW_IS_ABOUT_CONCEPT':
+                    recursive_crawl(value)
+                elif key == 'NESTEDLIST':
+                    recursive_crawl(value)
+
         elif isinstance(data, list):
             for item in data:
                 if (isinstance(item,
@@ -47,10 +50,10 @@ def extract_data(data):
     recursive_crawl(data)
 
     if id_label_dict:
-        return id_label_dict
+        return id_label_dict    # all {id : label} pairs
     else:
         filtered_list_data = list(set(list_data))  # remove duplicates
-        return filtered_list_data
+        return filtered_list_data   # case_affecting and affected_by_case
 
 
 def parse_to_json(response):
@@ -99,18 +102,16 @@ def parse_to_json(response):
             mongo_dict['text'] = content_url.get('DRECONTENT')
 
     expression = response.get('content').get('NOTICE').get('EXPRESSION')
-
     if expression:
         title = expression.get("EXPRESSION_TITLE")
         if title:
+            # list with length 1, use only the first value
             mongo_dict['title'] = extract_data(title)[0]
 
     manifestation = response.get('content').get('NOTICE').get('MANIFESTATION')
     if manifestation:
-        mongo_dict['subject'] = manifestation.get(
-            '"MANIFESTATION_CASE-LAW_SUBJECT')
-        mongo_dict['endorsements'] = manifestation.get(
-            'MANIFESTATION_CASE-LAW_ENDORSEMENTS')
+        mongo_dict['subject'] = manifestation.get('MANIFESTATION_CASE-LAW_SUBJECT')
+        mongo_dict['endorsements'] = manifestation.get('MANIFESTATION_CASE-LAW_ENDORSEMENTS')
 
         keywords = manifestation.get('MANIFESTATION_CASE-LAW_KEYWORDS')
         if keywords:
@@ -118,7 +119,6 @@ def parse_to_json(response):
 
         parties = manifestation.get('MANIFESTATION_CASE-LAW_PARTIES')
         if parties:
-            # list with length 1, use only the first value
             mongo_dict['parties'] = extract_data(parties)[0]
 
         grounds = manifestation.get('MANIFESTATION_CASE-LAW_GROUNDS')
@@ -148,19 +148,18 @@ def parse_to_json(response):
         if ecli:
             mongo_dict['ecli'] = extract_data(ecli)[0]
 
-        # specific .get() for list/dict distinction for this tag.
-        # handle outside generic recursive function
         memberlist = work.get('CASE-LAW_IS_ABOUT_CONCEPT.MEMBERLIST')
-        if memberlist and not isinstance(memberlist, list):
-            concept = memberlist.get('CASE-LAW_IS_ABOUT_CONCEPT')
-            if concept:
-                mongo_dict['case_law_directory'] = extract_data(concept)
-        elif memberlist:
-            for item in memberlist:  # no 'if concept', memberlist is definitely not empty
-                mongo_dict['case_law_directory'] = extract_data(
-                    item.get('CASE-LAW_IS_ABOUT_CONCEPT'))
+        if memberlist:
+            # MongoDB cannot handle dots in key-strings. replace them with commas
+            _temp_dict = extract_data(memberlist)
+            _dict_dots_replaced = {}
+            for key, value in _temp_dict.items():
+                if '.' in key:
+                    _dict_dots_replaced[key.replace('.', ',')] = value
+                else:
+                    _dict_dots_replaced[key] = value
+            mongo_dict['case_law_directory'] = _dict_dots_replaced
 
-        # the following tags usually contain more than one value. keep them as lists
         author_data = work.get('WORK_CREATED_BY_AGENT')
         if author_data:
             mongo_dict['author'] = extract_data(author_data)
@@ -171,7 +170,6 @@ def parse_to_json(response):
 
         case_affecting = work.get('CASE-LAW_CONFIRMS_RESOURCE_LEGAL')
         if case_affecting:
-            print('affecting case found')
             mongo_dict['case_affecting'] = extract_data(case_affecting)
 
         requested_by_agent = work.get('CASE-LAW_REQUESTED_BY_AGENT')
@@ -193,11 +191,7 @@ def parse_to_json(response):
             'RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
         if affected_by_case:
             print('AFFECTED BY CASE FOUND! check dump and backup file')
-            for key, value in affected_by_case.items():
-                if key != 'SAMEAS':
-                    print('PARSING ERROR: Element missed in affected_by_case')
-            mongo_dict['affected_by_case'] = extract_data(
-                affected_by_case.get('SAMEAS'))
+            mongo_dict['affected_by_case'] = extract_data(affected_by_case)
 
     parse_counter += 1
     return mongo_dict
