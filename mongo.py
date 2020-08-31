@@ -98,11 +98,11 @@ def get_docs_search_string(column, search):
         regex_c_group = "(.*" + word + ".*)"
         search_string += regex_c_group
     print(search_string)
-    cursor = collection.find({column: {"$regex": search_string}})
+    cursor = collection.find({column: {"$regex": search_string, "$options": "i"}})
     return cursor
 
 
 init_db()
 
-for doc in get_docs_search_string("title", "Judgment 1958"):
+for doc in get_docs_search_string("title", "judgment 1958"):
     print(doc)
