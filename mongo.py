@@ -1,15 +1,11 @@
-import datetime
-import random
-import sys
-from collections import OrderedDict
-
-from bson.json_util import loads, dumps
 from pymongo import MongoClient, errors
+
 client = MongoClient('localhost', 27017)
 db = client.test_database
 collection = client.test_database.judgements
 
 PRINT_DUPLICATE_ERRORS = 0
+
 
 def init_db():
     collist = db.list_collection_names()
@@ -30,44 +26,47 @@ def insert_doc(doc):
             print(e)
 
 
-def get_docs_by_date():
-    start = datetime.datetime(2000, 1, 1)
-    end = datetime.datetime(2005, 1, 1)
-    cursor = collection.find({'year': {'$lt': end, '$gte': start}})
-    cursor = dumps(cursor, separators=(',', ': '))
+def get_docs_between_dates(start, end):
+    cursor = collection.find({'date': {'$lt': end, '$gte': start}})
     return cursor
 
 
-# test shit
-def test():
-    init_db()
-    try:
-        db.judgements.insert_one({"x": 1})
-        print("NOT good; the insert above should have failed.")
+def get_docs_by_title(title):
+    cursor = collection.find({'title': title})
+    return cursor
 
-    except:
-        print("OK. Expected exception:", sys.exc_info())
 
-    try:
-        for x in range(1, 10):
-            rnd_date = random.randrange(2000, 2010, 1)
-            okdoc = {"name": "test", "year": datetime.datetime(rnd_date, 1, 1), "content": {
-                "test1": "test",
-                "test2": "test",
-                "test3": 1964
-            }}
-            insert_doc(collection, okdoc)
-            print("All good.")
+def get_docs_by_reference(reference):
+    cursor = collection.find({'reference': reference})
+    return cursor
 
-    except:
-        print("exc:", sys.exc_info())
 
-    start = datetime.datetime(2000, 1, 1)
-    end = datetime.datetime(2005, 1, 1)
-    for doc in db.judgements.find({'year': {'$lt': end, '$gte': start}}):
-        print(doc)
-    # test shit
-    print(get_docs_by_date())
+def get_docs_by_id(_id):
+    cursor = collection.find({'_id': _id})
+    return cursor
+
+
+def get_docs_by_celex(celex):
+    cursor = collection.find({'celex': celex})
+    return cursor
+
+
+def get_docs_by_date(date):
+    cursor = collection.find({'date': date})
+    return cursor
+
+
+def get_docs_by_ecli(ecli):
+    cursor = collection.find({'ecli': ecli})
+    return cursor
+
+
+def get_docs_by_case_affecting(case_affecting):
+    cursor = collection.find({'case_affecting': case_affecting})
+    return cursor
+
 
 init_db()
+for doc in get_docs_by_case_affecting("dec:1957:2:oj"):
+    print(doc)
 
