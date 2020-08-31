@@ -92,10 +92,17 @@ def get_docs_by_author_ceca(CECA):
 
 
 def get_docs_search_string(column, search):
-    cursor = collection.find({column: {"$regex": ".*" + search + ".*"}})
+    search_words = search.split(" ")
+    search_string = ""
+    for word in search_words:
+        regex_c_group = "(.*" + word + ".*)"
+        search_string += regex_c_group
+    print(search_string)
+    cursor = collection.find({column: {"$regex": search_string}})
     return cursor
 
 
 init_db()
-for doc in get_docs_search_string("title", "Judgment of the Court of 12 June 1958"):
+
+for doc in get_docs_search_string("title", "Judgment 1958"):
     print(doc)
