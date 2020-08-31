@@ -66,7 +66,36 @@ def get_docs_by_case_affecting(case_affecting):
     return cursor
 
 
-init_db()
-for doc in get_docs_by_case_affecting("dec:1957:2:oj"):
-    print(doc)
+def get_docs_by_author_cj(CJ):
+    cursor = collection.find({'author.CJ': CJ})
+    return cursor
 
+
+def get_docs_by_author_side(SIDE):
+    cursor = collection.find({'subject_matter.SIDE': SIDE})
+    return cursor
+
+
+def get_docs_by_subject_matter_finc(FINC):
+    cursor = collection.find({'subject_matter.FINC': FINC})
+    return cursor
+
+
+def get_docs_by_author_pere(PERE):
+    cursor = collection.find({'subject_matter.PERE': PERE})
+    return cursor
+
+
+def get_docs_by_author_ceca(CECA):
+    cursor = collection.find({'subject_matter.CECA': CECA})
+    return cursor
+
+
+def get_docs_search_string(column, search):
+    cursor = collection.find({column: {"$regex": ".*" + search + ".*"}})
+    return cursor
+
+
+init_db()
+for doc in get_docs_search_string("title", "Judgment of the Court of 12 June 1958"):
+    print(doc)
