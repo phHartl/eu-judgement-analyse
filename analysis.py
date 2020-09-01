@@ -1,12 +1,9 @@
-import string
-import re
-
 from nltk.tokenize import word_tokenize
 from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords, wordnet
 from nltk.stem.wordnet import WordNetLemmatizer
-from nltk.text import Text
-from nltk import pos_tag
+from nltk import pos_tag, FreqDist
+import re
 
 english_stop_words = list(set(stopwords.words("english")))
 german_stop_words = list(set(stopwords.words("german")))
@@ -19,8 +16,8 @@ def remove_punctuation(sentence):
 
 def remove_stopwords(sentence, english=True):
     if english:
-        return [w for w in sentence if not w in english_stop_words]
-    return [w for w in sentence if not w in german_stop_words]
+        return [w for w in sentence if not w.lower() in english_stop_words]
+    return [w for w in sentence if not w.lower() in german_stop_words]
 
 
 def tokenize(text):
@@ -55,3 +52,11 @@ def get_lemma(word):
 
 def get_lemma2(word):
     return WordNetLemmatizer().lemmatize(word)
+
+def most_frequent_words(text, n=10):
+    tokens = get_word_list(text)
+    return FreqDist(tokens).most_common(n)
+
+def average_word_length(text):
+    tokens = get_word_list(text)
+    return sum(map(len, tokens)) / len(tokens)
