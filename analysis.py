@@ -1,5 +1,6 @@
 import string
 import re
+import pickle
 
 from nltk.tokenize import word_tokenize
 from nltk.tokenize import sent_tokenize
@@ -24,6 +25,12 @@ class Analysis():
         else:
             self.language = language
 
+        with open('nltk_german_classifier_data.pickle', 'rb') as f:
+            self.german_tagger = pickle.load(f)
+
+        self.german_lemmata_mapping = self.read_lemmata_from_tiger_corpus(
+            'tiger_release_aug07.corrected.16012013.conll09')
+
     def set_lang(self, language):
         """
         Used to switch language when necessary (should almost never be the case).
@@ -42,16 +49,21 @@ class Analysis():
             return [w for w in sentence if not w.lower() in english_stop_words]
         return [w for w in sentence if not w.lower() in german_stop_words]
 
-    def tokenize(self, text):
+    def tokenize(self, text, removeStopWords=True):
         sentences = sent_tokenize(text)
         cleaned_sentences = [self.__remove_punctuation(sentence) for sentence in sentences]
         sentences_word_tokenized = [word_tokenize(sentence) for sentence in cleaned_sentences]
-        sentences_tokenized_filtered = [self.__remove_stopwords(sentence) for sentence in sentences_word_tokenized]
-        return sentences_tokenized_filtered
+        if removeStopWords:
+            sentences_word_tokenized = [self.__remove_stopwords(sentence) for sentence in sentences_word_tokenized]
+        return sentences_word_tokenized
 
     def part_of_speech_tagging(self, text):
-        tokenized_text = self.tokenize(text)
-        pos = [pos_tag(tokenized_sentence) for tokenized_sentence in tokenized_text]
+        tokenized_text = self.tokenize(text, False)
+        # part of speech tagging is not available in german currently
+        if self.language == "en":
+            pos = [pos_tag(tokenized_sentence) for tokenized_sentence in tokenized_text]
+        else:
+            pos = [self.german_tagger.tag(tokenized_sentence) for tokenized_sentence in tokenized_text]
         return pos
 
     def get_word_list(self, text):
@@ -62,11 +74,18 @@ class Analysis():
         return word_list
 
     def get_lemma(self, word):
-        lemma = wordnet.morphy(word)
-        if lemma is None:
-            return word
+        if self.language == "en":
+            lemma = wordnet.morphy(word)
+            if lemma is None:
+                return word
+            else:
+                return lemma
         else:
-            return lemma
+            lemma = self.german_lemmata_mapping.get(word, None)
+            if lemma is None:
+                return word
+            else:
+                return lemma
 
     def get_lemma2(self, word):
         return WordNetLemmatizer().lemmatize(word)
@@ -93,7 +112,7 @@ class Analysis():
     def prepare_text_for_lda(self, text):
         tokens = self.get_word_list(text)
         tokens = [token for token in tokens if len(token) > 4]
-        tokens = [self.get_lemma2(token) for token in tokens]
+        tokens = [self.get_lemma(token) for token in tokens]
         return tokens
 
     def generate_topic_models(self, text, topics=1):
@@ -104,3 +123,49 @@ class Analysis():
         topics = lda_model.print_topics()
         for topic in topics:
             print(topic)
+
+    def read_lemmata_from_tiger_corpus(self, tiger_corpus_file, valid_cols_n=15, col_words=1, col_lemmata=2):
+        lemmata_mapping = {}
+
+        with open(tiger_corpus_file) as f:
+            for line in f:
+                parts = line.split()
+                if len(parts) == valid_cols_n:
+                    w, lemma = parts[col_words], parts[col_lemmata]
+                    if w != lemma and w not in lemmata_mapping and not lemma.startswith('--'):
+                        lemmata_mapping[w] = lemma
+
+        return lemmata_mapping
+
+
+def train_german_tagger():
+    """
+    Trains a supervised classificator with an accuracy of ~95%. Use with caution - takes time!
+    """
+
+    import nltk
+    corp = nltk.corpus.ConllCorpusReader('.', 'tiger_release_aug07.corrected.16012013.conll09',
+                                         ['ignore', 'words', 'ignore', 'ignore', 'pos'],
+                                         encoding='utf-8')
+
+    import random
+
+    tagged_sents = list(corp.tagged_sents())
+    random.shuffle(tagged_sents)
+
+    # set a split size: use 90% for training, 10% for testing
+    split_perc = 0.1
+    split_size = int(len(tagged_sents) * split_perc)
+    train_sents, test_sents = tagged_sents[split_size:], tagged_sents[:split_size]
+
+    from ClassifierBasedGermanTagger import ClassifierBasedGermanTagger
+    tagger = ClassifierBasedGermanTagger(train=train_sents)
+
+    accuracy = tagger.evaluate(test_sents)
+
+    print(accuracy)
+
+    print(tagger.tag(['Das', 'ist', 'ein', 'einfacher', 'Test']))
+
+    with open('nltk_german_classifier_data.pickle', 'wb') as f:
+        pickle.dump(tagger, f, protocol=2)
