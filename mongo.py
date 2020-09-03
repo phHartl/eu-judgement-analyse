@@ -66,28 +66,41 @@ def get_docs_by_case_affecting(case_affecting):
     return cursor
 
 
-def get_docs_by_author_cj(CJ):
-    cursor = collection.find({'author.CJ': CJ})
+def get_docs_by_author_cj(cj):
+    cursor = collection.find({'author.CJ': cj})
     return cursor
 
 
-def get_docs_by_author_side(SIDE):
-    cursor = collection.find({'subject_matter.SIDE': SIDE})
+def get_docs_by_author_side(side):
+    cursor = collection.find({'subject_matter.SIDE': side})
     return cursor
 
 
-def get_docs_by_subject_matter_finc(FINC):
-    cursor = collection.find({'subject_matter.FINC': FINC})
+def get_docs_by_subject_matter_finc(finc):
+    cursor = collection.find({'subject_matter.FINC': finc})
     return cursor
 
 
-def get_docs_by_author_pere(PERE):
-    cursor = collection.find({'subject_matter.PERE': PERE})
+def get_docs_by_author_pere(pere):
+    cursor = collection.find({'subject_matter.PERE': pere})
     return cursor
 
 
-def get_docs_by_author_ceca(CECA):
-    cursor = collection.find({'subject_matter.CECA': CECA})
+def get_docs_by_author_ceca(ceca):
+    cursor = collection.find({'subject_matter.CECA': ceca})
+    return cursor
+
+
+def get_docs_by_object_v(column, value):
+    cursor = collection.find({"$where": ''' function()
+    {
+    for (var field in this.''' + column + ''') {
+    if (this.''' + column + '''[field] == ''' + '"' + value + '"' + '''){
+        return true;
+    }}
+    return false;
+
+}'''})
     return cursor
 
 
@@ -104,5 +117,5 @@ def get_docs_search_string(column, search):
 
 init_db()
 
-for doc in get_docs_search_string("title", "judgment 1958"):
+for doc in get_docs_by_object_v("defendant", "High authority"):
     print(doc)
