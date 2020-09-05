@@ -14,7 +14,6 @@ def init_db():
     else:
         db.create_collection("judgements", )
         collection.create_index([('reference', -1)], unique=True)
-    # Force create!
 
 
 def insert_doc(doc):
@@ -27,71 +26,55 @@ def insert_doc(doc):
 
 
 def get_docs_between_dates(start, end):
+    # retrieves documents between two dates (dates must be in the format: y-m-dT00:00:00.000+00:00)
     cursor = collection.find({'date': {'$lt': end, '$gte': start}})
     return cursor
 
 
 def get_docs_by_title(title):
+    # retrieves documents by the title
     cursor = collection.find({'title': title})
     return cursor
 
 
 def get_docs_by_reference(reference):
+    # retrieves documents by the reference number
     cursor = collection.find({'reference': reference})
     return cursor
 
 
 def get_docs_by_id(_id):
+    # retrieves documents by the mongoDb _id
     cursor = collection.find({'_id': _id})
     return cursor
 
 
 def get_docs_by_celex(celex):
+    # retrieves documents by the celex number
     cursor = collection.find({'celex': celex})
     return cursor
 
 
 def get_docs_by_date(date):
+    # retrieves documents by the date (date must be in the format: y-m-dT00:00:00.000+00:00)
     cursor = collection.find({'date': date})
     return cursor
 
 
 def get_docs_by_ecli(ecli):
+    # retrieves documents by the ecli number
     cursor = collection.find({'ecli': ecli})
     return cursor
 
 
 def get_docs_by_case_affecting(case_affecting):
+    # retrieves documents by the case_affecting value
     cursor = collection.find({'case_affecting': case_affecting})
     return cursor
 
 
-def get_docs_by_author_cj(cj):
-    cursor = collection.find({'author.CJ': cj})
-    return cursor
-
-
-def get_docs_by_author_side(side):
-    cursor = collection.find({'subject_matter.SIDE': side})
-    return cursor
-
-
-def get_docs_by_subject_matter_finc(finc):
-    cursor = collection.find({'subject_matter.FINC': finc})
-    return cursor
-
-
-def get_docs_by_author_pere(pere):
-    cursor = collection.find({'subject_matter.PERE': pere})
-    return cursor
-
-
-def get_docs_by_author_ceca(ceca):
-    cursor = collection.find({'subject_matter.CECA': ceca})
-    return cursor
-
-
-def get_docs_by_object_v(column, value):
+def get_docs_by_object_value(column, value):
+    # retrieves documents by searching a object column for a specified value
     cursor = collection.find({"$where": ''' function()
     {
     for (var field in this.''' + column + ''') {
@@ -105,6 +88,7 @@ def get_docs_by_object_v(column, value):
 
 
 def get_docs_search_string(column, search):
+    # retrieves documents by searching a string column with specified words (words separated by whitespace)
     search_words = search.split(" ")
     search_string = ""
     for word in search_words:
@@ -117,5 +101,5 @@ def get_docs_search_string(column, search):
 
 init_db()
 
-for doc in get_docs_by_object_v("defendant", "High authority"):
+for doc in get_docs_by_object_value("defendant", "High authority"):
     print(doc)
