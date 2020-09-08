@@ -87,6 +87,12 @@ def get_docs_by_object_value(column, value):
     return cursor
 
 
+def get_docs_by_object_key(column, key):
+    # retrieves documents by searching a object column for a specified value
+    cursor = collection.find({column + "." + key: {"$exists": True}})
+    return cursor
+
+
 def get_docs_search_string(column, search):
     # retrieves documents by searching a string column with specified words (words separated by whitespace)
     search_words = search.split(" ")
@@ -101,5 +107,5 @@ def get_docs_search_string(column, search):
 
 init_db()
 
-for doc in get_docs_by_object_value("defendant", "High authority"):
+for doc in get_docs_by_object_key("case_law_directory", "F"):
     print(doc)
