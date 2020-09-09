@@ -55,6 +55,11 @@ header_value = header(
     }
 )
 
+# all document languages available in eur-lex
+# for a descriptive list, see 13. in https://eur-lex.europa.eu/content/help/faq/intro.html
+AVAILABLE_LANGUAGES = ['bg', 'hr', 'cs', 'da', 'nl', 'en', 'et', 'fi', 'fr', 'de', 'el', 'hu',
+                        'ga', 'it', 'lv', 'lt', 'mt', 'pl', 'pt', 'ro', 'sk', 'sl', 'es', 'sv']
+
 
 def request_data(_page=1, _page_size=1, _language='en'):
     # Excute the query - zeep automatically generates an object with the doQuery property defined by eur-lex
@@ -70,18 +75,32 @@ def request_data(_page=1, _page_size=1, _language='en'):
         return response
 
 
-# This function can be called to crawl judgments at once automatically. Use with caution!
-def full_crawl():
+def request_all_data_for_language(lang):
     # Find out how much data we need to crawl for our query. Doesn't really make sense to convert to a dict here.
-    response = request_data(1, 1)
+    response = request_data(1, 1, lang)
     root = bs(response.content, "lxml", from_encoding="UTF-8")
     total_documents = root.find("totalhits").text
 
     for i in range(1, math.ceil(int(total_documents) / 100) + 1):
-        response = request_data(100, i)
+        response = request_data(100, i, lang)
         docs = parse_response_for_mongo(response)
         for doc in docs:
-            insert_doc(doc)
+            insert_doc(doc, lang)
+
+
+# This function can be called to crawl judgments at once automatically. Use with caution!
+# accepts a single language or an array of languages to request all docs for. default: only english
+def request_all_data(languages=['en']):
+    if isinstance(languages, list):
+        for current_lang in languages:
+            if current_lang not in AVAILABLE_LANGUAGES:
+                print("REQUEST: '", current_lang, "' is not a valid language.")
+            else:
+                request_all_data_for_language(current_lang)
+    elif type(languages, str):
+        request_all_data_for_language(languages)
+    else:
+        print("REQUEST: request_all_data(): the specified argument is not of type 'list' or 'str'")
 
 
 def main():
