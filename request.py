@@ -56,7 +56,7 @@ header_value = header(
 )
 
 
-def request_data(_page=1, _page_size=1):
+def request_data(_page=1, _page_size=1, _language='en'):
     # Excute the query - zeep automatically generates an object with the doQuery property defined by eur-lex
     # We need to use a raw request here (https://stackoverflow.com/questions/57730340/how-to-fix-str-object-has-no-attribute-keys-in-python-zeep-module)
     with client.settings(raw_response=True):
@@ -64,7 +64,7 @@ def request_data(_page=1, _page_size=1):
             expertQuery="<![CDATA[SELECT TI_DISPLAY, TE, IX, I1, I2, VS , MO, CO, DI, DN, AU, CT, RJ, RJ_NEW,  ECLI, DD,  AJ,  LB, AP, DF, CD, PR WHERE DTS_SUBDOM = EU_CASE_LAW AND (EMBEDDED_MANIFESTATION-TYPE = html OR xhtml or pdf) AND CASE_LAW_SUMMARY = false AND (DTT=C? AND DTS = 6) AND (FM_CODED = JUDG) ORDER BY DN ASC]]>",
             page=_page,
             pageSize=_page_size,
-            searchLanguage="en",
+            searchLanguage= _language,
             _soapheaders=[header_value],
         )
         return response
@@ -89,6 +89,7 @@ def main():
     _page_size = 10
     _dump_mode = None
     _debug_mode = False
+    _language = 'en'
 
     for arg in sys.argv[1:]:
         if arg == "debug":
@@ -104,12 +105,12 @@ def main():
             if val == "all" or val == "parse" or val == "response":
                 _dump_mode = val
 
-    response = request_data(_page, _page_size)
+    response = request_data(_page, _page_size, _language)
     docs = parse_response_for_mongo(
         response, debug_mode=_debug_mode, dump_mode=_dump_mode
     )
     for doc in docs:
-        insert_doc(doc)
+        insert_doc(doc, _language)
 
     if WRITE_TO_FILE_DEBUG:
         from bs4 import BeautifulSoup as bs

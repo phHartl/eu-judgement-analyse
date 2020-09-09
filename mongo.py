@@ -1,22 +1,34 @@
 from pymongo import MongoClient, errors
 
 client = MongoClient('localhost', 27017)
-db = client.test_database
-collection = client.test_database.judgements
+db = client.judgment_corpus
+collection = client.judgment_corpus.judgments_en
 
 PRINT_DUPLICATE_ERRORS = 0
 
 
-def init_db():
+def init_db(english_corpus_used = True, german_corpus_used = False):
     collist = db.list_collection_names()
-    if "judgements" in collist:
-        print("Collection exists already")
-    else:
-        db.create_collection("judgements", )
-        collection.create_index([('reference', -1)], unique=True)
+    if english_corpus_used:
+        if "judgments_en" in collist:
+            print("Collection already created for: English corpus")
+        else:
+            db.create_collection("judgments_en", )
+            collection.create_index([('reference', -1)], unique=True)
+    if german_corpus_used:
+        if "judgments_de" in collist:
+            print("Collection already created for: German corpus")
+        else:
+            db.create_collection("judgments_de", )
+            collection.create_index([('reference', -1)], unique=True)
 
 
-def insert_doc(doc):
+def insert_doc(doc, corpus):
+    if corpus == 'en':
+        collection = client.judgment_corpus.judgments_en
+    elif corpus == 'de':
+        collection = client.judgment_corpus.judgments_de
+
     try:
         collection.insert_one(doc)
     except errors.DuplicateKeyError as e:
@@ -75,15 +87,19 @@ def get_docs_by_case_affecting(case_affecting):
 
 def get_docs_by_object_value(column, value):
     # retrieves documents by searching a object column for a specified value
-    cursor = collection.find({"$where": ''' function()
-    {
-    for (var field in this.''' + column + ''') {
-    if (this.''' + column + '''[field] == ''' + '"' + value + '"' + '''){
-        return true;
-    }}
-    return false;
-
-}'''})
+    # this DB request requires JavaScript
+    cursor = collection.find({"$where":
+    '''
+        function() {
+            for (var field in this.''' + column + ''') {
+                if (this.''' + column + '''[field] == ''' + '"' + value + '"' + ''') {
+                    return true;
+                }
+            }
+        return false;
+        }
+    '''
+    })
     return cursor
 
 
@@ -105,7 +121,7 @@ def get_docs_search_string(column, search):
     return cursor
 
 
-init_db()
+init_db(english_corpus_used = True, german_corpus_used = True)
 
-for doc in get_docs_by_object_key("case_law_directory", "F"):
-    print(doc)
+# for doc in get_docs_by_object_value("author", "Court of Justice"):
+#     print(doc.get('author'))
