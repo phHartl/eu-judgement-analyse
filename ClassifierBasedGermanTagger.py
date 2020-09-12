@@ -40,6 +40,7 @@ class ClassifierBasedGermanTagger(ClassifierBasedTagger):
         """
 
         word = tokens[index]
+        word = word.lower()
         if index == 0: # At the beginning of the sentence
             prevword = prevprevword = None
             prevtag = prevprevtag = None
