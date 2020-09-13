@@ -48,6 +48,51 @@
   border: none;
 }
 
+label {
+  float: right;
+  margin-right: 12px;
+}
+
+input, select {
+  background-color: #4a505c;
+  border: 1px solid #1f2126;
+  color: lightgray;
+}
+
+.input-large {
+  width: 100%;
+}
+
+.input-small {
+  float: left;
+}
+
+.label-small {
+  float: left;
+}
+
+
+/* Floating column for labels: 25% width */
+.col-25 {
+  float: left;
+  width: 25%;
+  margin-top: 6px;
+}
+
+/* Floating column for inputs: 75% width */
+.col-75 {
+  float: left;
+  width: 75%;
+  margin-top: 6px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);

@@ -4,6 +4,7 @@ import ReactWordcloud from 'react-wordcloud';
 import wordListOne from "./words/words";
 import wordListTwo from "./words/words2";
 import CanvasJSReact from "./canvasjs.react";
+import SearchForm from "./SearchForm";
 
 var CanvasJS = CanvasJSReact.CanvasJS;
 var CanvasJSChart = CanvasJSReact.CanvasJSChart;
@@ -23,12 +24,14 @@ class App extends React.Component {
             <div className="App">
                 <header className="App-header">
                     <h1>Justice Demo</h1>
+                    <SearchForm/>
                     {this.renderWordcloud()}
                     {this.renderBarChart()}
                 </header>
             </div>
         )
     }
+    
 
     renderWordcloud() {
         return (
