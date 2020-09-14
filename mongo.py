@@ -1,18 +1,40 @@
 from pymongo import MongoClient, errors
-import functools
-import timeit
 
 client = MongoClient('localhost', 27017)
 db = client.judgment_corpus
-collection = client.judgment_corpus.judgments_en
+collection = client.judgment_corpus.judgments_en    # english as default language
 
 PRINT_DUPLICATE_ERRORS = 0
 
-AVAILABLE_LANGUAGES = ['bg', 'hr', 'cs', 'da', 'nl', 'en', 'et', 'fi', 'fr', 'de', 'el', 'hu',
-                        'ga', 'it', 'lv', 'lt', 'mt', 'pl', 'pt', 'ro', 'sk', 'sl', 'es', 'sv']
+AVAILABLE_LANGUAGES = {
+    'Bulgarian' : 'bg',
+    'Croatian' : 'hr',
+    'Czech' : 'cs',
+    'Danish' : 'da',
+    'Dutch' : 'nl',
+    'English' : 'en',
+    'Estonian' : 'et',
+    'Finnish' : 'fi',
+    'French' : 'fr',
+    'German' : 'de',
+    'Greek' : 'el',
+    'Hungarian' : 'hu',
+    'Irish' : 'ga',
+    'Italian' : 'it',
+    'Latvian' : 'lv',
+    'Lithuanian' : 'lt',
+    'Maltese' : 'mt',
+    'Polish' : 'pl',
+    'Portuguese' : 'pt',
+    'Romanian' : 'ro',
+    'Slovak' : 'sk',
+    'Slovenian' : 'sl',
+    'Spanish' : 'es',
+    'Swedish' : 'sv'
+    }
 
 def change_cur_coll(language):
-    if language in AVAILABLE_LANGUAGES:
+    if language in AVAILABLE_LANGUAGES.values():
         _collection = db["judgments_{}".format(language)]
         return _collection
 
@@ -20,25 +42,25 @@ def init_db(used_languages = ['en']):
     collist = db.list_collection_names()
 
     for lang in used_languages:
-        if lang not in AVAILABLE_LANGUAGES:
+        if lang not in AVAILABLE_LANGUAGES.values():
             continue
 
         coll_name = "judgments_" + lang
         if coll_name in collist:
-            print("DB: collection already created for:'",lang,"'")
+            print("DB: collection already created for:'{}'".format(lang))
         else:
             db.create_collection(coll_name)
             collection.create_index([('reference', -1)], unique=True)
 
-
 def insert_doc(doc, language):
-    collection = change_cur_coll(language)
-    try:
-        collection.insert_one(doc)
-    except errors.DuplicateKeyError as e:
-        if PRINT_DUPLICATE_ERRORS:
-            print("document exists already")
-            print(e)
+    if language in AVAILABLE_LANGUAGES.values():
+        collection = change_cur_coll(language)
+        try:
+            collection.insert_one(doc)
+        except errors.DuplicateKeyError as e:
+            if PRINT_DUPLICATE_ERRORS:
+                print("document exists already")
+                print(e)
     else:
         print("DB: insert_doc(): unsuported language")
 
@@ -94,8 +116,3 @@ def get_docs_by_value(column, value, language):
     collection = change_cur_coll(language)
     cursor = collection.find({column: value})
     return cursor
-
-init_db(used_languages=['en', 'de'])
-
-for doc in get_all_docs('en'):
-    print(doc.get('celex'))

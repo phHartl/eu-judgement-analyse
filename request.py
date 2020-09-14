@@ -138,13 +138,13 @@ def main():
         response_file = open("response.txt", "w+", encoding="UTF8")
         response_file.write(str(root.prettify()))
 
+    ## Benchmark section:
+    # t1 = timeit.Timer(functools.partial(parse_response_for_mongo, response))
+    # print(t1.timeit(100))
+    # t2 = timeit.Timer(functools.partial(parse_response_for_mongo_xml, response))
+    # print(t2.timeit(100))
 
 if __name__ == "__main__":
     main()
 
-# Benchmark section:
-# t1 = timeit.Timer(functools.partial(parse_response_for_mongo, response))
-# print(t1.timeit(100))
 
-# t2 = timeit.Timer(functools.partial(parse_response_for_mongo_xml, response))
-# print(t2.timeit(100))
