@@ -51,6 +51,9 @@ def init_db(used_languages = ['en']):
         else:
             db.create_collection(coll_name)
             collection.create_index([('reference', -1)], unique=True)
+            # possibility that two collections are created at once
+            # update collist repeatedly to ensure no crashes due to "collection has already been created"
+            collist = db.list_collection_names()
 
 def insert_doc(doc, language):
     if language in AVAILABLE_LANGUAGES.values():

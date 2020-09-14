@@ -141,12 +141,13 @@ def main():
     print('')
     acquire_data = confirm_data_acquisition()
     if acquire_data:
+        request_all_data(lang_list)
+        ## benchmark:
         # print('Data acquisition started. Completion time will be printed once finished')
         # t1 = timeit.Timer(functools.partial(request_all_data, lang_list))
         # time_needed = t1.timeit(1)
         # print('Requested and parsed all documents. Completion time:')
         # print(time_needed)
-        pass
 
 
 if __name__ == "__main__":
