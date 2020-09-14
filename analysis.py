@@ -5,16 +5,53 @@ from collections import Counter
 
 import gensim
 import textstat
-
-from blackstone.pipeline.sentence_segmenter import SentenceSegmenter
-from blackstone.rules import CITATION_PATTERNS, CONCEPT_PATTERNS
+# install version 2.18
 import spacy
 from spacy_iwnlp import spaCyIWNLP
+# install version 0.9.1 here (to avoid conflicts with blackstone)
+import textacy
+import textacy.ke
+import textacy.vsm 
+# This library uses an older version of spacy (2.1.8)
+from blackstone.pipeline.sentence_segmenter import SentenceSegmenter
+from blackstone.rules import CITATION_PATTERNS, CONCEPT_PATTERNS
 
 # Older text (1956 - 2003) formats always got the same headlines - remove them from the text to get better results
 english_legal_words = ["Summary", "Parties", "Subject of the case",
                        "Grounds", "Operative part", "Keywords", "Decision on costs"]
 german_legal_words = ["Leitsätze", "Parteien", 'Schlüsselwörter', 'Entscheidungsgründe', 'Tenor', 'Kostenentscheidung']
+
+
+def __remove_punctuation(sentence):
+    sentence = re.sub(r'[^\w\s\/]', '', sentence)
+    return sentence
+
+# https://regex101.com/r/2AgRRW/2
+def __remove_paragraph_numbers(text):
+    # Look for paragraph numbers in the new format
+    return re.sub(r"(?i)(?<!(rt\.\s)|(bs\.\s)|(nr\.\s))(?<=[.’'\"]\s)(\d+\.*\s)(?=[A-Z])", "", text)
+
+def __remove_enumerations(text):
+    return re.sub(r"(?<=\s)(\d\s?\.\s)", "", text)
+
+def __remove_legal_words(language, text):
+    if language == "en":
+        for word in english_legal_words:
+            text = text.replace(word, "")
+    else:
+        for word in german_legal_words:
+            text = text.replace(word, "")
+    return text
+
+# https://regex101.com/r/iPVtVT/1 - improves tokenizer for older texts substantially
+def __remove_white_spaces_before_punctuation(text):
+    return re.sub(r"\s(?=\.)", "", text)
+
+def normalize(language, text):
+    text = __remove_white_spaces_before_punctuation(text)
+    text = __remove_paragraph_numbers(text)
+    text = __remove_legal_words(language, text)
+    return text.lower()
 
 class Analysis():
     # Maybe the text also should be an input parameter to better cache different calculations later on?
@@ -30,41 +67,16 @@ class Analysis():
             # self.nlp = spacy.load("en_core_web_md") - uncomment this line to use a general model instead
             # pip install https://blackstone-model.s3-eu-west-1.amazonaws.com/en_blackstone_proto-0.0.1.tar.gz
             # Use Blackstone model which has been trained on english legal texts (https://github.com/ICLRandD/Blackstone)
-            self.nlp = spacy.load("en_blackstone_proto")
+            self.nlp = textacy.load_spacy_lang("en_blackstone_proto")
             sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CITATION_PATTERNS)
             self.nlp.add_pipe(sentence_segmenter, before="parser")
         else:
             # python -m spacy download de_core_news_md
-            self.nlp = spacy.load("de_core_news_sm", disable = ["textcat"])
+            self.nlp = textacy.load_spacy_lang("de_core_news_md", disable = ("textcat"))
             iwnlp = spaCyIWNLP(lemmatizer_path='data/IWNLP.Lemmatizer_20181001.json', ignore_case = True)
             self.nlp.add_pipe(iwnlp)
 
         self.doc = None
-
-    def __remove_punctuation(self, sentence):
-        sentence = re.sub(r'[^\w\s\/]', '', sentence)
-        return sentence
-
-    # https://regex101.com/r/2AgRRW/2
-    def __remove_paragraph_numbers(self, text):
-        # Look for paragraph numbers in the new format
-        return re.sub(r"(?i)(?<!(rt\.\s)|(bs\.\s)|(nr\.\s))(?<=[.’'\"]\s)(\d+\.*\s)(?=[A-Z])", "", text)
-
-    def __remove_enumerations(self, text):
-        return re.sub(r"(?<=\s)(\d\s?\.\s)", "", text)
-
-    def __remove_legal_words(self, text):
-        if self.language == "en":
-            for word in english_legal_words:
-                text = text.replace(word, "")
-        else:
-            for word in german_legal_words:
-                text = text.replace(word, "")
-        return text
-
-    # https://regex101.com/r/iPVtVT/1 - improves tokenizer for older texts substantially
-    def __remove_white_spaces_before_punctation(self, text):
-        return re.sub(r"\s(?=\.)", "", text)
 
     # https://www.datacamp.com/community/tutorials/fuzzy-string-python
     # def __filter_text(self, document):
@@ -90,8 +102,8 @@ class Analysis():
     #         return text_merged
 
     def init_pipeline(self, text):
-        text = self.normalize(text)
-        self.doc = self.nlp(text)
+        text = normalize(self.language,text)
+        self.doc = textacy.make_spacy_doc(text, lang=self.nlp)
 
     def get_tokens(self, remove_punctuation=False, remove_stop_words=False):
         """Returns a list of all words present in the text."""
@@ -112,29 +124,29 @@ class Analysis():
         """
         return list(self.doc.sents)
 
-    def get_lemmas(self, remove_stop_words=True):
+    def get_lemmata(self, remove_stop_words=True):
         """Returns a list of tuples with all base words and their lemmata"""
-        lemmas = []
+        lemmata = []
         for token in self.doc:
             if token.is_punct != True:
                 if remove_stop_words:
                     if token.is_stop != True:
                         if self.language == "en":
-                            lemmas.append((token, token.lemma_))
+                            lemmata.append((token, token.lemma_))
                         else:
                             if token._.iwnlp_lemmas is not None:
-                                lemmas.append((token, token._.iwnlp_lemmas[0]))
+                                lemmata.append((token, token._.iwnlp_lemmas[0]))
                             else:
-                                lemmas.append((token, token.lemma_))
+                                lemmata.append((token, token.lemma_))
                 else:
                     if self.language == "en":
-                        lemmas.append((token, token.lemma_))
+                        lemmata.append((token, token.lemma_))
                     else:
                         if token._.iwnlp_lemmas is not None:
-                            lemmas.append((token, token._.iwnlp_lemmas[0]))
+                            lemmata.append((token, token._.iwnlp_lemmas[0]))
                         else:
-                            lemmas.append((token, token.token_))
-        return lemmas
+                            lemmata.append((token, token.token_))
+        return lemmata
 
     def get_pos_tags(self):
         """Returns a list of tuples with all base words and their part of speech tag"""
@@ -168,8 +180,8 @@ class Analysis():
     def get_most_frequent_words(self, remove_stop_words=True, lemmatize=True, n=10):
         if lemmatize:
             # Lemmatization is a good way to account for multiple variation of the same word
-            lemmas = self.get_lemmas(remove_stop_words)
-            tokens = [tupl[1] for tupl in lemmas]
+            lemmata = self.get_lemmata(remove_stop_words)
+            tokens = [tupl[1] for tupl in lemmata]
         else:
             tokens = self.get_tokens(True, remove_stop_words)
         return Counter(tokens).most_common(n)
@@ -180,7 +192,7 @@ class Analysis():
 
     def get_document_cosine_similarity(self, other):
         """
-        Calculate similarity for a whole document based on word embeddings. Expects an other initalized analysis object
+        Calculate similarity for a whole document based on word embeddings. Expects an other initalized analysis object.
         """
         return self.doc.similarity(other.doc)
 
@@ -191,32 +203,74 @@ class Analysis():
     # Option 2: check when first paragraph number appears and cut text from there (keywords also got paragraph numbers sometimes)
     # Option 3: tokenize title, keywords & whole text and remove tile and keyword tokens from main text (greedy aka only first one)
 
-    def normalize(self, text):
-        text = self.__remove_white_spaces_before_punctation(text)
-        text = self.__remove_paragraph_numbers(text)
-        text = self.__remove_legal_words(text)
-        return text.lower()
+    # Text-complexity
+    def get_readability_score(self):
+        """
+        Returns flesch reading ease score:
+        English formula:
+            https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease
+        German formula:
+            https://de.wikipedia.org/wiki/Lesbarkeitsindex#Flesch-Reading-Ease
+        """
+        text_stats = textacy.TextStats(self.doc)
+        return text_stats.flesch_reading_ease
 
-    # Text-complexity (dynamic, Flesch-Kincaid reading ease formula (en & de supported))
-    def readability_score(self, text):
-        if self.language == "en":
-            textstat.set_lang("en")
+
+class CorpusAnalysis():
+    """
+    This class should be used if a number of texts are analysed.
+    """
+    def __init__(self, language):
+        if(language != "en" and language != "de"):
+            raise ValueError("Language not supported")
         else:
-            textstat.set_lang("de")
-        return textstat.flesch_reading_ease(text)
+            self.language = language
 
-    # LDA (static)
-    def prepare_text_for_lda(self, text):
-        tokens = self.get_word_list(text)
-        tokens = [token for token in tokens if len(token) > 4]
-        tokens = [self.__get_lemma(token) for token in tokens]
+        if self.language == "en":
+            # python -m spacy download en_core_web_md
+            # self.nlp = spacy.load("en_core_web_md") - uncomment this line to use a general model instead
+            # pip install https://blackstone-model.s3-eu-west-1.amazonaws.com/en_blackstone_proto-0.0.1.tar.gz
+            # Use Blackstone model which has been trained on english legal texts (https://github.com/ICLRandD/Blackstone)
+            self.nlp = textacy.load_spacy_lang("en_blackstone_proto", disable = ("textcat"))
+            # sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CITATION_PATTERNS)
+            # self.nlp.add_pipe(sentence_segmenter, before="parser")
+        else:
+            # python -m spacy download de_core_news_md
+            self.nlp = textacy.load_spacy_lang("de_core_news_md", disable = ("textcat"))
+            iwnlp = spaCyIWNLP(lemmatizer_path='data/IWNLP.Lemmatizer_20181001.json', ignore_case = True)
+            self.nlp.add_pipe(iwnlp)
+
+        self.corpus = None
+
+    def init_pipeline(self, texts):
+        texts = [normalize(self.language, text) for text in texts]
+        self.corpus = textacy.Corpus(self.nlp, data=texts)
+    
+        # LDA (static)
+    def prepare_text_for_lda(self):
+        pos_tagged_tokens = self.get_pos_tags()
+        tokens = [tupl[0] for tupl in pos_tagged_tokens if tupl[1] == "NOUN"]
+        tokens = [token.text.strip() for token in tokens if len(token) > 3]
+        # lemmata = self.get_pos_tags()
+        # tokens = [tupl[1] for tupl in lemmata]
         return tokens
 
-    def generate_topic_models(self, text, topics=1):
-        text_data = self.prepare_text_for_lda(text)
-        dictionary = gensim.corpora.Dictionary(([text_data]))
-        corpus = [dictionary.doc2bow(text) for text in [text_data]]
-        lda_model = gensim.models.ldamodel.LdaModel(corpus, topics, dictionary, passes=15)
+    def generate_topic_models(self, topics=300):
+        tokens = []
+        for doc in self.corpus:
+            for token in doc:
+                if not token.is_stop and not token.is_punct and token.pos_ == "NOUN":
+                    tokens.append(token.text)
+        dictionary = gensim.corpora.Dictionary([d.split() for d in tokens])
+        docs = []
+        for doc in self.corpus:
+            tokens_per_doc = []
+            for token in doc:
+                if not token.is_punct and not token.is_stop and token.pos_ == "NOUN":
+                    tokens_per_doc.append(token.text)
+            docs.append(tokens_per_doc)
+        corpus = [dictionary.doc2bow(text) for text in docs]
+        lda_model = gensim.models.LdaModel(corpus, topics, dictionary, chunksize=50, alpha="auto")
         topics = lda_model.print_topics()
         for topic in topics:
             print(topic)
