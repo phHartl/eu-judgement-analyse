@@ -192,11 +192,21 @@ def parse_to_json(response):
 
     inverse = response.get('content').get('NOTICE').get('INVERSE')
     if inverse:
-        affected_by_case = inverse.get(
-            'RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
+        # affected by case is saved under different tags
+        affected_combinated_list = None
+
+        affected_by_case = inverse.get('RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
         if affected_by_case:
-            print('AFFECTED BY CASE FOUND! check dump and backup file')
-            mongo_dict['affected_by_case'] = extract_data(affected_by_case)
+            affected_combinated_list = extract_data(affected_by_case)
+
+        affected_by_case2 = inverse.get('RESOURCE_LEGAL_PRELIMINARY_QUESTION-SUBMITTED_BY_COMMUNICATION_CASE_NEW')
+        if affected_by_case2:
+            if affected_combinated_list:
+                affected_combinated_list.extend(extract_data(affected_by_case2))
+            else:
+                affected_combinated_list = extract_data(affected_by_case2)
+        if affected_combinated_list:
+            mongo_dict['affected_by_case'] = affected_combinated_list
 
     parse_counter += 1
     return mongo_dict
