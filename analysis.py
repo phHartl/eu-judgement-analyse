@@ -159,6 +159,9 @@ class CorpusAnalysis():
         """
         return [list(doc.sents) for doc in [doc for doc in self.corpus]]
 
+    def get_sentence_count(self):
+        return len(self.get_sentences())
+
     def get_average_word_length(self, remove_stop_words):
         tokens = self.get_tokens(True, remove_stop_words)
         return sum(map(len, tokens)) / len(tokens)
@@ -265,6 +268,12 @@ class CorpusAnalysis():
             text_stats = textacy.TextStats(doc)
             scores.append(text_stats.flesch_reading_ease)
         return sum(scores) / len(scores)
+
+    def get_n_grams(self, n=2, filter_stop_words=True, filter_nums=True, min_freq=5):
+        """
+        This functions returns all n-grams (e.g. n=2 (bigram) 'the court'). Should be used to analyse collocations.
+        """
+        return list(textacy.extract.ngrams(self.corpus, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq))
 
         # LDA (static)
     # def prepare_text_for_lda(self):
