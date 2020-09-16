@@ -27,6 +27,7 @@ def __remove_punctuation(sentence):
     return sentence
 
 # https://regex101.com/r/2AgRRW/2
+
 def __remove_paragraph_numbers(text):
     # Look for paragraph numbers in the new format
     return re.sub(r"(?i)(?<!(rt\.\s)|(bs\.\s)|(nr\.\s))(?<=[.’'\"]\s)(\d+\.*\s)(?=[A-Z])", "", text)
@@ -123,30 +124,40 @@ class CorpusAnalysis():
         self.corpus = textacy.Corpus(self.nlp, data=texts)
 
     def get_tokens(self, remove_punctuation=False, remove_stop_words=False):
-        """Returns a list of all tokens (if you include punctuation, it returns words instead)."""
+        """Returns a list of all tokens (if you exclude punctuation, it returns words instead)"""
+        # Flatten per document list and return it
+        return [item for sublist in self.get_tokens_per_doc(remove_punctuation,remove_stop_words) for item in sublist]
+
+    def get_tokens_per_doc(self, remove_punctuation=False, remove_stop_words=False):
+        """Returns a list of all tokens (if you exclude punctuation, it returns words instead) per document."""
         tokens = []
         for doc in self.corpus:
+            tokens_per_doc = []
             for token in doc:
                 if remove_stop_words:
                     if remove_punctuation:
-                        temp_tokens = [token.text for token in doc if token.is_punct != True and token.is_stop != True]
-                        tokens.append(temp_tokens)
+                        if token.is_punct != True and token.is_stop != True:
+                            tokens_per_doc.append(token)
                     else:
-                        temp_tokens = [token.text for token in doc if token.is_stop != True]
-                        tokens.append(temp_tokens)
+                        if token.is_stop != True:
+                            tokens_per_doc.append(token)
                 elif remove_punctuation:
-                    temp_tokens = [token.text for token in doc if token.is_punct != True]
-                    tokens.append(temp_tokens)
+                    if token.is_punct != True:
+                        tokens_per_doc.append(token)
                 else:
-                    temp_tokens = [token.text for token in doc]
-                    tokens.append(temp_tokens)
+                    tokens_per_doc.append(token)
+            tokens.append(tokens_per_doc)
         return tokens
 
     def get_sentences(self):
+        """Returns all sentences present in the corpus"""
+        return [item for sublist in self.get_sentences_per_doc() for item in sublist]
+
+    def get_sentences_per_doc(self):
         """
-        Returns a list of all sentences present in the text. This objects can be iterated to get each token.
+        Returns all sentences present in the text grouped by document.
         """
-        return [sentence for sentence in doc for doc in self.corpus]
+        return [list(doc.sents) for doc in [doc for doc in self.corpus]]
 
     def get_average_word_length(self, remove_stop_words):
         tokens = self.get_tokens(True, remove_stop_words)
@@ -164,44 +175,72 @@ class CorpusAnalysis():
         """
         return len(self.get_tokens(True, remove_stop_words))
 
-    def get_pos_tags(self):
+    def get_post_tags(self):
         """Returns a list of tuples with all base words and their part of speech tag"""
-        pos = [(word, word.pos_) for word in doc for doc in self.corpus]
+        return [item for sublist in self.get_pos_tags_per_doc() for item in sublist]
+
+    def get_pos_tags_per_doc(self):
+        """Returns a list of tuples with all base words and their part of speech tag grouped by document"""
+        pos = []
+        for doc in self.corpus:
+            pos.append([(word, word.pos_) for word in doc])
         return pos
 
-    def get_lemmata(self, remove_stop_words=True):
-        """Returns a list of tuples with all base words and their lemmata"""
+    def get_lemmata_per_doc(self, remove_stop_words=True):
+        """Returns a list of tuples with all base words and their lemmata grouped by document"""
         lemmata = []
         for doc in self.corpus:
+            lemmata_per_doc = []
             for token in doc:
                 if token.is_punct != True:
                     if remove_stop_words:
                         if token.is_stop != True:
                             if self.language == "en":
-                                lemmata.append((token, token.lemma_))
+                                lemmata_per_doc.append((token, token.lemma_))
                             else:
                                 if token._.iwnlp_lemmas is not None:
-                                    lemmata.append((token, token._.iwnlp_lemmas[0]))
+                                    lemmata_per_doc.append((token, token._.iwnlp_lemmas[0]))
                                 else:
-                                    lemmata.append((token, token.lemma_))
+                                    lemmata_per_doc.append((token, token.lemma_))
                     else:
                         if self.language == "en":
-                            lemmata.append((token, token.lemma_))
+                            lemmata_per_doc.append((token, token.lemma_))
                         else:
                             if token._.iwnlp_lemmas is not None:
-                                lemmata.append((token, token._.iwnlp_lemmas[0]))
+                                lemmata_per_doc.append((token, token._.iwnlp_lemmas[0]))
                             else:
-                                lemmata.append((token, token.token_))
+                                lemmata_per_doc.append((token, token.token_))
+            lemmata.append(lemmata_per_doc)
         return lemmata
+
+    def get_lemmata(self, remove_stop_words=True):
+        """Returns a list of tuples with all base words and their lemmata"""
+        return [item for sublist in self.get_lemmata_per_doc(remove_stop_words) for item in sublist]
 
     def get_named_entities(self):
         """Returns a list of tuples. Each contains an assigned label and all entities for this label"""
         ner = []
-        labels = set([w.label_ for w in  doc.ents for doc in self.corpus])
+        labels = set([w.label_ for doc in self.corpus for w in doc.ents])
         for label in labels:
-            entities = [e.string for e in doc.ents for doc in self.corpus if label == e.label_]
+            entities = [e.string for doc in self.corpus for e in doc.ents if label == e.label_]
             entities = list(set(entities))
             ner.append((label, entities))
+        return ner
+    
+    def get_named_entities_per_doc(self):
+        """
+        Returns a list of lists of tuples. 
+        Each tuple contains an assigned label and all entities for this label in the corresponding document.
+        """
+        ner = []
+        labels = set([w.label_ for doc in self.corpus for w in doc.ents])
+        for doc in self.corpus:
+            ner_per_doc = []
+            for label in labels:
+                entities = [e.string for e in doc.ents if label == e.label_]
+                entities = list(set(entities))
+                ner_per_doc.append((label, entities))
+            ner.append(ner_per_doc)
         return ner
 
     def get_most_frequent_words(self, remove_stop_words=True, lemmatize=True, n=10):
@@ -215,7 +254,7 @@ class CorpusAnalysis():
 
     def get_average_readability_score(self):
         """
-        Returns flesch reading ease score:
+        Returns flesch reading ease score (different values for german & english!):
         English formula:
             https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease
         German formula:
