@@ -26,3 +26,39 @@ case_law_directory | { id : label } | Assigned case-law directory code
 applicant | { id : label } | Entity, who submitted the application
 defendant | { id : label }| Entity defending
 procedure_type | { id : label } | Nature and outcome (where possible) of the proceedings
+
+### Server API
+The API accepts a JSON-body when requesting data and returns results as JSON.
+Path: `/eu-judgments/api/data`, method: GET
+
+#### JSON format
+The JSON requires 3 mandatory keys to be specified:
+- "language": The language of documents to be used. Values: `en`, `de`
+- "corpus": The corpus to be used for analysis. Either "all" or specified with a Dictionary of database keys and values. 
+- "analysis": Type of analysis to perform. A List of Dictionaries, specifying a "type" and optional arguments for each.
+The keys of the JSON returned from the server match the types specified for analysis.
+
+Example:
+```json
+{
+    "language": "en",
+    "corpus": 
+        {
+            "celex": "61955CJ0008"
+        },
+    "analysis": [
+        {
+            "type": "n-grams",
+            "n": 2,
+            "limit": 10
+        },
+        {
+            "type": "readability"
+        },
+        {
+            "type": "tokens",
+            "limit": 50
+        }
+    ]
+}
+```
