@@ -46,12 +46,16 @@ def __remove_legal_words(language, text):
             text = text.replace(word, "")
     return text
 
+# https://regex101.com/r/5M9OWR/2/
+def __remove_old_header_alt_language_pages(text):
+    return re.sub(r"\w+\s((Sonderausgabe Seite)|(special edition Page)|())\s\d+", "", text)
+
 # https://regex101.com/r/iPVtVT/1 - improves tokenizer for older texts substantially
 def __remove_white_spaces_before_punctuation(text):
     return re.sub(r"\s(?=\.)", "", text)
 
 # https://www.datacamp.com/community/tutorials/fuzzy-string-python - expects a document dict
-def __filter_text(document):
+def filter_text(document):
     # The idea behind this function is to remove the messy header which is always present
     paragraphs = ['title', 'keywords', 'parties', 'subject', 'grounds',
                   'decisions_on_costs', 'operative_part', 'endorsements']
@@ -79,6 +83,7 @@ def normalize(language, text):
     text = __remove_white_spaces_before_punctuation(text)
     text = __remove_paragraph_numbers(text)
     text = __remove_legal_words(language, text)
+    text = __remove_old_header_alt_language_pages(text)
     return text.lower()
 
 # TODO: Topic modeling (static, works basically but needs more parameter optimization aka running time) - on corpus basis,
@@ -178,7 +183,7 @@ class CorpusAnalysis():
         """
         return len(self.get_tokens(True, remove_stop_words))
 
-    def get_post_tags(self):
+    def get_pos_tags(self):
         """Returns a list of tuples with all base words and their part of speech tag"""
         return [item for sublist in self.get_pos_tags_per_doc() for item in sublist]
 
@@ -212,7 +217,7 @@ class CorpusAnalysis():
                             if token._.iwnlp_lemmas is not None:
                                 lemmata_per_doc.append((token, token._.iwnlp_lemmas[0]))
                             else:
-                                lemmata_per_doc.append((token, token.token_))
+                                lemmata_per_doc.append((token, token.lemma_))
             lemmata.append(lemmata_per_doc)
         return lemmata
 
@@ -471,7 +476,7 @@ class Analysis(CorpusAnalysis):
                         if token._.iwnlp_lemmas is not None:
                             lemmata.append((token, token._.iwnlp_lemmas[0]))
                         else:
-                            lemmata.append((token, token.token_))
+                            lemmata.append((token, token.lemma_))
         return lemmata
 
     def get_pos_tags(self):
