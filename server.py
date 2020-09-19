@@ -70,7 +70,7 @@ def query():
     # for arg in analysis_args:
     #     analysis_data[arg] = analyse_selected_corpus(corpus, arg)
 
-    return "api under construction"
+    return analysis_data
     
 
 # If we're running in stand alone mode, run the application
