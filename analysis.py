@@ -20,13 +20,18 @@ english_legal_words = ["Summary", "Parties", "Subject of the case",
                        "Grounds", "Operative part", "Keywords", "Decision on costs"]
 german_legal_words = ["Leitsätze", "Parteien", 'Schlüsselwörter', 'Entscheidungsgründe', 'Tenor', 'Kostenentscheidung']
 
+UNIVERSAL_POS_TAGS = ("ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM",
+                      "PART", "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM", "VERB", "X")
+
 # Pre-processing methods
+
 
 def __remove_punctuation(sentence):
     sentence = re.sub(r'[^\w\s\/]', '', sentence)
     return sentence
 
 # https://regex101.com/r/2AgRRW/2
+
 
 def __remove_paragraph_numbers(text):
     # Look for paragraph numbers in the new format
@@ -47,14 +52,24 @@ def __remove_legal_words(language, text):
     return text
 
 # https://regex101.com/r/5M9OWR/2/
+
+
 def __remove_old_header_alt_language_pages(text):
     return re.sub(r"\w+\s((Sonderausgabe Seite)|(special edition Page)|())\s\d+", "", text)
 
 # https://regex101.com/r/iPVtVT/1 - improves tokenizer for older texts substantially
+
+
 def __remove_white_spaces_before_punctuation(text):
     return re.sub(r"\s(?=\.)", "", text)
 
+
+def __remove_old_french_header_text(text):
+    return re.sub(r"(Avis juridique important \|)\s\w+", "", text)
+
 # https://www.datacamp.com/community/tutorials/fuzzy-string-python - expects a document dict
+
+
 def filter_text(document):
     # The idea behind this function is to remove the messy header which is always present
     paragraphs = ['title', 'keywords', 'parties', 'subject', 'grounds',
@@ -84,6 +99,7 @@ def normalize(language, text):
     text = __remove_paragraph_numbers(text)
     text = __remove_legal_words(language, text)
     text = __remove_old_header_alt_language_pages(text)
+    text = __remove_old_french_header_text(text)
     return text.lower()
 
 # TODO: Topic modeling (static, works basically but needs more parameter optimization aka running time) - on corpus basis,
@@ -128,29 +144,37 @@ class CorpusAnalysis():
         texts = [normalize(self.language, text) for text in texts]
         self.corpus = textacy.Corpus(self.nlp, data=texts)
 
-    def get_tokens(self, remove_punctuation=False, remove_stop_words=False):
+    def get_tokens(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
         """Returns a list of all tokens (if you exclude punctuation, it returns words instead)"""
         # Flatten per document list and return it
-        return [item for sublist in self.get_tokens_per_doc(remove_punctuation,remove_stop_words) for item in sublist]
+        return [item for sublist in self.get_tokens_per_doc(remove_punctuation, remove_stop_words, include_pos, exclude_pos, min_freq_per_doc) for item in sublist]
 
-    def get_tokens_per_doc(self, remove_punctuation=False, remove_stop_words=False):
+    def get_tokens_per_doc(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
         """Returns a list of all tokens (if you exclude punctuation, it returns words instead) per document."""
+        if include_pos is None:
+            include_pos = UNIVERSAL_POS_TAGS
+        if exclude_pos is not None:
+            include_pos = [pos_tag for pos_tag in include_pos if pos_tag not in exclude_pos]
         tokens = []
         for doc in self.corpus:
             tokens_per_doc = []
             for token in doc:
                 if remove_stop_words:
                     if remove_punctuation:
-                        if token.is_punct != True and token.is_stop != True:
+                        if token.is_punct != True and token.is_stop != True and token.is_space != True:
                             tokens_per_doc.append(token)
                     else:
-                        if token.is_stop != True:
+                        if token.is_stop != True and token.is_space != True:
                             tokens_per_doc.append(token)
                 elif remove_punctuation:
-                    if token.is_punct != True:
+                    if token.is_punct != True and token.is_space != True:
                         tokens_per_doc.append(token)
                 else:
-                    tokens_per_doc.append(token)
+                    if token.is_space != True:
+                        tokens_per_doc.append(token)
+            tokens_per_doc = [token.text for token in tokens_per_doc if token.pos_ in include_pos]
+            if min_freq_per_doc != 1:
+                tokens_per_doc = [key for key, value in Counter(tokens_per_doc).items() if value >= min_freq_per_doc]
             tokens.append(tokens_per_doc)
         return tokens
 
@@ -234,7 +258,7 @@ class CorpusAnalysis():
             entities = list(set(entities))
             ner.append((label, entities))
         return ner
-    
+
     def get_named_entities_per_doc(self):
         """
         Returns a list of lists of tuples. 
@@ -276,9 +300,13 @@ class CorpusAnalysis():
 
     def get_n_grams(self, n=2, filter_stop_words=True, filter_nums=True, min_freq=5):
         """
-        This functions returns all n-grams (e.g. n=2 (bigram) 'the court'). Should be used to analyse collocations.
+        This functions returns a set of all n-grams (e.g. n=2 (bigram) 'the court'). Should be used to analyse collocations.
         """
-        return list(textacy.extract.ngrams(self.corpus, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq))
+        merged_text = ""
+        for doc in self.corpus:
+            merged_text += doc.text
+        doc = self.nlp(merged_text)
+        return set([token.text for token in textacy.extract.ngrams(doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
 
         # LDA (static)
     # def prepare_text_for_lda(self):
@@ -436,17 +464,25 @@ class Analysis(CorpusAnalysis):
         text = normalize(self.language, text)
         self.doc = textacy.make_spacy_doc(text, lang=self.nlp)
 
-    def get_tokens(self, remove_punctuation=False, remove_stop_words=False):
-        """Returns a list of all tokens present in the text."""
+    def get_tokens(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq=1):
+        """
+        Returns a list of all tokens present in the text. Can be customized by filtering punctuation, stopwords, part of speech tags and token frequency.
+        """
         if remove_stop_words:
             if remove_punctuation:
-                tokens = [token.text for token in self.doc if token.is_punct != True and token.is_stop != True]
+                tokens = [token for token in self.doc if token.is_punct != True and token.is_stop != True]
             else:
-                tokens = [token.text for token in self.doc if token.is_stop != True]
+                tokens = [token for token in self.doc if token.is_stop != True]
         elif remove_punctuation:
-            tokens = [token.text for token in self.doc if token.is_punct != True]
+            tokens = [token for token in self.doc if token.is_punct != True]
         else:
-            tokens = [token.text for token in self.doc]
+            tokens = [token for token in self.doc]
+        if include_pos is None:
+            include_pos = UNIVERSAL_POS_TAGS
+        if exclude_pos is not None:
+            include_pos = [pos_tag for pos_tag in include_pos if pos_tag not in exclude_pos]
+        tokens = [token.text for token in tokens if token.pos_ in include_pos]
+        tokens = [key for key, value in Counter(tokens).items() if value >= min_freq]
         return tokens
 
     def get_sentences(self):
@@ -502,11 +538,25 @@ class Analysis(CorpusAnalysis):
         """
         return self.doc.similarity(other.doc)
 
-    def get_n_grams(self, n=2, filter_stop_words=True, filter_nums=True, min_freq=5):
+    def get_n_grams(self, n=2, filter_stop_words=True, filter_nums=True, min_freq=2):
         """
-        This functions returns all n-grams (e.g. n=2 (bigram) 'the court'). Should be used to analyse collocations.
+        This functions returns a set of all n-grams (e.g. n=2 (bigram) 'the court'). Should be used to analyse collocations.
         """
-        return list(textacy.extract.ngrams(self.doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq))
+        return set([token.text for token in textacy.extract.ngrams(self.doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
+
+    def _get_single_lemma(self, spacy_token):
+        if self.language == "de":
+            if spacy_token._.iwnlp_lemmas is not None:
+                return spacy_token._.iwnlp_lemmas[0]
+        return spacy_token.lemma_
+
+    def get_keywords(self, top_n=10):
+        """
+        We use PositionRank (a biased PageRank algorithm) to compute the keywords for documents.
+        We do this, because european judgments start with a keyword section (similar to an Abstract in research papers, which this algorithm was optimized for).
+        https://www.aclweb.org/anthology/P17-1102.pdf
+        """
+        return textacy.ke.textrank(self.doc, normalize=self._get_single_lemma, window_size=10, edge_weighting="count", position_bias=True, topn=top_n)
 
     # Text-complexity (there are a few more metrics present if we want to also show them to the user)
     def get_readability_score(self):
