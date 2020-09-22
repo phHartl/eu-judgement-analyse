@@ -53,43 +53,6 @@ def __get_tuples(query, language):
             "value" : query.get('search value')
         })
 
-def generate_subcorpus(corpus_args, language):
-    corpus = []
-    op_curs_tuples = []
-    object_queries = []
-    keys_containing_dicts = ["author", "subject_matter", "case_law_directory",
-                            "applicant", "defendant", "procedure_type"]
-    docs = get_docs_by_custom_query(corpus_args, language)
-    # for query in corpus_args:
-    #     op_curs_tuples.append(__get_tuples(query, language))
-    # print(op_curs_tuples)
-    # if isinstance(corpus_args, list):
-    #     pass
-    # else:
-    #     for k,v in corpus_args.items():
-    #         if k not in keys_containing_dicts:
-    #             corpus.append(get_docs_by_value(k, v, language))
-    # for item in corpus:
-    #     print(corpus.get('celex'))
-
-args = [
-        {
-            "column": "author",
-            "value": "Court of Justice"
-        },
-        {
-            "operator": "NOT",
-            "search identifier": True,
-            "column": "case_law_directory",
-            "value": 'F'
-        },
-        {
-            "column": 'applicant',
-            "value": 'Person'
-        }
-]
-get_docs_by_custom_query(args,'en')
-
 def analyse_selected_corpus(corpus, args, language):
     # setup
     analyser = CorpusAnalysis(language)
@@ -121,3 +84,29 @@ def analyse_selected_doc(doc, args, language):
 
     del analyser
     return analysis_data
+
+#-------------------
+# test custom query
+#-------------------
+test_query = [
+        {
+            "operator": "NOT",
+            "search identifier": True,
+            "column": "case_law_directory",
+            "value": 'F'
+        },
+        {
+            "operator" : "NOT",
+            "search identifier": True,
+            "column": 'applicant',
+            "value": 'Person'
+        },
+        {
+            "column": 'celex',
+            "value": ['61956CJ0007', '61958CJ0022', '61959CJ0025']
+        }
+]
+# 61956CJ0007 has cld = C and F
+# 61958CJ0022 has cld not Fm applicant PART
+# 61959CJ0025 has cld not F, applicant not PART
+# get_docs_by_custom_query(test_query,'en')

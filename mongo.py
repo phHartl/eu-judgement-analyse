@@ -121,34 +121,46 @@ def get_docs_by_value(column, value, language):
   
 def get_docs_by_custom_query(query_args, language):
     search_dict = {}
-    obj_key_val_tuples = []
     keys_containing_dicts = ["author", "subject_matter", "case_law_directory",
                             "applicant", "defendant", "procedure_type"]
+    change_cur_coll(language)
+
     for item in query_args:
         if item.get('column') in keys_containing_dicts:
             if item.get('search identifier'):
                 if isinstance(item.get('value'), list):
-                    search_dict[item.get('column')+".ids"] = {"$in" : item.get('value')}
+                    if item.get('operator') == 'NOT':
+                        search_dict[item.get('column')+".ids"] = {"$nin" : item.get('value')}
+                    else:
+                        search_dict[item.get('column')+".ids"] = {"$in" : item.get('value')}
                 else:
-                    search_dict[item.get('column')+".ids"] = item.get('value')
+                    if item.get('operator') == 'NOT':
+                        search_dict[item.get('column')+".ids"] = {"$ne" : item.get('value')}
+                    else:
+                        search_dict[item.get('column')+'.ids'] = item.get('value')
             else:
                 if isinstance(item.get('value'), list):
-                    search_dict[item.get('column')+".labels"] = {"$in" : item.get('value')
-                    }
+                    if item.get('operator') == 'NOT':
+                        search_dict[item.get('column')+".labels"] = {"$nin" : item.get('value')}
+                    else:
+                        search_dict[item.get('column')+".labels"] = {"$in" : item.get('value')}
                 else:
-                    search_dict[item.get('column')+".labels"] = item.get('value')
+                    if item.get('operator') == 'NOT':
+                        search_dict[item.get('column')+".labels"] = {"$ne": item.get('value')}
+                    else:
+                        search_dict[item.get('column')+".labels"] = item.get('value')
         else:
             if isinstance(item.get('value'), list):
-                search_dict[item.get('column')] = {"$in" : item.get('value')}
+                if item.get('operator') == 'NOT':
+                    search_dict[item.get('column')] = {"$nin" : item.get('value')}
+                else:
+                    search_dict[item.get('column')] = {"$in" : item.get('value')}
             else:
-                search_dict[item.get('column')] = item.get('value')
+                if item.get('operator') == 'NOT':
+                    search_dict[item.get('column')] = {"$ne" : item.get('value')}
+                else:
+                    search_dict[item.get('column')] = item.get('value')
 
-    print('printing custom query')
-    print(search_dict)
     cursor = collection.find(search_dict)
-    print('print done')
-
-    for item in cursor:
-        print(item.get('celex'))
-
+    return cursor
         
