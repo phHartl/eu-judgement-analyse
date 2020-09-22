@@ -2,43 +2,45 @@ from pymongo import MongoClient, errors
 
 client = MongoClient('localhost', 27017)
 db = client.judgment_corpus
-collection = client.judgment_corpus.judgments_en    # english as default language
+collection = client.judgment_corpus.judgments_en  # english as default language
 
 PRINT_DUPLICATE_ERRORS = 0
 
 AVAILABLE_LANGUAGES = {
-    'Bulgarian' : 'bg',
-    'Croatian' : 'hr',
-    'Czech' : 'cs',
-    'Danish' : 'da',
-    'Dutch' : 'nl',
-    'English' : 'en',
-    'Estonian' : 'et',
-    'Finnish' : 'fi',
-    'French' : 'fr',
-    'German' : 'de',
-    'Greek' : 'el',
-    'Hungarian' : 'hu',
-    'Irish' : 'ga',
-    'Italian' : 'it',
-    'Latvian' : 'lv',
-    'Lithuanian' : 'lt',
-    'Maltese' : 'mt',
-    'Polish' : 'pl',
-    'Portuguese' : 'pt',
-    'Romanian' : 'ro',
-    'Slovak' : 'sk',
-    'Slovenian' : 'sl',
-    'Spanish' : 'es',
-    'Swedish' : 'sv'
-    }
+    'Bulgarian': 'bg',
+    'Croatian': 'hr',
+    'Czech': 'cs',
+    'Danish': 'da',
+    'Dutch': 'nl',
+    'English': 'en',
+    'Estonian': 'et',
+    'Finnish': 'fi',
+    'French': 'fr',
+    'German': 'de',
+    'Greek': 'el',
+    'Hungarian': 'hu',
+    'Irish': 'ga',
+    'Italian': 'it',
+    'Latvian': 'lv',
+    'Lithuanian': 'lt',
+    'Maltese': 'mt',
+    'Polish': 'pl',
+    'Portuguese': 'pt',
+    'Romanian': 'ro',
+    'Slovak': 'sk',
+    'Slovenian': 'sl',
+    'Spanish': 'es',
+    'Swedish': 'sv'
+}
+
 
 def change_cur_coll(language):
     if language in AVAILABLE_LANGUAGES.values():
         _collection = db["judgments_{}".format(language)]
         return _collection
 
-def init_db(used_languages = ['en']):
+
+def init_db(used_languages=['en']):
     collist = db.list_collection_names()
 
     for lang in used_languages:
@@ -55,6 +57,7 @@ def init_db(used_languages = ['en']):
             # update collist repeatedly to ensure no crashes due to "collection has already been created"
             collist = db.list_collection_names()
 
+
 def insert_doc(doc, language):
     if language in AVAILABLE_LANGUAGES.values():
         collection = change_cur_coll(language)
@@ -67,16 +70,21 @@ def insert_doc(doc, language):
     else:
         print("DB: insert_doc(): unsuported language")
 
+
 def get_all_docs(language):
     collection = change_cur_coll(language)
     cursor = collection.find({})
     return cursor
 
+
 def get_docs_between_dates(start, end, language):
+    collection = change_cur_coll(language)
     # retrieves documents between two dates (dates must be in the format: y-m-dT00:00:00.000+00:00)
     cursor = collection.find({'date': {'$lt': end, '$gte': start}})
     return cursor
 
+
+"""
 def get_docs_by_object_value(column, value, language):
     # retrieves documents by searching a object column for a specified value
     # this DB request requires JavaScript
@@ -94,12 +102,20 @@ def get_docs_by_object_value(column, value, language):
     '''
     })
     return cursor
+"""
 
 
-def get_docs_by_object_key(column, key, language):
+def get_docs_by_object_key(column, values, language):
     # retrieves documents by searching a object column for a specified value
     collection = change_cur_coll(language)
-    cursor = collection.find({column + "." + key: {"$exists": True}})
+    cursor = collection.find({column + "." + "ids": {"$in": values}})
+    return cursor
+
+
+def get_docs_by_object_value(column, values, language):
+    # retrieves documents by searching a object column for a specified value
+    collection = change_cur_coll(language)
+    cursor = collection.find({column + "." + "labels": {"$in": values}})
     return cursor
 
 
@@ -114,6 +130,7 @@ def get_docs_search_string(column, search, language):
     print(search_string)
     cursor = collection.find({column: {"$regex": search_string, "$options": "i"}})
     return cursor
+
 
 def get_docs_by_value(column, value, language):
     collection = change_cur_coll(language)
