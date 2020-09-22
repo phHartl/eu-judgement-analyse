@@ -1,6 +1,7 @@
 import re
 import pickle
 from collections import Counter
+import statistics
 
 import gensim
 from fuzzywuzzy import fuzz
@@ -13,7 +14,10 @@ import textacy.ke
 import textacy.vsm
 # This library uses an older version of spacy (2.1.8)
 from blackstone.pipeline.sentence_segmenter import SentenceSegmenter
-from blackstone.rules import CITATION_PATTERNS
+from blackstone.pipeline.compound_cases import CompoundCases
+from blackstone.rules import CONCEPT_PATTERNS, CITATION_PATTERNS
+
+import stanza
 
 # Older text (1956 - 2003) formats always got the same headlines - remove them from the text to get better results
 english_legal_words = ["Summary", "Parties", "Subject of the case",
@@ -63,6 +67,9 @@ def __remove_old_header_alt_language_pages(text):
 def __remove_white_spaces_before_punctuation(text):
     return re.sub(r"\s(?=\.)", "", text)
 
+def __remove_white_spaces_before_parentheses(text):
+    return re.sub(r"((?<=\w)\s(?=\)))|((?<=\()\s)", "", text)
+
 
 def __remove_old_french_header_text(text):
     return re.sub(r"(Avis juridique important \|)\s\w+", "", text)
@@ -96,6 +103,7 @@ def filter_text(document):
 
 def normalize(language, text):
     text = __remove_white_spaces_before_punctuation(text)
+    text = __remove_white_spaces_before_parentheses(text)
     text = __remove_paragraph_numbers(text)
     text = __remove_legal_words(language, text)
     text = __remove_old_header_alt_language_pages(text)
@@ -128,14 +136,24 @@ class CorpusAnalysis():
             # pip install https://blackstone-model.s3-eu-west-1.amazonaws.com/en_blackstone_proto-0.0.1.tar.gz
             # Use Blackstone model which has been trained on english legal texts (https://github.com/ICLRandD/Blackstone)
             self.nlp = textacy.load_spacy_lang("en_blackstone_proto", disable=("textcat"))
+            if "sentencizer" in self.nlp.pipe_names:
+                self.nlp.remove_pipe('sentencizer')
             # Use a custom sentence segmenter for better tokenization
-            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CITATION_PATTERNS)
+            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CONCEPT_PATTERNS)
             self.nlp.add_pipe(sentence_segmenter, before="parser")
+            # https://github.com/ICLRandD/Blackstone#compound-case-reference-detection
+            compound_pipe = CompoundCases(self.nlp)
+            self.nlp.add_pipe(compound_pipe)
         else:
             # python -m spacy download de_core_news_md
             self.nlp = textacy.load_spacy_lang("de_core_news_md", disable=("textcat"))
             iwnlp = spaCyIWNLP(lemmatizer_path='data/IWNLP.Lemmatizer_20181001.json', ignore_case=True)
             self.nlp.add_pipe(iwnlp)
+            # remove the default spaCy sentencizer from the model pipeline
+            if "sentencizer" in self.nlp.pipe_names:
+                self.nlp.remove_pipe('sentencizer')
+            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CONCEPT_PATTERNS)
+            self.nlp.add_pipe(sentence_segmenter, before="parser")
 
         self.corpus = None
 
@@ -292,11 +310,8 @@ class CorpusAnalysis():
         German formula:
             https://de.wikipedia.org/wiki/Lesbarkeitsindex#Flesch-Reading-Ease
         """
-        scores = []
-        for doc in self.corpus:
-            text_stats = textacy.TextStats(doc)
-            scores.append(text_stats.flesch_reading_ease)
-        return sum(scores) / len(scores)
+        scores = [textacy.TextStats(doc).flesch_reading_ease for doc in self.corpus]
+        return statistics.mean(scores)
 
     def get_n_grams(self, n=2, filter_stop_words=True, filter_nums=True, min_freq=5):
         """
@@ -308,7 +323,7 @@ class CorpusAnalysis():
         doc = self.nlp(merged_text)
         return set([token.text for token in textacy.extract.ngrams(doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
 
-        # LDA (static)
+    # # LDA (static)
     # def prepare_text_for_lda(self):
     #     pos_tagged_tokens = self.get_pos_tags()
     #     tokens = [tupl[0] for tupl in pos_tagged_tokens if tupl[1] == "NOUN"]
@@ -448,14 +463,29 @@ class Analysis(CorpusAnalysis):
             # pip install https://blackstone-model.s3-eu-west-1.amazonaws.com/en_blackstone_proto-0.0.1.tar.gz
             # Use Blackstone model which has been trained on english legal texts (https://github.com/ICLRandD/Blackstone)
             self.nlp = textacy.load_spacy_lang("en_blackstone_proto")
+            # remove the default spaCy sentencizer from the model pipeline
+            if "sentencizer" in self.nlp.pipe_names:
+                self.nlp.remove_pipe('sentencizer')
             # Use a custom sentence segmenter for better tokenization
-            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CITATION_PATTERNS)
+            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CONCEPT_PATTERNS)
             self.nlp.add_pipe(sentence_segmenter, before="parser")
+            # https://github.com/ICLRandD/Blackstone#compound-case-reference-detection
+            compound_pipe = CompoundCases(self.nlp)
+            self.nlp.add_pipe(compound_pipe)
+            # stanza.download("en", processors="tokenize, sentiment")
+            self.stanza_nlp = stanza.Pipeline(lang="en", processors="tokenize, sentiment", tokenize_pretokenized=True)
         else:
             # python -m spacy download de_core_news_md
             self.nlp = textacy.load_spacy_lang("de_core_news_md", disable=("textcat"))
             iwnlp = spaCyIWNLP(lemmatizer_path='data/IWNLP.Lemmatizer_20181001.json', ignore_case=True)
             self.nlp.add_pipe(iwnlp)
+            # remove the default spaCy sentencizer from the model pipeline
+            if "sentencizer" in self.nlp.pipe_names:
+                self.nlp.remove_pipe('sentencizer')
+            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CONCEPT_PATTERNS)
+            self.nlp.add_pipe(sentence_segmenter, before="parser")
+            # stanza.download("de", processors="tokenize, sentiment")
+            self.stanza_nlp = stanza.Pipeline(lang="de", processors="tokenize, sentiment", tokenize_pretokenized=True)
 
         self.doc = None
 
@@ -569,3 +599,21 @@ class Analysis(CorpusAnalysis):
         """
         text_stats = textacy.TextStats(self.doc)
         return text_stats.flesch_reading_ease
+
+    def get_sentiment(self):
+        """
+        Use a CNN (https://arxiv.org/abs/1408.5882) to classify the sentiment of each sentence. Returns the median of all sentences.
+        This might take a little longer on slower systems. 
+        0 - negative, 1 - neutral, 2 - positive sentiment (https://stanfordnlp.github.io/stanza/sentiment.html)
+        """
+        stanza_sentences = []
+        sentences = self.get_sentences()
+        for sentence in sentences:
+            temp_sentence = []
+            for token in sentence:
+                temp_sentence.append(token.text)
+            stanza_sentences.append(temp_sentence)
+
+        doc = self.stanza_nlp(stanza_sentences)
+        sentiment = [sentence.sentiment for sentence in doc.sentences]
+        return int(statistics.median(sentiment))
