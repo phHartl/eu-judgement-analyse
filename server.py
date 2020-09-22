@@ -39,6 +39,8 @@ def home():
 
 @app.route('/eu-judgments/api/data', methods=['GET'])
 def query():
+    # args = request.args
+    # print(args)
     req = request.get_json()
     language = req.get('language')
     corpus_args = req.get('corpus')
@@ -63,8 +65,7 @@ def query():
         for arg in analysis_args:
             analysis_data[arg.get('type')] = analyse_selected_doc(corpus, arg, language)
     else:
-        # corpus = generate_subcorpus(corpus_args)
-        pass
+        corpus = generate_subcorpus(corpus_args, language)
 
     # analyse and save for in every way specified in the request
     # for arg in analysis_args:

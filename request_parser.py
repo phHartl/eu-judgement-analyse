@@ -11,7 +11,8 @@ parse_counter = 0
 
 def extract_data(data):
     list_data = []
-    id_label_dict = {}
+    ids = []
+    labels = []
 
     # iterate over the data tree recursively, depending on whether the current data is an OrderedDict or a list
     # distinguish between aiming for a VALUE or an IDENTIFIER
@@ -23,9 +24,8 @@ def extract_data(data):
                 if key == 'VALUE':
                     list_data.append(value)
                 elif key == 'IDENTIFIER':
-                    _id = value
-                    _label = data.get('PREFLABEL')
-                    id_label_dict[_id] = _label
+                    ids.append(value)
+                    labels.append(data.get('PREFLABEL'))
                 elif key == 'SAMEAS':
                     if isinstance(value, list):
                         recursive_crawl(value)
@@ -49,8 +49,12 @@ def extract_data(data):
 
     recursive_crawl(data)
 
-    if id_label_dict:
-        return id_label_dict    # all {id : label} pairs
+    if ids:
+        ids_labels_dict = {
+            "ids": ids,
+            "labels": labels
+        }
+        return ids_labels_dict
     else:
         filtered_list_data = list(set(list_data))  # remove duplicates
         return filtered_list_data   # case_affecting and affected_by_case

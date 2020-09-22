@@ -40,8 +40,55 @@ def __get_top_tokens(analyser, args):
 
     return top_tokens_dict
 
-def generate_subcorpus(corpus_args):
-    pass
+def __get_tuples(query, language):
+    operator = 'and'
+    if query.get('operator'):
+        operator = query.get('operator')
+    if not query.get('search identifier'):
+        cursor = get_docs_by_value(query.get('search column'), query.get('search value'), language)
+        return (operator, cursor)
+    else:
+        return (operator, {
+            "column": query.get('search column'),
+            "value" : query.get('search value')
+        })
+
+def generate_subcorpus(corpus_args, language):
+    corpus = []
+    op_curs_tuples = []
+    object_queries = []
+    keys_containing_dicts = ["author", "subject_matter", "case_law_directory",
+                            "applicant", "defendant", "procedure_type"]
+    docs = get_docs_by_custom_query(corpus_args, language)
+    # for query in corpus_args:
+    #     op_curs_tuples.append(__get_tuples(query, language))
+    # print(op_curs_tuples)
+    # if isinstance(corpus_args, list):
+    #     pass
+    # else:
+    #     for k,v in corpus_args.items():
+    #         if k not in keys_containing_dicts:
+    #             corpus.append(get_docs_by_value(k, v, language))
+    # for item in corpus:
+    #     print(corpus.get('celex'))
+
+args = [
+        {
+            "column": "author",
+            "value": "Court of Justice"
+        },
+        {
+            "operator": "NOT",
+            "search identifier": True,
+            "column": "case_law_directory",
+            "value": 'F'
+        },
+        {
+            "column": 'applicant',
+            "value": 'Person'
+        }
+]
+get_docs_by_custom_query(args,'en')
 
 def analyse_selected_corpus(corpus, args, language):
     # setup
