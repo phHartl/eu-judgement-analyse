@@ -290,6 +290,9 @@ class CorpusAnalysis():
                 entities = [e.string for e in doc.ents if label == e.label_]
                 entities = list(set(entities))
                 ner_per_doc.append((label, entities))
+            compound_cases = [compound_case for compound_case in self.doc._.compound_cases]
+            if len(compound_cases) > 0:
+                ner_per_doc.append(("COMPOUND_CASES", compound_cases))
             ner.append(ner_per_doc)
         return ner
 
@@ -560,6 +563,9 @@ class Analysis(CorpusAnalysis):
             entities = [e.string for e in self.doc.ents if label == e.label_]
             entities = list(set(entities))
             ner.append((label, entities))
+        compound_cases = [compound_case for compound_case in self.doc._.compound_cases]
+        if len(compound_cases) > 0:
+            ner.append(("COMPOUND_CASES", compound_cases))
         return ner
 
     def get_document_cosine_similarity(self, other):
