@@ -1,18 +1,13 @@
 import configparser
-import functools
-import sys
-import timeit
 import math
+import sys
 
 from zeep import Client
 from zeep import xsd
-from bs4 import BeautifulSoup as bs
 
 from mongo import insert_doc
 from plugin import prevent_escaping_characters_in_cdata
 from request_parser import parse_response_for_mongo
-from request_parser_xml_alternative import parse_response_for_mongo_xml
-
 
 WRITE_TO_FILE_DEBUG = 0
 
@@ -58,7 +53,7 @@ header_value = header(
 # all document languages available in eur-lex
 # for a descriptive list, see 13. in https://eur-lex.europa.eu/content/help/faq/intro.html
 AVAILABLE_LANGUAGES = ['bg', 'hr', 'cs', 'da', 'nl', 'en', 'et', 'fi', 'fr', 'de', 'el', 'hu',
-                        'ga', 'it', 'lv', 'lt', 'mt', 'pl', 'pt', 'ro', 'sk', 'sl', 'es', 'sv']
+                       'ga', 'it', 'lv', 'lt', 'mt', 'pl', 'pt', 'ro', 'sk', 'sl', 'es', 'sv']
 
 
 def request_data(page_size=1, page=1, language='en'):
@@ -69,7 +64,7 @@ def request_data(page_size=1, page=1, language='en'):
             expertQuery="<![CDATA[SELECT TI_DISPLAY, TE, IX, I1, I2, VS , MO, CO, DI, DN, AU, CT, RJ, RJ_NEW,  ECLI, DD,  AJ,  LB, AP, DF, CD, PR WHERE DTS_SUBDOM = EU_CASE_LAW AND (EMBEDDED_MANIFESTATION-TYPE = html OR xhtml or pdf) AND CASE_LAW_SUMMARY = false AND (DTT=C? AND DTS = 6) AND (FM_CODED = JUDG) ORDER BY DN ASC]]>",
             page=page,
             pageSize=page_size,
-            searchLanguage= language,
+            searchLanguage=language,
             _soapheaders=[header_value],
         )
         return response
@@ -124,27 +119,26 @@ def main():
             if val == "all" or val == "parse" or val == "response":
                 _dump_mode = val
 
-    # response = request_data(_page, _page_size, _language)
-    # docs = parse_response_for_mongo(
-    #     response, debug_mode=_debug_mode, dump_mode=_dump_mode
-    # )
-    # for doc in docs:
-    #     insert_doc(doc, _language)
+    response = request_data( _page_size, _page, _language)
+    docs = parse_response_for_mongo(
+        response, debug_mode=_debug_mode, dump_mode=_dump_mode
+    )
+    for doc in docs:
+        insert_doc(doc, _language)
 
-    if WRITE_TO_FILE_DEBUG:
-        from bs4 import BeautifulSoup as bs
 
-        root = bs(response.content, "lxml", from_encoding="UTF-8")
-        response_file = open("response.txt", "w+", encoding="UTF8")
-        response_file.write(str(root.prettify()))
+if WRITE_TO_FILE_DEBUG:
+    from bs4 import BeautifulSoup as bs
 
-    ## Benchmark section:
-    # t1 = timeit.Timer(functools.partial(parse_response_for_mongo, response))
-    # print(t1.timeit(100))
-    # t2 = timeit.Timer(functools.partial(parse_response_for_mongo_xml, response))
-    # print(t2.timeit(100))
+    root = bs(response.content, "lxml", from_encoding="UTF-8")
+    response_file = open("response.txt", "w+", encoding="UTF8")
+    response_file.write(str(root.prettify()))
+
+## Benchmark section:
+# t1 = timeit.Timer(functools.partial(parse_response_for_mongo, response))
+# print(t1.timeit(100))
+# t2 = timeit.Timer(functools.partial(parse_response_for_mongo_xml, response))
+# print(t2.timeit(100))
 
 if __name__ == "__main__":
     main()
-
-

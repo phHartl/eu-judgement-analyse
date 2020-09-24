@@ -3,36 +3,37 @@ from datetime import datetime
 
 client = MongoClient('localhost', 27017)
 db = client.judgment_corpus
-collection = client.judgment_corpus.judgments_en    # english as default language
+collection = client.judgment_corpus.judgments_en  # english as default language
 
 PRINT_DUPLICATE_ERRORS = 0
 
 AVAILABLE_LANGUAGES = {
-    'Bulgarian' : 'bg',
-    'Croatian' : 'hr',
-    'Czech' : 'cs',
-    'Danish' : 'da',
-    'Dutch' : 'nl',
-    'English' : 'en',
-    'Estonian' : 'et',
-    'Finnish' : 'fi',
-    'French' : 'fr',
-    'German' : 'de',
-    'Greek' : 'el',
-    'Hungarian' : 'hu',
-    'Irish' : 'ga',
-    'Italian' : 'it',
-    'Latvian' : 'lv',
-    'Lithuanian' : 'lt',
-    'Maltese' : 'mt',
-    'Polish' : 'pl',
-    'Portuguese' : 'pt',
-    'Romanian' : 'ro',
-    'Slovak' : 'sk',
-    'Slovenian' : 'sl',
-    'Spanish' : 'es',
-    'Swedish' : 'sv'
-    }
+    'Bulgarian': 'bg',
+    'Croatian': 'hr',
+    'Czech': 'cs',
+    'Danish': 'da',
+    'Dutch': 'nl',
+    'English': 'en',
+    'Estonian': 'et',
+    'Finnish': 'fi',
+    'French': 'fr',
+    'German': 'de',
+    'Greek': 'el',
+    'Hungarian': 'hu',
+    'Irish': 'ga',
+    'Italian': 'it',
+    'Latvian': 'lv',
+    'Lithuanian': 'lt',
+    'Maltese': 'mt',
+    'Polish': 'pl',
+    'Portuguese': 'pt',
+    'Romanian': 'ro',
+    'Slovak': 'sk',
+    'Slovenian': 'sl',
+    'Spanish': 'es',
+    'Swedish': 'sv'
+}
+
 
 # accepts yyyy-mm-dd string and returns a datetime object for mongoDB
 def __get_datetime_from_string(ymd_string):
@@ -45,7 +46,7 @@ def change_cur_coll(language):
         _collection = db["judgments_{}".format(language)]
         return _collection
 
-def init_db(used_languages = ['en']):
+def init_db(used_languages=['en']):
     collist = db.list_collection_names()
 
     for lang in used_languages:
@@ -87,31 +88,17 @@ def get_docs_between_dates(start, end, language):
     cursor = collection.find({'date': {'$lt': end_date, '$gte': start_date}})
     return cursor
 
-# retrieves documents by searching a object column for a specified value
-# this DB request requires JavaScript
-def get_docs_by_object_value(column, value, language):
-    collection = change_cur_coll(language)
-    cursor = collection.find({"$where":
-    '''
-        function() {
-            for (var field in this.''' + column + ''') {
-                if (this.''' + column + '''[field] == ''' + '"' + value + '"' + ''') {
-                    return true;
-                }
-            }
-        return false;
-        }
-    '''
-    })
-    return cursor
-
-
-def get_docs_by_object_key(column, key, language):
+def get_docs_by_object_key(column, values, language):
     # retrieves documents by searching a object column for a specified value
     collection = change_cur_coll(language)
-    cursor = collection.find({column + "." + key: {"$exists": True}})
+    cursor = collection.find({column + "." + "ids": {"$in": values}})
     return cursor
 
+def get_docs_by_object_value(column, values, language):
+    # retrieves documents by searching a object column for a specified value
+    collection = change_cur_coll(language)
+    cursor = collection.find({column + "." + "labels": {"$in": values}})
+    return cursor
 
 def get_docs_search_string(column, search, language):
     # retrieves documents by searching a string column with specified words (words separated by whitespace)
@@ -128,7 +115,7 @@ def get_docs_by_value(column, value, language):
     collection = change_cur_coll(language)
     cursor = collection.find({column: value})
     return cursor
-  
+
 def get_docs_by_custom_query(query_args, language):
     search_dict = {}
     keys_containing_dicts = ["author", "subject_matter", "case_law_directory",
@@ -182,4 +169,3 @@ def get_docs_by_custom_query(query_args, language):
 
     cursor = collection.find(search_dict)
     return cursor
-        
