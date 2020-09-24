@@ -178,7 +178,7 @@ class CorpusAnalysis():
         """
         return len(self.get_tokens(True, remove_stop_words))
 
-    def get_post_tags(self):
+    def get_pos_tags(self):
         """Returns a list of tuples with all base words and their part of speech tag"""
         return [item for sublist in self.get_pos_tags_per_doc() for item in sublist]
 
