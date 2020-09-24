@@ -1,4 +1,5 @@
 from pymongo import MongoClient, errors
+from datetime import datetime
 
 client = MongoClient('localhost', 27017)
 db = client.judgment_corpus
@@ -32,6 +33,12 @@ AVAILABLE_LANGUAGES = {
     'Spanish' : 'es',
     'Swedish' : 'sv'
     }
+
+# accepts yyyy-mm-dd string and returns a datetime object for mongoDB
+def __get_datetime_from_string(ymd_string):
+        split = ymd_string.split('-')
+        date = datetime(int(split[0]), int(split[1]), int(split[2]))
+        return date
 
 def change_cur_coll(language):
     if language in AVAILABLE_LANGUAGES.values():
@@ -72,14 +79,17 @@ def get_all_docs(language):
     cursor = collection.find({})
     return cursor
 
+# retrieves documents between two dates (dates must be in the format: y-m-dT00:00:00.000+00:00)
 def get_docs_between_dates(start, end, language):
-    # retrieves documents between two dates (dates must be in the format: y-m-dT00:00:00.000+00:00)
-    cursor = collection.find({'date': {'$lt': end, '$gte': start}})
+    collection = change_cur_coll(language)
+    start_date = __get_datetime_from_string(start)
+    end_date = __get_datetime_from_string(end)
+    cursor = collection.find({'date': {'$lt': end_date, '$gte': start_date}})
     return cursor
 
+# retrieves documents by searching a object column for a specified value
+# this DB request requires JavaScript
 def get_docs_by_object_value(column, value, language):
-    # retrieves documents by searching a object column for a specified value
-    # this DB request requires JavaScript
     collection = change_cur_coll(language)
     cursor = collection.find({"$where":
     '''
@@ -149,6 +159,15 @@ def get_docs_by_custom_query(query_args, language):
                         search_dict[item.get('column')+".labels"] = {"$ne": item.get('value')}
                     else:
                         search_dict[item.get('column')+".labels"] = item.get('value')
+        elif item.get('column') == 'date':
+            start_date = __get_datetime_from_string(item.get('start date'))
+            end_date = __get_datetime_from_string(item.get('end date'))
+            if start_date and end_date:
+                search_dict['date'] = {'$lt': end_date, '$gte': start_date}
+            elif start_date:
+                search_dict['date'] = {'$gte': start_date}
+            elif end_date:
+                search_dict['date'] = {'$lt': end_date}
         else:
             if isinstance(item.get('value'), list):
                 if item.get('operator') == 'NOT':

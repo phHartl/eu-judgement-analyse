@@ -40,28 +40,16 @@ def __get_top_tokens(analyser, args):
 
     return top_tokens_dict
 
-def __get_tuples(query, language):
-    operator = 'and'
-    if query.get('operator'):
-        operator = query.get('operator')
-    if not query.get('search identifier'):
-        cursor = get_docs_by_value(query.get('search column'), query.get('search value'), language)
-        return (operator, cursor)
-    else:
-        return (operator, {
-            "column": query.get('search column'),
-            "value" : query.get('search value')
-        })
 
 def analyse_selected_corpus(corpus, args, language):
     # setup
     analyser = CorpusAnalysis(language)
     texts = []
+    analysis_data = {}
+
     for doc in corpus:
         texts.append(doc.get('text'))
-
     analyser.init_pipeline(texts)
-    analysis_data = {}
 
     if args.get('type') == 'n-grams':
         analysis_data['n-grams'] = __get_top_n_grams(analyser, args)
@@ -72,8 +60,8 @@ def analyse_selected_corpus(corpus, args, language):
 def analyse_selected_doc(doc, args, language):
     # setup
     analyser = Analysis(language)
-    analyser.init_pipeline(doc.get('text'))
     analysis_data = {}
+    analyser.init_pipeline(doc.get('text'))
 
     if args.get('type') == 'n-grams':
         analysis_data = __get_top_n_grams(analyser, args)
@@ -89,24 +77,30 @@ def analyse_selected_doc(doc, args, language):
 # test custom query
 #-------------------
 test_query = [
-        {
-            "operator": "NOT",
-            "search identifier": True,
-            "column": "case_law_directory",
-            "value": 'F'
-        },
-        {
-            "operator" : "NOT",
-            "search identifier": True,
-            "column": 'applicant',
-            "value": 'Person'
-        },
+        # {
+        #     "operator": "NOT",
+        #     "search identifier": True,
+        #     "column": "case_law_directory",
+        #     "value": 'F'
+        # },
+        # {
+        #     "operator" : "NOT",
+        #     "search identifier": True,
+        #     "column": 'applicant',
+        #     "value": 'Person'
+        # },
         {
             "column": 'celex',
             "value": ['61956CJ0007', '61958CJ0022', '61959CJ0025']
+        },
+        {
+            "column": "date",
+            "start date": "1958-07-17",
+            "end date": "1959-07-17" 
         }
 ]
 # 61956CJ0007 has cld = C and F
 # 61958CJ0022 has cld not Fm applicant PART
 # 61959CJ0025 has cld not F, applicant not PART
-# get_docs_by_custom_query(test_query,'en')
+# cur = get_docs_by_custom_query(test_query,'en')
+# print(len(list(cur)))
