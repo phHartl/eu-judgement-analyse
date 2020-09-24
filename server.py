@@ -18,10 +18,10 @@ def __singular_doc_requested(args):
     if isinstance(args, list):
         return False
     # https://www.geeksforgeeks.org/python-get-the-first-key-in-dictionary/
-    if isinstance(args.get(next((iter(args)))), list):
+    if isinstance(args.get('value'), list):
         return False
     uids = ['celex', 'ecli', 'reference']
-    if args.keys().isdisjoint(uids):
+    if args.get('column') not in uids:
         return False
     return True
            
@@ -59,9 +59,9 @@ def query():
     if corpus_args == 'all':
         corpus = get_all_docs(language)
     elif __singular_doc_requested(corpus_args):
-        column = next(iter(corpus_args))
-        value = corpus_args.get(next(iter(corpus_args)))
-        corpus = get_docs_by_value(column=column, value=value, language=language)[0]
+        corpus = get_docs_by_value(column=corpus_args.get('column'),
+                                    value=corpus_args.get('value'),
+                                    language=language)[0]
         for arg in analysis_args:
             analysis_data[arg.get('type')] = analyse_selected_doc(corpus, arg, language)
     else:
@@ -70,10 +70,9 @@ def query():
     # analyse and save for in every way specified in the request
     # for arg in analysis_args:
     #     analysis_data[arg] = analyse_selected_corpus(corpus, arg)
-
     return analysis_data
-    
 
+    
 # If we're running in stand alone mode, run the application
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000, debug=True)
