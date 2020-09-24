@@ -90,7 +90,7 @@ Example custom subcorpus:
         {
             "column" : "date",
             "start date" : "1958-07-17",
-            "end date" : ""1975-02-25"
+            "end date" : "1975-02-25"
         },
         {
             "column" : "author",
