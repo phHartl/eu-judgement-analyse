@@ -100,7 +100,7 @@ Example custom subcorpus:
             "operator" : "NOT",
             "search identifier" : true,
             "column" : "case_law_directory",
-            "value" ["F", "C"]
+            "value" : ["F", "C"]
         }
    ]
 }
