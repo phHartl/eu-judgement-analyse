@@ -178,7 +178,7 @@ class CorpusAnalysis():
         """
         return len(self.get_tokens(True, remove_stop_words))
 
-    def get_post_tags(self):
+    def get_pos_tags(self):
         """Returns a list of tuples with all base words and their part of speech tag"""
         return [item for sublist in self.get_pos_tags_per_doc() for item in sublist]
 
@@ -416,8 +416,8 @@ class Analysis(CorpusAnalysis):
             # Use Blackstone model which has been trained on english legal texts (https://github.com/ICLRandD/Blackstone)
             self.nlp = textacy.load_spacy_lang("en_blackstone_proto")
             # Use a custom sentence segmenter for better tokenization
-            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CITATION_PATTERNS)
-            self.nlp.add_pipe(sentence_segmenter, before="parser")
+            # sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CITATION_PATTERNS)
+            # self.nlp.add_pipe(sentence_segmenter, before="parser")
         else:
             # python -m spacy download de_core_news_md
             self.nlp = textacy.load_spacy_lang("de_core_news_md", disable=("textcat"))
