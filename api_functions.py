@@ -3,8 +3,6 @@ from mongo import *
 from analysis import Analysis, CorpusAnalysis
 
 def __get_top_n_grams(analyser, args):
-    return_limit = 10   # default
-
     # get n-grams
     n_grams = []
     if args.get('n'):
@@ -12,11 +10,15 @@ def __get_top_n_grams(analyser, args):
     else:
         n_grams = analyser.get_n_grams()
 
-    # most frequent n-grams. return size determined by limit
-    newlist = []
+    # most frequent n-grams. returns all or most *limit* occurrences
+    string_list = []
     for item in n_grams:
-        newlist.append(str(item))
-    top_ngram_list = Counter(newlist).most_common(args.get('limit'))
+        string_list.append(str(item))   
+    # ensure type int to prevent crashing
+    if isinstance(args.get('limit'), int):
+        top_ngram_list = Counter(string_list).most_common(args.get('limit'))
+    else:
+        top_ngram_list = Counter(string_list).most_common()
 
     # list of tuples -> dict
     top_ngram_dict = {}
@@ -26,12 +28,17 @@ def __get_top_n_grams(analyser, args):
     return top_ngram_dict
 
 def __get_top_tokens(analyser, args):
-    # TODO: add tokenizer parameter to args
-    tokens = analyser.get_tokens(remove_punctuation=True, remove_stop_words = True)
-    return_limit = 50  # default: most frequent tokens returned
+    _remove_punctuation = args.get('remove punctuation')
+    _remove_stop_words = args.get('remove stop words')
+    tokens = analyser.get_tokens(remove_punctuation = _remove_punctuation,
+                                    remove_stop_words = _remove_stop_words)
+
+    # count occurrences for every token
+    # ensure type int to prevent crashing
     if isinstance(args.get('limit'), int):
-        return_limit = args.get('limit')
-    top_tokens_list = Counter(tokens).most_common(return_limit)
+        top_tokens_list = Counter(tokens).most_common(args.get('limit'))
+    else:
+        top_tokens_list = Counter(tokens).most_common()
 
     # list of tuples -> dict
     top_tokens_dict = {}
@@ -70,7 +77,7 @@ def __analyse_generic_parameters(analyser, args, language):
         analysis_data = analyser.get_named_entities()
     return analysis_data
 
-def analyse_selected_corpus(corpus, args, language):
+def analyse_corpus(corpus, args_list, language):
     # setup
     analyser = CorpusAnalysis(language)
     texts = []
@@ -80,13 +87,15 @@ def analyse_selected_corpus(corpus, args, language):
         texts.append(doc.get('text'))
     analyser.init_pipeline(texts)
 
-    if args.get('type') == 'n-grams':
-        analysis_data['n-grams'] = __get_top_n_grams(analyser, args)
+    for args in args_list:
+        analysis_data[args.get('type')] = __analyse_generic_parameters(analyser, args, language)
+        if args.get('type') == 'tokens per doc':
+            pass
 
     del analyser
     return analysis_data
 
-def analyse_selected_doc(doc, args_list, language):
+def analyse_singular_doc(doc, args_list, language):
     # setup
     analyser = Analysis(language)
     analysis_data = {}

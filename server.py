@@ -3,7 +3,7 @@ from analysis import Analysis, CorpusAnalysis
 from flask import render_template, Flask, request
 from flask_pymongo import PyMongo
 from collections import OrderedDict
-from api_functions import analyse_selected_corpus, analyse_selected_doc
+from api_functions import analyse_corpus, analyse_singular_doc
 
 # Create the application instance
 app = Flask(__name__)
@@ -62,7 +62,7 @@ def query():
         corpus = get_docs_by_value(column=corpus_args.get('column'),
                                     value=corpus_args.get('value'),
                                     language=language)[0]
-        analysis_data = analyse_selected_doc(corpus, analysis_args, language)
+        analysis_data = analyse_singular_doc(corpus, analysis_args, language)
     else:
         corpus = get_docs_by_custom_query(corpus_args, language)
 
