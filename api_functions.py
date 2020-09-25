@@ -14,28 +14,19 @@ def __get_top_occurrences(_list, limit=None):
         occurrence_list = Counter(string_list).most_common(limit)
     else:
         occurrence_list = Counter(string_list).most_common()
-
-    # list of tuples -> dict
-    occurrence_dict = {}
-    for _tuple in occurrence_list:
-        occurrence_dict[str(_tuple[0])] = _tuple[1]
-
-    return occurrence_dict
+    return occurrence_list
 
 def __get_top_n_grams(analyser, args):
     # prevent present bug, when getting n-grams from a corpus
-    if isinstance(analyser, CorpusAnalysis):
+    if not isinstance(analyser, Analysis):
         return None
-
     # get n-grams
     n_grams = []
     if args.get('n'):
         n_grams = analyser.get_n_grams(n=args['n'])
     else:
         n_grams = analyser.get_n_grams()
-
-    ngram_occurrences = None
-    __get_top_occurrences(n_grams, args.get('limit'))
+    ngram_occurrences = __get_top_occurrences(n_grams, args.get('limit'))
     return ngram_occurrences
 
 def __get_top_tokens(analyser, args):
