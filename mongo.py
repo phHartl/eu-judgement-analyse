@@ -122,6 +122,10 @@ def get_docs_by_custom_query(query_args, language):
                             "applicant", "defendant", "procedure_type"]
     change_cur_coll(language)
 
+    # encapsule in list if only one column is specified.
+    if not isinstance(query_args, list):
+        query_args = [query_args]
+
     for item in query_args:
         if item.get('column') in keys_containing_dicts:
             if item.get('search identifier'):

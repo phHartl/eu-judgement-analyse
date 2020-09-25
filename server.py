@@ -3,7 +3,7 @@ from analysis import Analysis, CorpusAnalysis
 from flask import render_template, Flask, request
 from flask_pymongo import PyMongo
 from collections import OrderedDict
-from api_functions import analyse_selected_corpus, analyse_selected_doc
+from api_functions import analyse_corpus, analyse_singular_doc
 
 # Create the application instance
 app = Flask(__name__)
@@ -58,14 +58,15 @@ def query():
     # whole corpus, single document or custom subcorpus
     if corpus_args == 'all':
         corpus = get_all_docs(language)
+        analysis_data = analyse_corpus(corpus, analysis_args, language)
     elif __singular_doc_requested(corpus_args):
         corpus = get_docs_by_value(column=corpus_args.get('column'),
                                     value=corpus_args.get('value'),
                                     language=language)[0]
-        for arg in analysis_args:
-            analysis_data[arg.get('type')] = analyse_selected_doc(corpus, arg, language)
+        analysis_data = analyse_singular_doc(corpus, analysis_args, language)
     else:
         corpus = get_docs_by_custom_query(corpus_args, language)
+        analysis_data = analyse_corpus(corpus, analysis_args, language)
 
     # analyse and save for in every way specified in the request
     # for arg in analysis_args:
