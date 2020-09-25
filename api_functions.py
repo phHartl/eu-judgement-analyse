@@ -52,6 +52,24 @@ def __to_tuple_list(token_tuples):
         tuples.append((str(item[0]), str(item[1])))
     return tuples
 
+def __analyse_generic_parameters(analyser, args, language):
+    analysis_data = None
+    if args.get('type') == 'n-grams':
+        analysis_data = __get_top_n_grams(analyser, args)
+    if args.get('type') == 'readability':
+        analysis_data = analyser.get_readability_score()
+    if args.get('type') == 'tokens':
+        analysis_data = __get_top_tokens(analyser, args)
+    if args.get('type') == 'sentences':
+        analysis_data = __to_sentence_list(analyser.get_sentences())
+    if args.get('type') == 'lemmata':
+        analysis_data = __to_tuple_list(analyser.get_lemmata())
+    if args.get('type') == 'pos tags':
+        analysis_data = __to_tuple_list(analyser.get_pos_tags())
+    if args.get('type') == 'named entities':
+        analysis_data = analyser.get_named_entities()
+    return analysis_data
+
 def analyse_selected_corpus(corpus, args, language):
     # setup
     analyser = CorpusAnalysis(language)
@@ -68,32 +86,21 @@ def analyse_selected_corpus(corpus, args, language):
     del analyser
     return analysis_data
 
-def analyse_selected_doc(doc, args, language):
+def analyse_selected_doc(doc, args_list, language):
     # setup
     analyser = Analysis(language)
     analysis_data = {}
     analyser.init_pipeline(doc.get('text'))
 
-    if args.get('type') == 'n-grams':
-        analysis_data = __get_top_n_grams(analyser, args)
-    if args.get('type') == 'readability':
-        analysis_data = analyser.get_readability_score()
-    if args.get('type') == 'tokens':
-        analysis_data = __get_top_tokens(analyser, args)
-    if args.get('type') == 'sentences':
-        analysis_data = __to_sentence_list(analyser.get_sentences())
-    if args.get('type') == 'lemmata':
-        analysis_data = __to_tuple_list(analyser.get_lemmata())
-    if args.get('type') == 'pos tags':
-        analysis_data = __to_tuple_list(analyser.get_pos_tags())
-    if args.get('type') == 'named entities':
-        analysis_data = analyser.get_named_entities()
-    if args.get('type') == 'similarity':
-        other_analyser = Analysis(language)
-        text = get_docs_by_value('celex', args.get('other celex'), language)[0].get('text')
-        other_analyser.init_pipeline(text)
-        analysis_data = analyser.get_document_cosine_similarity(other_analyser)
-        del other_analyser
+    # analysis
+    for args in args_list:
+        analysis_data[args.get('type')] = __analyse_generic_parameters(analyser, args, language)
+        if args.get('type') == 'similarity':
+            other_analyser = Analysis(language)
+            text = get_docs_by_value('celex', args.get('other celex'), language)[0].get('text')
+            other_analyser.init_pipeline(text)
+            analysis_data[args.get('type')] = analyser.get_document_cosine_similarity(other_analyser)
+            del other_analyser
 
     del analyser
     return analysis_data

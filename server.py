@@ -62,8 +62,7 @@ def query():
         corpus = get_docs_by_value(column=corpus_args.get('column'),
                                     value=corpus_args.get('value'),
                                     language=language)[0]
-        for arg in analysis_args:
-            analysis_data[arg.get('type')] = analyse_selected_doc(corpus, arg, language)
+        analysis_data = analyse_selected_doc(corpus, analysis_args, language)
     else:
         corpus = get_docs_by_custom_query(corpus_args, language)
 
