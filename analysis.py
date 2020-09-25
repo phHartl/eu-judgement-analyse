@@ -108,8 +108,8 @@ class CorpusAnalysis():
             # Use Blackstone model which has been trained on english legal texts (https://github.com/ICLRandD/Blackstone)
             self.nlp = textacy.load_spacy_lang("en_blackstone_proto", disable=("textcat"))
             # Use a custom sentence segmenter for better tokenization
-            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CITATION_PATTERNS)
-            self.nlp.add_pipe(sentence_segmenter, before="parser")
+            # sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CITATION_PATTERNS)
+            # self.nlp.add_pipe(sentence_segmenter, before="parser")
         else:
             # python -m spacy download de_core_news_md
             self.nlp = textacy.load_spacy_lang("de_core_news_md", disable=("textcat"))
