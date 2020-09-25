@@ -12,6 +12,7 @@ from spacy_iwnlp import spaCyIWNLP
 import textacy
 import textacy.ke
 import textacy.vsm
+import textacy.tm
 # This library uses an older version of spacy (2.1.8)
 from blackstone.pipeline.sentence_segmenter import SentenceSegmenter
 from blackstone.pipeline.compound_cases import CompoundCases
@@ -67,6 +68,7 @@ def __remove_old_header_alt_language_pages(text):
 def __remove_white_spaces_before_punctuation(text):
     return re.sub(r"\s(?=\.)", "", text)
 
+
 def __remove_white_spaces_before_parentheses(text):
     return re.sub(r"((?<=\w)\s(?=\)))|((?<=\()\s)", "", text)
 
@@ -111,17 +113,17 @@ def normalize(language, text):
     return text.lower()
 
 # TODO: Topic modeling (static, works basically but needs more parameter optimization aka running time) - on corpus basis,
-# Sentiment analysis (dynamic, if non-ML approach aka. dictionary) - on document basis (average value for corpus),
+# Sentiment analysis (dynamic, if non-ML approach aka. dictionary) - how to calculate for a corpus?
 # Co-occurrences for a corpus (dynamic),
 # diachronic analysis (can be achieved by comparing different base stats of corpora),
 # judgment classification (probably quite hard),
-# inter-textuality (probably won't make it)
 
 
 class CorpusAnalysis():
     """
-    This class represents a state of analysis for a multiple texts (aka. a corpus). 
-    Init with a language (en or de) and a list of texts.
+    This class performs analysis for a multiple texts in english (en) or german (de) (resp. a corpus).
+    This class should only have static instances (aka one singleton per language) to prevent unnecessary pipeline setups,
+    for each text individually. Execute the loaded pipeline for list of texts via exec_pipeline().
     """
 
     def __init__(self, language):
@@ -131,39 +133,41 @@ class CorpusAnalysis():
             self.language = language
 
         if self.language == "en":
-            # python -m spacy download en_core_web_md
-            # self.nlp = spacy.load("en_core_web_md") - uncomment this line to use a general model instead
             # pip install https://blackstone-model.s3-eu-west-1.amazonaws.com/en_blackstone_proto-0.0.1.tar.gz
             # Use Blackstone model which has been trained on english legal texts (https://github.com/ICLRandD/Blackstone)
             self.nlp = textacy.load_spacy_lang("en_blackstone_proto", disable=("textcat"))
-            if "sentencizer" in self.nlp.pipe_names:
-                self.nlp.remove_pipe('sentencizer')
-            # Use a custom sentence segmenter for better tokenization
-            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CONCEPT_PATTERNS)
-            self.nlp.add_pipe(sentence_segmenter, before="parser")
-            # https://github.com/ICLRandD/Blackstone#compound-case-reference-detection
-            compound_pipe = CompoundCases(self.nlp)
-            self.nlp.add_pipe(compound_pipe)
+            if not ("sentence_segmenter" or "CompoundCases") in self.nlp.pipe_names:
+                # Use a custom sentence segmenter for better tokenization
+                sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CONCEPT_PATTERNS)
+                self.nlp.add_pipe(sentence_segmenter, before="parser")
+                # https://github.com/ICLRandD/Blackstone#compound-case-reference-detection
+                compound_pipe = CompoundCases(self.nlp)
+                self.nlp.add_pipe(compound_pipe)
+            # stanza.download("en", processors="tokenize, sentiment")
+            self.stanza_nlp = stanza.Pipeline(lang="en", processors="tokenize, sentiment", tokenize_pretokenized=True)
         else:
             # python -m spacy download de_core_news_md
             self.nlp = textacy.load_spacy_lang("de_core_news_md", disable=("textcat"))
-            iwnlp = spaCyIWNLP(lemmatizer_path='data/IWNLP.Lemmatizer_20181001.json', ignore_case=True)
-            self.nlp.add_pipe(iwnlp)
-            # remove the default spaCy sentencizer from the model pipeline
-            if "sentencizer" in self.nlp.pipe_names:
-                self.nlp.remove_pipe('sentencizer')
-            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CONCEPT_PATTERNS)
-            self.nlp.add_pipe(sentence_segmenter, before="parser")
+            # Textacy caches loaded pipeline components. So do not add them again if they are already present.
+            if not ("sentence_segmenter" or "spacyiwnlp") in self.nlp.pipe_names:
+                iwnlp = spaCyIWNLP(lemmatizer_path='data/IWNLP.Lemmatizer_20181001.json', ignore_case=True)
+                self.nlp.add_pipe(iwnlp)
+                sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CONCEPT_PATTERNS)
+                self.nlp.add_pipe(sentence_segmenter, before="parser")
+            # stanza.download("de", processors="tokenize, sentiment")
+            self.stanza_nlp = stanza.Pipeline(lang="de", processors="tokenize, sentiment", tokenize_pretokenized=True)
 
         self.corpus = None
 
-    def init_pipeline(self, texts):
-        """This function uses spaCy to initialize a processed corpus based on the input texts"""
+    def exec_pipeline(self, texts):
+        """This function uses spaCy to execute the previously defined pipline on a corpus based on the input texts"""
         texts = [normalize(self.language, text) for text in texts]
         self.corpus = textacy.Corpus(self.nlp, data=texts)
 
     def get_tokens(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
-        """Returns a list of all tokens (if you exclude punctuation, it returns words instead)"""
+        """
+        Returns a list of all tokens (if you exclude punctuation, it returns words instead).
+        """
         # Flatten per document list and return it
         return [item for sublist in self.get_tokens_per_doc(remove_punctuation, remove_stop_words, include_pos, exclude_pos, min_freq_per_doc) for item in sublist]
 
@@ -236,13 +240,17 @@ class CorpusAnalysis():
             pos.append([(word, word.pos_) for word in doc])
         return pos
 
-    def get_lemmata_per_doc(self, remove_stop_words=True):
+    def get_lemmata_per_doc(self, remove_stop_words=True, include_pos=None, exclude_pos=None):
         """Returns a list of tuples with all base words and their lemmata grouped by document"""
         lemmata = []
+        if include_pos is None:
+            include_pos = UNIVERSAL_POS_TAGS
+        if exclude_pos is not None:
+            include_pos = [pos_tag for pos_tag in include_pos if pos_tag not in exclude_pos]
         for doc in self.corpus:
             lemmata_per_doc = []
             for token in doc:
-                if token.is_punct != True:
+                if token.is_punct != True and token.is_space != True and token.pos_ in include_pos:
                     if remove_stop_words:
                         if token.is_stop != True:
                             if self.language == "en":
@@ -263,9 +271,9 @@ class CorpusAnalysis():
             lemmata.append(lemmata_per_doc)
         return lemmata
 
-    def get_lemmata(self, remove_stop_words=True):
+    def get_lemmata(self, remove_stop_words=True, include_pos=None, exclude_pos=None):
         """Returns a list of tuples with all base words and their lemmata"""
-        return [item for sublist in self.get_lemmata_per_doc(remove_stop_words) for item in sublist]
+        return [item for sublist in self.get_lemmata_per_doc(remove_stop_words, include_pos, exclude_pos) for item in sublist]
 
     def get_named_entities(self):
         """Returns a list of tuples. Each contains an assigned label and all entities for this label"""
@@ -275,6 +283,9 @@ class CorpusAnalysis():
             entities = [e.string for doc in self.corpus for e in doc.ents if label == e.label_]
             entities = list(set(entities))
             ner.append((label, entities))
+        compound_cases = [compound_case for doc in self.corpus for compound_case in doc._.compound_cases]
+        if len(compound_cases) > 0:
+            ner.append(("COMPOUND_CASES", compound_cases))
         return ner
 
     def get_named_entities_per_doc(self):
@@ -305,6 +316,16 @@ class CorpusAnalysis():
             tokens = self.get_tokens(True, remove_stop_words)
         return Counter(tokens).most_common(n)
 
+    def get_readability_score_per_doc(self):
+        """
+        Returns a list of flesch reading ease scores per document in the corpus (different values for german & english!):
+        English formula:
+            https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease
+        German formula:
+            https://de.wikipedia.org/wiki/Lesbarkeitsindex#Flesch-Reading-Ease
+        """
+        return [textacy.TextStats(doc).flesch_reading_ease for doc in self.corpus]
+
     def get_average_readability_score(self):
         """
         Returns flesch reading ease score (different values for german & english!):
@@ -314,7 +335,7 @@ class CorpusAnalysis():
             https://de.wikipedia.org/wiki/Lesbarkeitsindex#Flesch-Reading-Ease
         """
         scores = [textacy.TextStats(doc).flesch_reading_ease for doc in self.corpus]
-        return statistics.mean(scores)
+        return statistics.mean(self.get_readability_score_per_doc)
 
     def get_n_grams(self, n=2, filter_stop_words=True, filter_nums=True, min_freq=5):
         """
@@ -326,6 +347,50 @@ class CorpusAnalysis():
         doc = self.nlp(merged_text)
         return set([token.text for token in textacy.extract.ngrams(doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
 
+    def get_sentiment(self):
+        """
+        Use a CNN (https://arxiv.org/abs/1408.5882) to classify the sentiment of each sentence.
+        Returns a normalized sentiment value for the whole corpus
+        This might take a little longer on slower systems. 
+        0 - negative, 1 - neutral, 2 - positive sentiment (https://stanfordnlp.github.io/stanza/sentiment.html)
+        """
+        return int(statistics.median([sentiment for doc in self._get_sentiment_per_doc_and_sentence() for sentiment in doc]))
+
+    def get_sentiment_per_doc(self):
+        """
+        Use a CNN (https://arxiv.org/abs/1408.5882) to classify the sentiment of each sentence. Returns the median for each document.
+        This might take a little longer on slower systems. 
+        0 - negative, 1 - neutral, 2 - positive sentiment (https://stanfordnlp.github.io/stanza/sentiment.html)
+        """
+        return [int(statistics.median(doc)) for doc in self._get_sentiment_per_doc_and_sentence()]
+
+    def _get_sentiment_per_doc_and_sentence(self):
+        sentences_per_doc = self.get_sentences_per_doc()
+        stanza_docs = []
+        for doc in sentences_per_doc:
+            temp_sentences = []
+            for sentence in doc:
+                temp_tokens = []
+                for token in sentence:
+                    temp_tokens.append(token.text)
+                temp_sentences.append(temp_tokens)
+            stanza_docs.append(temp_sentences)
+        docs = [self.stanza_nlp(doc) for doc in stanza_docs]
+        sentiment_per_doc = []
+        for doc in docs:
+            sentiment = []
+            for sentence in doc.sentences:
+                sentiment.append(sentence.sentiment)
+            sentiment_per_doc.append(sentiment)
+        return sentiment_per_doc
+
+    def _get_single_lemma(self, spacy_token):
+        if self.language == "de":
+            if spacy_token._.iwnlp_lemmas is not None:
+                return spacy_token._.iwnlp_lemmas[0]
+        return spacy_token.lemma_
+
+
     # # LDA (static)
     # def prepare_text_for_lda(self):
     #     pos_tagged_tokens = self.get_pos_tags()
@@ -335,7 +400,7 @@ class CorpusAnalysis():
     #     # tokens = [tupl[1] for tupl in lemmata]
     #     return tokens
 
-    # def compute_coherence_values(self, corpus, texts, dictionary, k, a, b):
+    # def compute_coherence_values_(self, corpus, texts, dictionary, k, a, b):
     #     lda_model = gensim.models.LdaMulticore(corpus=corpus,
     #                                            id2word=dictionary,
     #                                            num_topics=k,
@@ -372,8 +437,8 @@ class CorpusAnalysis():
     #     corpus = [dictionary.doc2bow(text) for text in docs]
     #     grid = {}
     #     grid['Validation_Set'] = {}  # Topics range
-    #     min_topics = 2
-    #     max_topics = 11
+    #     min_topics = 10
+    #     max_topics = 15
     #     step_size = 1
     #     topics_range = range(min_topics, 150, 20)  # Alpha parameter
     #     alpha = list(np.arange(0.01, 1, 0.3))
@@ -419,80 +484,86 @@ class CorpusAnalysis():
     #         pd.DataFrame(model_results).to_csv('lda_tuning_results.csv', index=False)
     #         pbar.close()
 
-    # def generate_topic_models(self, topics=100):
-    #     tokens = []
-    #     for doc in self.corpus:
-    #         for token in doc:
-    #             if not token.is_stop and not token.is_punct and (token.pos_ == "NOUN" or token.pos_ == "VERB" or token.pos_ == "ADJ") and len(token) > 3:
-    #                 tokens.append(token.text)
-    #     dictionary = gensim.corpora.Dictionary([d.split() for d in tokens])
-    #     docs = []
-    #     for doc in self.corpus:
-    #         tokens_per_doc = []
-    #         for token in doc:
-    #             if not token.is_punct and not token.is_stop and (token.pos_ == "NOUN" or token.pos_ == "VERB" or token.pos_ == "ADJ") and len(token) > 3:
-    #                 tokens_per_doc.append(token.text)
-    #         docs.append(tokens_per_doc)
-    #     corpus = [dictionary.doc2bow(text) for text in docs]
-    #     # model_list, coherence_values = self.compute_coherence_values(dictionary=dictionary, corpus=corpus, texts=docs, limit=2000)
+    # def make_bigrams(self, docs, bigram_mod):
+    #     return [bigram_mod[doc] for doc in docs]
+
+    # def make_trigrams(self, docs, trigram_mod, bigram_mod):
+    #     return [trigram_mod[bigram_mod[doc]] for doc in docs]
+
+    # def generate_topic_models(self, topics=10):
+    #     # Build the bigram and trigram models
+    #     tokens_per_doc = []
+    #     for doc in self.get_lemmata_per_doc(True, include_pos=("NOUN", "ADJ", "VERB", "ADV")):
+    #         tokens = []
+    #         for tupl in doc:
+    #             tokens.append(tupl[1])
+    #         tokens_per_doc.append(tokens)
+    #     bigram = gensim.models.Phrases(tokens_per_doc, min_count=5, threshold=10)
+    #     trigram = gensim.models.Phrases(bigram[tokens_per_doc], threshold=10)
+
+    #     # Faster way to get a sentence clubbed as a trigram/bigram
+    #     bigram_mod = gensim.models.phrases.Phraser(bigram)
+    #     trigram_mod = gensim.models.phrases.Phraser(trigram)
+
+    #     tokens_bigrams = self.make_trigrams(tokens_per_doc, trigram_mod, bigram_mod)
+
+    #     id2word = gensim.corpora.Dictionary(tokens_bigrams)
+    #     docs = tokens_bigrams
+    #     corpus = [id2word.doc2bow(text) for text in docs]
+    #     # model_list, coherence_values = self.compute_coherence_values(id2word,corpus,docs,200,50,10)
     #     # print("")
-    #     lda_model = gensim.models.LdaMulticore(corpus, topics, dictionary, chunksize=5,
-    #                                            alpha="symmetric", per_word_topics=True)
-    #     coherence_model_lda = gensim.models.CoherenceModel(
-    #         model=lda_model, texts=docs, dictionary=dictionary, coherence='c_v'
-    #     )
-    #     coherence_lda = coherence_model_lda.get_coherence()
-    #     print(coherence_lda)
-    #     topics = lda_model.print_topics()
-    #     doc_lda = lda_model[corpus]
-    #     for topic in topics:
-    #         print(topic)
+    #     # lda_model = gensim.models.wrappers.LdaMallet('data/mallet-2.0.8/bin/mallet',corpus, num_topics=topics, id2word=id2word)
+    #     # coherence_model_lda = gensim.models.CoherenceModel(
+    #     #     model=lda_model, texts=docs, dictionary=id2word, coherence='c_v'
+    #     # )
+    #     # coherence_lda = coherence_model_lda.get_coherence()
+    #     # print(coherence_lda)
+    #     # topics = lda_model.print_topics()
+    #     # doc_lda = lda_model[corpus]
+    #     # for topic in topics:
+    #     #     print(topic)
+
+    # def compute_coherence_values(self, dictionary, corpus, texts, limit, start=2, step=3):
+    #     """
+    #     Compute c_v coherence for various number of topics
+
+    #     Parameters:
+    #     ----------
+    #     dictionary : Gensim dictionary
+    #     corpus : Gensim corpus
+    #     texts : List of input texts
+    #     limit : Max num of topics
+
+    #     Returns:
+    #     -------
+    #     model_list : List of LDA topic models
+    #     coherence_values : Coherence values corresponding to the LDA model with respective number of topics
+    #     """
+    #     coherence_values = []
+    #     model_list = []
+    #     for num_topics in range(start, limit, step):
+    #         model = gensim.models.wrappers.LdaMallet(
+    #             "data/mallet-2.0.8/bin/mallet", corpus=corpus, id2word=dictionary, num_topics=num_topics)
+    #         model_list.append(model)
+    #         coherencemodel = gensim.models.CoherenceModel(
+    #             model=model, texts=texts, dictionary=dictionary, coherence='c_v')
+    #         coherence_values.append(coherencemodel.get_coherence())
+
+    #     return model_list, coherence_values
 
 
 class Analysis(CorpusAnalysis):
     """
-    This class represents a state of analysis for a single text. Init with a language (en or de) and the complete text.
+    This class performs analysis for a single text in english (en) or german (de).
+    This class should only have static instances (aka one singleton per language) to prevent unnecessary pipeline setups,
+    for each text individually. Execute the loaded pipeline with a single document text via exec_pipeline().
     """
 
     def __init__(self, language):
-        if(language != "en" and language != "de"):
-            raise ValueError("Language not supported")
-        else:
-            self.language = language
-
-        if self.language == "en":
-            # python -m spacy download en_core_web_md
-            # self.nlp = spacy.load("en_core_web_md") - uncomment this line to use a general model instead
-            # pip install https://blackstone-model.s3-eu-west-1.amazonaws.com/en_blackstone_proto-0.0.1.tar.gz
-            # Use Blackstone model which has been trained on english legal texts (https://github.com/ICLRandD/Blackstone)
-            self.nlp = textacy.load_spacy_lang("en_blackstone_proto")
-            # remove the default spaCy sentencizer from the model pipeline
-            if "sentencizer" in self.nlp.pipe_names:
-                self.nlp.remove_pipe('sentencizer')
-            # Use a custom sentence segmenter for better tokenization
-            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CONCEPT_PATTERNS)
-            self.nlp.add_pipe(sentence_segmenter, before="parser")
-            # https://github.com/ICLRandD/Blackstone#compound-case-reference-detection
-            compound_pipe = CompoundCases(self.nlp)
-            self.nlp.add_pipe(compound_pipe)
-            # stanza.download("en", processors="tokenize, sentiment")
-            self.stanza_nlp = stanza.Pipeline(lang="en", processors="tokenize, sentiment", tokenize_pretokenized=True)
-        else:
-            # python -m spacy download de_core_news_md
-            self.nlp = textacy.load_spacy_lang("de_core_news_md", disable=("textcat"))
-            iwnlp = spaCyIWNLP(lemmatizer_path='data/IWNLP.Lemmatizer_20181001.json', ignore_case=True)
-            self.nlp.add_pipe(iwnlp)
-            # remove the default spaCy sentencizer from the model pipeline
-            if "sentencizer" in self.nlp.pipe_names:
-                self.nlp.remove_pipe('sentencizer')
-            sentence_segmenter = SentenceSegmenter(self.nlp.vocab, CONCEPT_PATTERNS)
-            self.nlp.add_pipe(sentence_segmenter, before="parser")
-            # stanza.download("de", processors="tokenize, sentiment")
-            self.stanza_nlp = stanza.Pipeline(lang="de", processors="tokenize, sentiment", tokenize_pretokenized=True)
-
+        super(Analysis, self).__init__(language)
         self.doc = None
 
-    def init_pipeline(self, text):
+    def exec_pipeline(self, text):
         """Starts the NLP pipeline (https://miro.medium.com/max/700/1*tRJU9bFckl0uG5_wTR8Tsw.png) of spaCy"""
         text = normalize(self.language, text)
         self.doc = textacy.make_spacy_doc(text, lang=self.nlp)
@@ -579,12 +650,6 @@ class Analysis(CorpusAnalysis):
         This functions returns a set of all n-grams (e.g. n=2 (bigram) 'the court'). Should be used to analyse collocations.
         """
         return set([token.text for token in textacy.extract.ngrams(self.doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
-
-    def _get_single_lemma(self, spacy_token):
-        if self.language == "de":
-            if spacy_token._.iwnlp_lemmas is not None:
-                return spacy_token._.iwnlp_lemmas[0]
-        return spacy_token.lemma_
 
     def get_keywords(self, top_n=10):
         """
