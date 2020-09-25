@@ -1,108 +1,175 @@
 from pymongo import MongoClient, errors
+from datetime import datetime
 
 client = MongoClient('localhost', 27017)
-db = client.test_database
-collection = client.test_database.judgements
+db = client.judgment_corpus
+collection = client.judgment_corpus.judgments_en  # english as default language
 
 PRINT_DUPLICATE_ERRORS = 0
 
+AVAILABLE_LANGUAGES = {
+    'Bulgarian': 'bg',
+    'Croatian': 'hr',
+    'Czech': 'cs',
+    'Danish': 'da',
+    'Dutch': 'nl',
+    'English': 'en',
+    'Estonian': 'et',
+    'Finnish': 'fi',
+    'French': 'fr',
+    'German': 'de',
+    'Greek': 'el',
+    'Hungarian': 'hu',
+    'Irish': 'ga',
+    'Italian': 'it',
+    'Latvian': 'lv',
+    'Lithuanian': 'lt',
+    'Maltese': 'mt',
+    'Polish': 'pl',
+    'Portuguese': 'pt',
+    'Romanian': 'ro',
+    'Slovak': 'sk',
+    'Slovenian': 'sl',
+    'Spanish': 'es',
+    'Swedish': 'sv'
+}
 
-def init_db():
+
+# accepts yyyy-mm-dd string and returns a datetime object for mongoDB
+def __get_datetime_from_string(ymd_string):
+        split = ymd_string.split('-')
+        date = datetime(int(split[0]), int(split[1]), int(split[2]))
+        return date
+
+def change_cur_coll(language):
+    if language in AVAILABLE_LANGUAGES.values():
+        _collection = db["judgments_{}".format(language)]
+        return _collection
+
+def init_db(used_languages=['en']):
     collist = db.list_collection_names()
-    if "judgements" in collist:
-        print("Collection exists already")
+
+    for lang in used_languages:
+        if lang not in AVAILABLE_LANGUAGES.values():
+            continue
+
+        coll_name = "judgments_" + lang
+        if coll_name in collist:
+            print("DB: collection already created for:'{}'".format(lang))
+        else:
+            db.create_collection(coll_name)
+            collection.create_index([('reference', -1)], unique=True)
+            # possibility that two collections are created at once
+            # update collist repeatedly to ensure no crashes due to "collection has already been created"
+            collist = db.list_collection_names()
+
+def insert_doc(doc, language):
+    if language in AVAILABLE_LANGUAGES.values():
+        collection = change_cur_coll(language)
+        try:
+            collection.insert_one(doc)
+        except errors.DuplicateKeyError as e:
+            if PRINT_DUPLICATE_ERRORS:
+                print("document exists already")
+                print(e)
     else:
-        db.create_collection("judgements", )
-        collection.create_index([('reference', -1)], unique=True)
-    # Force create!
+        print("DB: insert_doc(): unsuported language")
 
-
-def insert_doc(doc):
-    try:
-        collection.insert_one(doc)
-    except errors.DuplicateKeyError as e:
-        if PRINT_DUPLICATE_ERRORS:
-            print("document exists already")
-            print(e)
-
-
-def get_docs_between_dates(start, end):
-    cursor = collection.find({'date': {'$lt': end, '$gte': start}})
+def get_all_docs(language):
+    collection = change_cur_coll(language)
+    cursor = collection.find({})
     return cursor
 
-
-def get_docs_by_title(title):
-    cursor = collection.find({'title': title})
+# retrieves documents between two dates (dates must be in the format: y-m-dT00:00:00.000+00:00)
+def get_docs_between_dates(start, end, language):
+    collection = change_cur_coll(language)
+    start_date = __get_datetime_from_string(start)
+    end_date = __get_datetime_from_string(end)
+    cursor = collection.find({'date': {'$lt': end_date, '$gte': start_date}})
     return cursor
 
-
-def get_docs_by_reference(reference):
-    cursor = collection.find({'reference': reference})
+def get_docs_by_object_key(column, values, language):
+    # retrieves documents by searching a object column for a specified value
+    collection = change_cur_coll(language)
+    cursor = collection.find({column + "." + "ids": {"$in": values}})
     return cursor
 
-
-def get_docs_by_id(_id):
-    cursor = collection.find({'_id': _id})
+def get_docs_by_object_value(column, values, language):
+    # retrieves documents by searching a object column for a specified value
+    collection = change_cur_coll(language)
+    cursor = collection.find({column + "." + "labels": {"$in": values}})
     return cursor
 
-
-def get_docs_by_celex(celex):
-    cursor = collection.find({'celex': celex})
-    return cursor
-
-
-def get_docs_by_date(date):
-    cursor = collection.find({'date': date})
-    return cursor
-
-
-def get_docs_by_ecli(ecli):
-    cursor = collection.find({'ecli': ecli})
-    return cursor
-
-
-def get_docs_by_case_affecting(case_affecting):
-    cursor = collection.find({'case_affecting': case_affecting})
-    return cursor
-
-
-def get_docs_by_author_cj(CJ):
-    cursor = collection.find({'author.CJ': CJ})
-    return cursor
-
-
-def get_docs_by_author_side(SIDE):
-    cursor = collection.find({'subject_matter.SIDE': SIDE})
-    return cursor
-
-
-def get_docs_by_subject_matter_finc(FINC):
-    cursor = collection.find({'subject_matter.FINC': FINC})
-    return cursor
-
-
-def get_docs_by_author_pere(PERE):
-    cursor = collection.find({'subject_matter.PERE': PERE})
-    return cursor
-
-
-def get_docs_by_author_ceca(CECA):
-    cursor = collection.find({'subject_matter.CECA': CECA})
-    return cursor
-
-
-def get_docs_search_string(column, search):
+def get_docs_search_string(column, search, language):
+    # retrieves documents by searching a string column with specified words (words separated by whitespace)
+    collection = change_cur_coll(language)
     search_words = search.split(" ")
     search_string = ""
     for word in search_words:
         regex_c_group = "(.*" + word + ".*)"
         search_string += regex_c_group
-    print(search_string)
     cursor = collection.find({column: {"$regex": search_string, "$options": "i"}})
     return cursor
 
+def get_docs_by_value(column, value, language):
+    collection = change_cur_coll(language)
+    cursor = collection.find({column: value})
+    return cursor
 
-init_db()
+def get_docs_by_custom_query(query_args, language):
+    search_dict = {}
+    keys_containing_dicts = ["author", "subject_matter", "case_law_directory",
+                            "applicant", "defendant", "procedure_type"]
+    change_cur_coll(language)
 
-for doc in get_docs_search_string("title", "judgment 1958"):
-    print(doc)
+    # encapsule in list if only one column is specified.
+    if not isinstance(query_args, list):
+        query_args = [query_args]
+
+    for item in query_args:
+        if item.get('column') in keys_containing_dicts:
+            if item.get('search identifier'):
+                if isinstance(item.get('value'), list):
+                    if item.get('operator') == 'NOT':
+                        search_dict[item.get('column')+".ids"] = {"$nin" : item.get('value')}
+                    else:
+                        search_dict[item.get('column')+".ids"] = {"$in" : item.get('value')}
+                else:
+                    if item.get('operator') == 'NOT':
+                        search_dict[item.get('column')+".ids"] = {"$ne" : item.get('value')}
+                    else:
+                        search_dict[item.get('column')+'.ids'] = item.get('value')
+            else:
+                if isinstance(item.get('value'), list):
+                    if item.get('operator') == 'NOT':
+                        search_dict[item.get('column')+".labels"] = {"$nin" : item.get('value')}
+                    else:
+                        search_dict[item.get('column')+".labels"] = {"$in" : item.get('value')}
+                else:
+                    if item.get('operator') == 'NOT':
+                        search_dict[item.get('column')+".labels"] = {"$ne": item.get('value')}
+                    else:
+                        search_dict[item.get('column')+".labels"] = item.get('value')
+        elif item.get('column') == 'date':
+            start_date = __get_datetime_from_string(item.get('start date'))
+            end_date = __get_datetime_from_string(item.get('end date'))
+            if start_date and end_date:
+                search_dict['date'] = {'$lt': end_date, '$gte': start_date}
+            elif start_date:
+                search_dict['date'] = {'$gte': start_date}
+            elif end_date:
+                search_dict['date'] = {'$lt': end_date}
+        else:
+            if isinstance(item.get('value'), list):
+                if item.get('operator') == 'NOT':
+                    search_dict[item.get('column')] = {"$nin" : item.get('value')}
+                else:
+                    search_dict[item.get('column')] = {"$in" : item.get('value')}
+            else:
+                if item.get('operator') == 'NOT':
+                    search_dict[item.get('column')] = {"$ne" : item.get('value')}
+                else:
+                    search_dict[item.get('column')] = item.get('value')
+
+    cursor = collection.find(search_dict)
+    return cursor

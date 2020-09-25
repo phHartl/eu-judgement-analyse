@@ -11,7 +11,8 @@ parse_counter = 0
 
 def extract_data(data):
     list_data = []
-    id_label_dict = {}
+    ids = []
+    labels = []
 
     # iterate over the data tree recursively, depending on whether the current data is an OrderedDict or a list
     # distinguish between aiming for a VALUE or an IDENTIFIER
@@ -23,9 +24,8 @@ def extract_data(data):
                 if key == 'VALUE':
                     list_data.append(value)
                 elif key == 'IDENTIFIER':
-                    _id = value
-                    _label = data.get('PREFLABEL')
-                    id_label_dict[_id] = _label
+                    ids.append(value)
+                    labels.append(data.get('PREFLABEL'))
                 elif key == 'SAMEAS':
                     if isinstance(value, list):
                         recursive_crawl(value)
@@ -49,8 +49,12 @@ def extract_data(data):
 
     recursive_crawl(data)
 
-    if id_label_dict:
-        return id_label_dict    # all {id : label} pairs
+    if ids:
+        ids_labels_dict = {
+            "ids": ids,
+            "labels": labels
+        }
+        return ids_labels_dict
     else:
         filtered_list_data = list(set(list_data))  # remove duplicates
         return filtered_list_data   # case_affecting and affected_by_case
@@ -192,11 +196,21 @@ def parse_to_json(response):
 
     inverse = response.get('content').get('NOTICE').get('INVERSE')
     if inverse:
-        affected_by_case = inverse.get(
-            'RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
+        # affected by case is saved under different tags
+        affected_combinated_list = None
+
+        affected_by_case = inverse.get('RESOURCE_LEGAL_INTERPRETATION_REQUESTED_BY_CASE-LAW')
         if affected_by_case:
-            print('AFFECTED BY CASE FOUND! check dump and backup file')
-            mongo_dict['affected_by_case'] = extract_data(affected_by_case)
+            affected_combinated_list = extract_data(affected_by_case)
+
+        affected_by_case2 = inverse.get('RESOURCE_LEGAL_PRELIMINARY_QUESTION-SUBMITTED_BY_COMMUNICATION_CASE_NEW')
+        if affected_by_case2:
+            if affected_combinated_list:
+                affected_combinated_list.extend(extract_data(affected_by_case2))
+            else:
+                affected_combinated_list = extract_data(affected_by_case2)
+        if affected_combinated_list:
+            mongo_dict['affected_by_case'] = affected_combinated_list
 
     parse_counter += 1
     return mongo_dict
