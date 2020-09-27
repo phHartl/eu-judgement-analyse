@@ -77,7 +77,7 @@ Example:
     "language": "en",
     "corpus": 
         {
-            "column" : "celex"
+            "column" : "celex",
             "value": "61955CJ0008"
         },
     "analysis": [
