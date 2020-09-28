@@ -16,7 +16,7 @@ import textacy.tm
 # This library uses an older version of spacy (2.1.8)
 from blackstone.pipeline.sentence_segmenter import SentenceSegmenter
 from blackstone.pipeline.compound_cases import CompoundCases
-from blackstone.rules import CONCEPT_PATTERNS, CITATION_PATTERNS
+from blackstone.rules import CONCEPT_PATTERNS
 
 import stanza
 
@@ -76,6 +76,7 @@ def __remove_white_spaces_before_parentheses(text):
 def __remove_old_french_header_text(text):
     return re.sub(r"(Avis juridique important \|)\s\w+", "", text)
 
+
 def normalize(language, text):
     """
     Pre-processes the legal texts, by removing typical messy data present. 
@@ -116,7 +117,7 @@ class CorpusAnalysis():
     Returns
     -------
     CorpusAnalysis
-        instance of classe
+        instance of class
 
     Raises
     ------
@@ -161,7 +162,7 @@ class CorpusAnalysis():
 
         self.corpus = None
 
-    def exec_pipeline(self, texts, normalize=True):   
+    def exec_pipeline(self, texts, normalize_texts=True):
         """
         Starts the NLP pipeline (https://miro.medium.com/max/700/1*tRJU9bFckl0uG5_wTR8Tsw.png) of spaCy defined in the constructor for a corpus.
 
@@ -174,11 +175,12 @@ class CorpusAnalysis():
         """
         if isinstance(texts, str):
             texts = [texts]
-        if normalize:
-            texts = [normalize(self.language, text) for text in texts]
+        if normalize_texts:
+            texts = [normalize(self.language, text) for text in texts if text is not None]
         else:
             print("The input texts haven't been normalized! Expect way worse results.")
-        self.corpus = textacy.Corpus(self.nlp, data=texts)
+        self.corpus = textacy.Corpus(self.nlp)
+        self.corpus.add_texts(texts, batch_size=1000)
 
     def get_tokens(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
         """
@@ -255,7 +257,7 @@ class CorpusAnalysis():
             tokens.append(tokens_per_doc)
         return tokens
 
-    def get_unique_tokens(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq=1):    
+    def get_unique_tokens(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq=1):
         """
         Returns a list of all unique tokens in the corpus.
 
@@ -278,7 +280,7 @@ class CorpusAnalysis():
             a customizable list of all unique tokens in the corpus (if you exclude punctuation, it returns words instead).
         """
         return set(self.get_tokens(remove_punctuation, remove_stop_words, include_pos, exclude_pos, min_freq))
-    
+
     def get_sentences(self):
         """
         Returns all sentences present in the corpus
@@ -325,7 +327,7 @@ class CorpusAnalysis():
         -------
         float
             average word length
-        """        
+        """
         tokens = self.get_tokens(True, remove_stop_words)
         return sum(map(len, tokens)) / len(tokens)
 
@@ -350,10 +352,10 @@ class CorpusAnalysis():
         -------
         float
             average token length
-        """            
+        """
         tokens = self.get_tokens(remove_punctuation, remove_stop_words, include_pos, exclude_pos, min_freq)
         return sum(map(len, tokens)) / len(tokens)
-    
+
     def get_token_count(self):
         """
         Calculates the amount of tokens present in the text.
@@ -362,7 +364,7 @@ class CorpusAnalysis():
         -------
         int
             quantity of tokens in the corpus
-        """        
+        """
         return len(self.get_tokens(False, False))
 
     def get_word_count(self, remove_stop_words):
@@ -389,7 +391,7 @@ class CorpusAnalysis():
         -------
         List[Tuple[str, str]]
             a list of tuples with the base word and its part of speech tag
-        """        
+        """
         return [item for sublist in self.get_pos_tags_per_doc() for item in sublist]
 
     def get_pos_tags_per_doc(self):
@@ -423,7 +425,7 @@ class CorpusAnalysis():
         -------
         List[List[Tuple[str, str]]]
             list of tuples with base word and its lemma grouped by document
-        """        
+        """
         lemmata = []
         if include_pos is None:
             include_pos = UNIVERSAL_POS_TAGS
@@ -470,7 +472,7 @@ class CorpusAnalysis():
         -------
         List[Tuple[str, str]]
             list of tuples with base word and its lemma for the whole corpus
-        """    
+        """
         return [item for sublist in self.get_lemmata_per_doc(remove_stop_words, include_pos, exclude_pos) for item in sublist]
 
     def get_named_entities(self):
@@ -570,7 +572,7 @@ class CorpusAnalysis():
         float
             the mean score for each document in the corpus.
         """
-        return statistics.mean(self.get_readability_score_per_doc)
+        return statistics.mean(self.get_readability_score_per_doc())
 
     def get_n_grams(self, n=2, filter_stop_words=True, filter_nums=True, min_freq=5):
         """
@@ -590,14 +592,18 @@ class CorpusAnalysis():
 
         Returns
         -------
-        Set[str]
+        List[str]
             of all n-grams.
         """
         merged_text = ""
         for doc in self.corpus:
             merged_text += doc.text
-        doc = self.nlp(merged_text)
-        return set([token.text for token in textacy.extract.ngrams(doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
+        doc = None
+        with self.nlp.disable_pipes("tagger", "parser", "ner"):
+            self.nlp.max_length = 100000000
+            doc = self.nlp(merged_text)
+        return list([token.text for token in textacy.extract.ngrams(doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
+        
 
     def get_sentiment(self):
         """
@@ -646,14 +652,9 @@ class CorpusAnalysis():
             sentiment_per_doc.append(sentiment)
         return sentiment_per_doc
 
-    def get_document_cosine_similarity(self, other):
+    def get_document_cosine_similarity(self):
         """
-        Calculate similarity for single document based on word embeddings. Expects an other initalized analysis object.
-
-        Parameters
-        ----------
-        other : CorpusAnalysis
-            Another already processed (exec_pipeline() called) CorpusAnalysis object
+        Calculate similarity for two documents based on their word embeddings.
 
         Returns
         -------
@@ -663,11 +664,11 @@ class CorpusAnalysis():
         Raises
         ------
         ValueError
-            when one or both corpora have more than one document
-        """        
-        if self.corpus.n_docs != 1 or other.corpus.n_docs != 1:
+            when the corpus has not two but any other number of documents
+        """
+        if self.corpus.n_docs != 2:
             raise ValueError("Document vector similarity only makes sense on two single documents")
-        return self.doc.similarity(other.doc)
+        return self.corpus[0].similarity(self.corpus[1])
 
     def get_keywords(self, top_n=10):
         """
@@ -689,9 +690,10 @@ class CorpusAnalysis():
         ------
         NotImplementedError
             when corpus length is greater than one, because this method is not suited for multiple documents at once
-        """        
+        """
         if self.corpus.n_docs != 1:
-            raise NotImplementedError("Keyword extraction does not work for the whole corpus. Use get_keywords_per_doc() instead.")
+            raise NotImplementedError(
+                "Keyword extraction does not work for the whole corpus. Use get_keywords_per_doc() instead.")
         return textacy.ke.textrank(self.corpus[0], normalize=self._get_single_lemma, window_size=10, edge_weighting="count", position_bias=True, topn=top_n)
 
     def get_keywords_per_doc(self, top_n=10):
@@ -709,10 +711,11 @@ class CorpusAnalysis():
         -------
         List[List[Tuple[str, int]]]
             A list of documents with their list of tuples of keyterms and weight
-        """        
-        keywords = [textacy.ke.textrank(doc, normalize=self._get_single_lemma, window_size=10, edge_weighting="count", position_bias=True, topn=top_n) for doc in self.corpus]
+        """
+        keywords = [textacy.ke.textrank(doc, normalize=self._get_single_lemma, window_size=10,
+                                        edge_weighting="count", position_bias=True, topn=top_n) for doc in self.corpus]
         return keywords
-    
+
     def _get_single_lemma(self, spacy_token):
         # This function returns the lemma for a single token
         if self.language == "de":

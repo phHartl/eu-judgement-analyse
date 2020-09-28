@@ -1,9 +1,9 @@
 from mongo import *
-from analysis import Analysis, CorpusAnalysis
+from analysis import CorpusAnalysis
 from flask import render_template, Flask, request
 from flask_pymongo import PyMongo
 from collections import OrderedDict
-from api_functions import analyse_corpus, analyse_singular_doc
+from api_functions import Api
 
 # Create the application instance
 app = Flask(__name__)
@@ -12,6 +12,7 @@ app.config['TESTING'] = True
 mongo = PyMongo(app)
 db = mongo.db
 collection = mongo.db.judgements
+API = Api()
 
 
 def __singular_doc_requested(args):
@@ -58,22 +59,21 @@ def query():
     # whole corpus, single document or custom subcorpus
     if corpus_args == 'all':
         corpus = get_all_docs(language)
-        analysis_data = analyse_corpus(corpus, analysis_args, language)
-    elif __singular_doc_requested(corpus_args):
-        corpus = get_docs_by_value(column=corpus_args.get('column'),
-                                    value=corpus_args.get('value'),
-                                    language=language)[0]
-        analysis_data = analyse_singular_doc(corpus, analysis_args, language)
+        analysis_data = API.analyse_corpus(corpus, analysis_args, language)
+    # elif __singular_doc_requested(corpus_args):
+    #     corpus = get_docs_by_value(column=corpus_args.get('column'),
+    #                                 value=corpus_args.get('value'),
+    #                                 language=language)[0]
+    #     analysis_data = API.analyse_singular_doc(corpus, analysis_args, language)
     else:
         corpus = get_docs_by_custom_query(corpus_args, language)
-        analysis_data = analyse_corpus(corpus, analysis_args, language)
+        analysis_data = API.analyse_corpus(corpus, analysis_args, language)
 
     # analyse and save for in every way specified in the request
     # for arg in analysis_args:
     #     analysis_data[arg] = analyse_selected_corpus(corpus, arg)
     return analysis_data
 
-    
-# If we're running in stand alone mode, run the application
+    # If we're running in stand alone mode, run the application
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000, debug=True)
