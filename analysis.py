@@ -18,6 +18,9 @@ from blackstone.pipeline.sentence_segmenter import SentenceSegmenter
 from blackstone.pipeline.compound_cases import CompoundCases
 from blackstone.rules import CONCEPT_PATTERNS
 
+import en_blackstone_proto
+import de_core_news_md
+
 import stanza
 
 # Older text (1956 - 2003) formats always got the same headlines - remove them from the text to get better results
@@ -56,11 +59,11 @@ def __remove_legal_words(language, text):
             text = text.replace(word, "")
     return text
 
-# https://regex101.com/r/5M9OWR/2/
+# https://regex101.com/r/5M9OWR/3/
 
 
 def __remove_old_header_alt_language_pages(text):
-    return re.sub(r"\w+\s((Sonderausgabe Seite)|(special edition Page)|())\s\d+", "", text)
+    return re.sub(r"\w+\s((Sonderausgabe Seite)|(Ausgabe Seite)|(special edition Page)|(edition Page))\s\d+", "", text)
 
 # https://regex101.com/r/iPVtVT/1 - improves tokenizer for older texts substantially
 
@@ -144,7 +147,7 @@ class CorpusAnalysis():
                 self.nlp.add_pipe(compound_pipe)
             else:
                 print("Please only instantiate this class only once per language.")
-            # stanza.download("en", processors="tokenize, sentiment")
+            stanza.download("en", processors="tokenize, sentiment")
             self.stanza_nlp = stanza.Pipeline(lang="en", processors="tokenize, sentiment", tokenize_pretokenized=True)
         else:
             # python -m spacy download de_core_news_md
@@ -157,7 +160,7 @@ class CorpusAnalysis():
                 self.nlp.add_pipe(sentence_segmenter, before="parser")
             else:
                 print("Please only instantiate this class only once per language.")
-            # stanza.download("de", processors="tokenize, sentiment")
+            stanza.download("de", processors="tokenize, sentiment")
             self.stanza_nlp = stanza.Pipeline(lang="de", processors="tokenize, sentiment", tokenize_pretokenized=True)
 
         self.corpus = None
@@ -604,6 +607,33 @@ class CorpusAnalysis():
             doc = self.nlp(merged_text)
         return list([token.text for token in textacy.extract.ngrams(doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
         
+    def get_n_grams_per_doc(self, n=2, filter_stop_words=True, filter_nums=True, min_freq=2):
+        """
+        This functions calculates a set of all n-grams (e.g. n=2 (bigram) 'the court').
+        This corresponds to simple word collocations in the corpus.
+
+        Parameters
+        ----------
+        n : int, optional
+            type of n-gram to calculate, by default 2 (bigram)
+        filter_stop_words : bool, optional
+            whether stop words should be removed, by default True
+        filter_nums : bool, optional
+            whether numerics should be removed, by default True
+        min_freq : int, optional
+            minimum occurrence in the corpus, by default 5
+
+        Returns
+        -------
+        List[List[str]]
+            of all n-grams grouped by document
+        """
+        n_grams_per_doc = []
+        for doc in self.corpus:
+            n_grams = list([token.text for token in textacy.extract.ngrams(
+                doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
+            n_grams_per_doc.append(n_grams)
+        return n_grams_per_doc
 
     def get_sentiment(self):
         """
