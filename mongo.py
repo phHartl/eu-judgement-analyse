@@ -120,7 +120,7 @@ def get_docs_by_custom_query(query_args, language):
     search_dict = {}
     keys_containing_dicts = ["author", "subject_matter", "case_law_directory",
                             "applicant", "defendant", "procedure_type"]
-    change_cur_coll(language)
+    collection = change_cur_coll(language)
 
     # encapsule in list if only one column is specified.
     if not isinstance(query_args, list):
