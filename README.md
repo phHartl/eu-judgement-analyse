@@ -1,8 +1,8 @@
 # Quantitative analysis of judgments by the European Court of Justice
 ## Requirements
-- [Python 3.7](https://www.python.org/downloads/release/python-379/) (3.8 unsupported)
+- [Python 3.7](https://www.python.org/downloads/release/python-379/) (3.8 only supported under Linux)
 - [MongoDB](https://www.mongodb.com/try/download/community)
-- [Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/de/downloads/0)  
+- [Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/de/downloads/0) (Windows only) 
 - To install packages, run `pip install -r requirements.txt`
 
 ## Usage
@@ -22,40 +22,47 @@ key | data type | description
 ----|-----------|------------
 language | `en`,`de` | language of corpus to use
 corpus | `all`, Dictionary[ ] | (sub-)corpus query. See the [schema](#database-schema) and [query example](#creating-custom-sub-corpora).
-analysis | Dictionary[ ] | Defenition of the analysis to perform. See [Analysis](#analysis-types) and [query example](#analysis-of-single-document).  
+analysis | Dictionary[ ] | Defenition of the analysis to perform. See [Analysis](#analysis-metrics-whole-corpus) and [query example](#analysis-of-single-document).  
 
 The keys of the JSON returned from the server matches the types specified for analysis.
 
-#### Analysis `types`
+#### Analysis `metrics`: whole corpus
+`metric` | arguments | type(return value) | description
+---------|--------------|---------|------------
+tokens | `remove_punctuation`, `remove_stop_words`,`include_pos`, `exclude_pos`, `min_freq_per_doc` | List[str] | A customizable list of all tokens in the corpus.
+unique tokens | `remove_punctuation`, `remove_stop_words`,`include_pos`, `exclude_pos`, `min_freq_per_doc` | Set[str] | A customizable set of all unique tokens in the corpus.
+token count | | int | # of all tokens.
+average token length | `remove_punctuation`, `remove_stop_words`,`include_pos`, `exclude_pos`, `min_freq_per_doc` | float | Mean token length in corpus based on different filter options.
+word count | `remove_stop_words` | int | # of all words.
+average word length | `remove_stop_words`| float | Mean word length in corpus.
+most frequent words | `remove_stop_words`, `lemmatise`, `n` | List[Tuple[str, int]] | Most frequently used words. Can be lemmatised and stop words removed
+sentences | | List[str] | All sentences in the corpus.
+sentence count | | int | # of sentences.
+lemmata | | List[Tuple[str, str] | A list of all words and their lemmata.
+pos tags | | (List[Tuple[str, str] | A list of all tokens and their part of speech tags.
+named entities | | List[Tuple[str, List[str]]] | Calculates all named entities in the corpus and groups them by their label.
+readability | | float | The average readability score of the corpus ([Flesch-Reading-Ease](https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease))
+n-grams | `n`, `filter_stop_words`, `filter_nums`, `min_freq` | List[str] | The most common n-grams (collocations) with length n (default 2). Can be optionally be filtered.
+sentiment | | int | A normalized sentiment value for the whole corpus (0 - negative, 1 - neutral, 2 - positive sentiment ([Paper](https://arxiv.org/abs/1408.5882)). 
+
+#### Specific `metrics` : specific sub-corpora
 `type`-value | arguments | type(return value) | description
 -------------|-----------|--------------------|------------
-n-grams | `n`, `limit` | (str, int)[ ] | the most common n-grams with length n (default 2). array size defined by limit (default 10)
-tokens | `limit` | str[ ] | the most common tokens
-token count | | int | # of tokens
-word count | `remove stop words` | int | # of words
-most frequent words | `remove stop words`, `lemmatise`, `limit` | (str, str)[ ] | Most frequently used words. Can be lemmatised and stop words removed
-sentences | | str[ ] | all sentences of the document
-sentence count | | int | # of sentences
-lemmata | | (str, str)[ ] | a list of all words and their lemmata
-pos tags | | (str, str)[ ] | a list of all tokens and their part of speech tags
-named entities | | (str, str[ ])[ ] | a list of all categories and their entities
-average word length | `remove stop words` | float | 
-readability | | float | the readability score of the document
-similarity | `other celex` (mandatory) | float | The similarity score of the corpus document with the other one. Requires a celex number.
+keywords | `top_n` | List[Tuple[str, int]] | List of keyterms computed with the [PositionRank](https://www.aclweb.org/anthology/P17-1102.pdf) algorithm, with their corresponding weight in the document. Only available on single documents or per document basis.
+similarity |  | float | Calculates the vector similarity of two documents. Only available when comparing two documents. 
 
-#### Specific `types` : single doc
-`type`-value | arguments | type(return value) | description
--------------|-----------|--------------------|------------
-similarity | `other celex` | float | Similarity score between the single corpus doc and a `other` doc, specified by its `celex` identifier
-
-#### Specific `types` : sub-corpus
-The following `types` specify per-doc-analysis and return a list of their respective `type` described above:
+#### Specific `metrics` : sub-corpus
+The following `types` specify per-doc-analysis and return a list of their respective `metric` for each document described above:
 - `tokens per doc`
 - `sentences per doc`
 - `pos tags per doc`
 - `lemmata per doc`
 - `named entities per doc`
-In addition to these, `average readability` returns the average score across the defined corpus.
+- `readbility per doc`
+- `sentiment per doc`
+- `keywords per doc`
+
+Note: `keywords per doc` is only available per document and cannot be computed on a corus at once, because PositionRank is not suited for more than one document.
 
 #### Analysis of single document
 Example:
