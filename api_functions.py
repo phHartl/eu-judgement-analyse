@@ -9,7 +9,7 @@ analysers = {
     "de": None
 }
 
-def __add_analyser(language):
+def add_analyser(language):
     global analysers
     if language == "en" and not analysers.get("en"):
         print("Loading english models...")
@@ -82,13 +82,13 @@ def __run_analysis(analyser, args):
     elif arg_type == 'named entities':
         analysis_data = analyser.get_named_entities()
     elif arg_type == 'sentence count':
-        analysis_data = analyser.get_sentence_count()
+        analysis_data = len(analyser.get_sentences())
     elif arg_type == 'average word length':
-        analysis_data = analyser.get_average_word_length(args.get('remove stop words'))
+        analysis_data = analyser.get_average_token_length(True, args.get('remove stop words'))
     elif arg_type == 'token count':
         analysis_data = analyser.get_token_count()
     elif arg_type == 'word count':
-        analysis_data = analyser.get_word_count(args.get('remove stop words'))
+        analysis_data = analyser.get_token_count(True, args.get('remove stop words'))
     elif arg_type == 'most frequent words':
         analysis_data = analyser.get_most_frequent_words(args.get('remove stop words'),
             args.get('lemmatise'), args.get('limit'))
@@ -123,7 +123,7 @@ def __run_analysis(analyser, args):
 def analyse_corpus(corpus, args_list, language):
     global analysers
     if not analysers.get(language):
-        __add_analyser(language)
+        add_analyser(language)
     
     texts = []
     analysis_data = {}

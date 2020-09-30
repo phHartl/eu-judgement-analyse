@@ -24,7 +24,12 @@ def __singular_doc_requested(args):
     if args.get('column') not in uids:
         return False
     return True
-           
+
+@app.before_first_request          
+def load_models():
+    add_analyser("en")
+    add_analyser("de")
+
 
 # Create a URL route in our application for "/"
 @app.route('/')
