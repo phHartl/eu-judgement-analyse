@@ -133,7 +133,7 @@ ecli | string | European 5-part unique document identifier
 date | string | Adoption, signature or publication date (varies)
 case_affecting | string[ ] | CELEX numbers of acts quoted in the operative part
 affected_by_case | string[ ] | CELEX numbers of decisions affecting the act
-author | { ids : string[], labels : string[] } |
+author | { ids : string[ ], labels : string[ ] } |
 subject_matter | { ids : string[ ], labels : string[ ] } | Subject matter descriptors
 case_law_directory | { ids : string[ ], labels : string[ ] } | Assigned case-law directory code
 applicant | { ids : string[ ], labels : string[ ] } | Entity, who submitted the application
