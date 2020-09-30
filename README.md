@@ -52,7 +52,7 @@ keywords | `top_n` | List[Tuple[str, int]] | List of keyterms computed with the 
 similarity |  | float | Calculates the vector similarity of two documents. Only available when comparing two documents. 
 
 #### Specific `metrics` : sub-corpus
-The following `types` specify per-doc-analysis and return a list of their respective `metric` for each document described above:
+The following `metrics` specify per-doc-analysis and return a list of their respective `metric` for each document described above:
 - `tokens per doc`
 - `sentences per doc`
 - `pos tags per doc`
