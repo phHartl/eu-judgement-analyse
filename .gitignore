@@ -213,10 +213,16 @@ fabric.properties
 
 config.ini
 /json_dumps
+/response_dumps
 /parse_dumps
-data_*
 response.txt
+/.vscode
+/.idea
+
+dump_backup/
+
 
 # Webapp
 webapp/node_modules
 webapp/.idea
+
