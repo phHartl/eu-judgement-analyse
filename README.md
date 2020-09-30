@@ -21,8 +21,8 @@ The JSON requires 3 mandatory keys to be specified:
 key | data type | description
 ----|-----------|------------
 language | `en`,`de` | language of corpus to use
-corpus | `all`, \[Dictionary\] | (sub-)corpus query. See the [schema](#database-schema) and [query example](#creating-custom-sub-corpora).
-analysis | \[Dictionary\] | Defenition of the analysis to perform. See [Analysis](#analysis-types) and [query example](#analysis-of-single-document).  
+corpus | `all`, Dictionary[ ] | (sub-)corpus query. See the [schema](#database-schema) and [query example](#creating-custom-sub-corpora).
+analysis | Dictionary[ ] | Defenition of the analysis to perform. See [Analysis](#analysis-types) and [query example](#analysis-of-single-document).  
 
 The keys of the JSON returned from the server matches the types specified for analysis.
 
@@ -134,8 +134,8 @@ date | string | Adoption, signature or publication date (varies)
 case_affecting | string[ ] | CELEX numbers of acts quoted in the operative part
 affected_by_case | string[ ] | CELEX numbers of decisions affecting the act
 author | { ids : string[], labels : string[] } |
-subject_matter | { ids : string[], labels : string[] } | Subject matter descriptors
-case_law_directory | { ids : string[], labels : string[] } | Assigned case-law directory code
-applicant | { ids : string[], labels : string[] } | Entity, who submitted the application
-defendant | { ids : string[], labels : string[] } | Entity defending
-procedure_type | { ids : string[], labels : string[] } | Nature and outcome (where possible) of the proceedings
+subject_matter | { ids : string[ ], labels : string[ ] } | Subject matter descriptors
+case_law_directory | { ids : string[ ], labels : string[ ] } | Assigned case-law directory code
+applicant | { ids : string[ ], labels : string[ ] } | Entity, who submitted the application
+defendant | { ids : string[ ], labels : string[ ] } | Entity defending
+procedure_type | { ids : string[ ], labels : string[ ] } | Nature and outcome (where possible) of the proceedings
