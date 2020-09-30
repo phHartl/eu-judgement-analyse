@@ -1,7 +1,7 @@
 export default [
     {
         text: 'told',
-        value: 64,
+        value: 64
     },
     {
         text: 'mistake',

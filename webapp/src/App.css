@@ -48,10 +48,21 @@
   border: none;
 }
 
-label {
+.search-label {
   float: right;
   margin-right: 12px;
 }
+
+.checkboxes {
+  vertical-align: middle;
+  margin: auto;
+}
+
+input, checkbox {
+  padding-left: 12px;
+}
+
+
 
 input, select {
   background-color: #4a505c;
@@ -86,11 +97,35 @@ input, select {
   margin-top: 6px;
 }
 
+/* Floating column for inputs: 33% width */
+.col-33 {
+  float: left;
+  width: 33%;
+  margin-top: 6px;
+}
+
+.col-66 {
+  float: left;
+  width: 66%;
+  margin-top: 6px;
+}
+
+.col-50 {
+  float: left;
+  width: 50%;
+  margin-top: 6px;
+}
+
 /* Clear floats after the columns */
 .row:after {
   content: "";
   display: table;
   clear: both;
+}
+
+
+.readability-chart {
+  max-width: 600px;
 }
 
 @keyframes App-logo-spin {
@@ -99,5 +134,268 @@ input, select {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+.ks-cboxtags {
+  display: inline;
+}
+.ks-cboxtags label{
+  display: inline-block;
+  background-color: #4a505c;
+  border: 2px solid #1f2126;
+  color: #fff;
+  border-radius: 25px;
+  white-space: nowrap;
+  margin: 3px 0px;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: all .2s;
+}
+
+.ks-cboxtags label {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.ks-cboxtags label::before {
+  display: inline-block;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  font-family: "Font Awesome 5 Free" !important;
+  font-weight: 900;
+  font-size: 12px;
+  padding: 2px 6px 2px 2px;
+  content: "\f067";
+  transition: transform .3s ease-in-out;
+}
+
+.ks-cboxtags input[type="checkbox"]:checked + label::before {
+  content: "\f00c";
+  transform: rotate(-360deg);
+  transition: transform .3s ease-in-out;
+}
+
+.ks-cboxtags input[type="checkbox"]:checked + label {
+  border: 2px solid #1f2126;
+  background-color: #2d3138;
+  color: #fff;
+  transition: all .2s;
+}
+
+/*.ks-cboxtags input[type="checkbox"] {*/
+/*  display: absolute;*/
+/*}*/
+.ks-cboxtags input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+}
+ks-cboxtags input[type="checkbox"]:focus + label {
+  border: 2px solid #e9a1ff;
+}
+
+
+/************************************
+ * RAW DATA TABLE                   *
+ ************************************/
+.limiter {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.container-table100 {
+  width: 100%;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.wrap-table100 {
+  width: 1170px;
+}
+
+table {
+  border-spacing: 1px;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  margin: 0 auto 40px;
+}
+table * {
+  position: relative;
+}
+table td, table th {
+  padding-left: 8px;
+}
+table thead tr {
+  height: 60px;
+  background: #2d3138;
+  /*background: #4a505c;*/
+}
+table tbody tr {
+  height: 50px;
+}
+table tbody tr:last-child {
+  border: 0;
+}
+table td, table th {
+  text-align: left;
+}
+table td.l, table th.l {
+  text-align: right;
+}
+table td.c, table th.c {
+  text-align: center;
+}
+table td.r, table th.r {
+  text-align: center;
+}
+
+
+.table100-head th{
+  font-size: 18px;
+  color: #fff;
+  line-height: 1.2;
+  font-weight: unset;
+}
+
+/* if every other row should have a different color, uncomment this */
+/*tbody tr:nth-child(even) {*/
+/*  background: #4a505c;*/
+/*}*/
+
+tbody tr {
+  font-size: 15px;
+  color: #ffff;
+  line-height: 1.2;
+  font-weight: unset;
+  background: #4a505c;
+}
+
+tbody tr:hover {
+  color: #ffff;
+  background-color: #2b2f36;
+  cursor: pointer;
+}
+
+.column1 {
+  width: 260px;
+  padding-left: 40px;
+}
+
+.column2 {
+  width: 160px;
+}
+
+.column3 {
+  width: 245px;
+}
+
+.column4 {
+  width: 110px;
+  text-align: right;
+}
+
+.column5 {
+  width: 170px;
+  text-align: right;
+}
+
+.column6 {
+  width: 222px;
+  text-align: right;
+  padding-right: 62px;
+}
+
+
+@media screen and (max-width: 992px) {
+  table {
+    display: block;
+  }
+  table > *, table tr, table td, table th {
+    display: block;
+  }
+  table thead {
+    display: none;
+  }
+  table tbody tr {
+    height: auto;
+    padding: 37px 0;
+  }
+  table tbody tr td {
+    padding-left: 40% !important;
+    margin-bottom: 24px;
+  }
+  table tbody tr td:last-child {
+    margin-bottom: 0;
+  }
+  table tbody tr td:before {
+    font-family: OpenSans-Regular;
+    font-size: 14px;
+    color: #999999;
+    line-height: 1.2;
+    font-weight: unset;
+    position: absolute;
+    width: 40%;
+    left: 30px;
+    top: 0;
+  }
+  table tbody tr td:nth-child(1):before {
+    content: "Date";
+  }
+  table tbody tr td:nth-child(2):before {
+    content: "Order ID";
+  }
+  table tbody tr td:nth-child(3):before {
+    content: "Name";
+  }
+  table tbody tr td:nth-child(4):before {
+    content: "Price";
+  }
+  table tbody tr td:nth-child(5):before {
+    content: "Quantity";
+  }
+  table tbody tr td:nth-child(6):before {
+    content: "Total";
+  }
+
+  .column4,
+  .column5,
+  .column6 {
+    text-align: left;
+  }
+
+  .column4,
+  .column5,
+  .column6,
+  .column1,
+  .column2,
+  .column3 {
+    width: 100%;
+  }
+
+  tbody tr {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 576px) {
+  .container-table100 {
+    padding-left: 15px;
+    padding-right: 15px;
   }
 }

@@ -1,128 +1,135 @@
 import React from 'react';
 import './App.css';
 import ReactWordcloud from 'react-wordcloud';
-import wordListOne from "./words/words";
-import wordListTwo from "./words/words2";
 import CanvasJSReact from "./canvasjs.react";
 import SearchForm from "./SearchForm";
+import DataVisualizer from "./DataVisualizer";
+import {
+    BAR_CHART,
+    MOST_FREQUENT_WORD_VISUALIZATION,
+    N_GRAM_VISUALIZATION,
+    TOKEN_VISUALIZATION,
+    WORDCLOUD
+} from "./Constants";
+import {usePromiseTracker} from "react-promise-tracker";
+import {LoadingIndicator} from "./LoadingIndicator";
+import {trackPromise} from "react-promise-tracker";
+
 
 var CanvasJS = CanvasJSReact.CanvasJS;
 var CanvasJSChart = CanvasJSReact.CanvasJSChart;
+
 
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            wordList: wordListOne,
-            toggle: true,
-            rotations: 1,
+            error: false,
+            // dataFetched: false,
+            data: '',
+            nGramVisualization: BAR_CHART,
+            tokenVisualization: WORDCLOUD,
+            mostFrequentWordVisualization: BAR_CHART,
         }
+        this.handleFormSubmit = this.handleFormSubmit.bind(this);
+        this.handleVisualizationSelected = this.handleVisualizationSelected.bind(this);
     }
+
 
     render() {
         return (
             <div className="App">
                 <header className="App-header">
                     <h1>Justice Demo</h1>
-                    <SearchForm/>
-                    {this.renderWordcloud()}
-                    {this.renderBarChart()}
+                    <SearchForm
+                        // dataFetched={this.state.dataFetched}
+                        data={this.state.data}
+                        onResponse={json => this.handleFormSubmit(json)}
+                        onVisualizationSelected={(name, value) => this.handleVisualizationSelected(name, value)}
+                    />
+                    <LoadingIndicator/>
+                    <div id="error-message" name="error-message" style={{display: this.state.error === true ? "" : "none"}}>
+                        <h4>There was an error when fetching your data. Please check your inputs or try again later.</h4>
+                    </div>
+                    <DataVisualizer
+                        // dataFetched={this.state.dataFetched}
+                        data={this.state.data}
+                        nGramVisualization={this.state.nGramVisualization}
+                        tokenVisualization={this.state.tokenVisualization}
+                        mostFrequentWordVisualization={this.state.mostFrequentWordVisualization}
+                    />
+                    {/*{this.renderDemoWordcloud()}*/}
+                    {/*{this.renderBarChart()}*/}
                 </header>
             </div>
         )
     }
-    
 
-    renderWordcloud() {
-        return (
-            <div className="feature-container">
-                <h3 className={"feature-section"}>Wordcloud</h3>
-                <div /*style={{border: "1px solid black", paddingBottom: "20px"}} example of how to set inline style*/>
-                    <ReactWordcloud
-                        words={this.state.toggle ? wordListOne : wordListTwo}
-                        options={{
-                            fontSizes: [10, 40],
-                            rotations: this.state.rotations,
-                            /*
-                             * If rotations is set to '1', only the first parameter (0) will be used.
-                             * If rotations is set to 3+, it will use the parameters that are already given, and evenly divide them for new ones
-                             */
-                            rotationAngles: [0, 90]
-                        }}
-                    />
-                    <button className={"generic-button"} onClick={() => this.toggleWordsFlag()}>Swap Word Set</button>
-                    <button className={"generic-button"} onClick={() => this.toggleRotations()}>Change Rotations ({this.state.rotations})</button>
-                </div>
-            </div>
-        );
-    }
+    handleVisualizationSelected(name, value) {
+        switch (name) {
+            case N_GRAM_VISUALIZATION:
+                this.setState(() => {
+                    return {nGramVisualization: value}
+                });
+                break;
 
-    renderBarChart() {
-        const options = {
-            animationEnabled: true,
-            theme: "dark2",
-            backgroundColor: "#282c34",
-            title:{
-                text: "Most Popular Social Networking Sites"
-            },
-            axisX: {
-                title: "Social Network",
-                reversed: true,
-            },
-            axisY: {
-                title: "Monthly Active Users",
-                includeZero: true,
-                labelFormatter: this.addSymbols
-            },
-            data: [{
-                type: "bar",
-                dataPoints: [
-                    { y:  2200000000, label: "Facebook" },
-                    { y:  1800000000, label: "YouTube" },
-                    { y:  800000000, label: "Instagram" },
-                    { y:  563000000, label: "Qzone" },
-                    { y:  376000000, label: "Weibo" },
-                    { y:  336000000, label: "Twitter" },
-                    { y:  330000000, label: "Reddit" }
-                ]
-            }]
+            case TOKEN_VISUALIZATION:
+                this.setState(() => {
+                    return {tokenVisualization: value}
+                });
+                break;
+
+            case MOST_FREQUENT_WORD_VISUALIZATION:
+                this.setState(() => {
+                    return {mostFrequentWordVisualization: value}
+                });
+                break;
+
+            default:
+                return;
         }
-
-        return (
-            <div className="feature-container" style={{paddingTop: "60px"}}>
-                <h3 className={"feature-section"}>Bar Chart</h3>
-                <CanvasJSChart options={options}
-                               onRef={ref => this.chart = ref}
-                />
-            </div>
-        );
     }
 
-    addSymbols(e){
+
+    handleFormSubmit(json) {
+        this.downloadData(json);
+
+    }
+
+    downloadData(json) {
+        const request = new Request("http://127.0.0.1:5000/eu-judgments/api/data", {
+            method: 'POST',
+            body: JSON.stringify(json)
+        });
+
+        trackPromise(
+            fetch(request)
+                .then(response => {
+                    if (response.status === 200) {
+                        return response.json();
+                    } else {
+                        throw new Error('Error when requesting data from the API server.');
+                    }
+                })
+                .then(response => {
+                    console.debug(response);
+                    this.setState({error: false});
+                    this.setState({data: response});
+                    // this.setState({dataFetched: true});
+                }).catch(error => {
+                    console.error(error);
+                    this.setState({error: true});
+            }));
+
+    }
+
+    addSymbols(e) {
         var suffixes = ["", "K", "M", "B"];
         var order = Math.max(Math.floor(Math.log(e.value) / Math.log(1000)), 0);
-        if(order > suffixes.length - 1)
+        if (order > suffixes.length - 1)
             order = suffixes.length - 1;
         var suffix = suffixes[order];
         return CanvasJS.formatNumber(e.value / Math.pow(1000, order)) + suffix;
-    }
-
-    toggleWordsFlag() {
-        this.setState({
-            toggle: !this.state.toggle
-        })
-    }
-
-    toggleRotations() {
-        if (this.state.rotations >= 3) {
-            this.setState({
-                rotations: 1
-            })
-        } else {
-            this.setState({
-                rotations: this.state.rotations + 1   // do not use ++
-            })
-        }
     }
 
 }
