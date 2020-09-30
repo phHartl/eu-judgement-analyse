@@ -1,30 +1,16 @@
 # Quantitative analysis of judgments by the European Court of Justice
-## Database schema
+## Requirements
+- [Python 3.7](https://www.python.org/downloads/release/python-379/) (3.8 unsupported)
+- [MongoDB](https://www.mongodb.com/try/download/community)
+- [Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/de/downloads/0)  
+- To install packages, run `pip install -r requirements.txt`
 
-key | value-type | description
-----|------------|------------
-_id | string | MongoDB UID
-reference | string | Cellar API reference number
-title | string | Document title
-text | string | Full text of the judgment
-keywords | string |
-parties | string | Parties involved in the judgment
-subject | string | Subject of the case
-endorsements | string |
-grounds | string | Legal grounds
-decisions_on_costs | string |
-operative_part | string | 
-celex | string | CELEX number of the judgment
-ecli | string | European 5-part unique document identifier
-date | string | Adoption, signature or publication date (varies)
-case_affecting | string[ ] | CELEX numbers of acts quoted in the operative part
-affected_by_case | string[ ] | CELEX numbers of decisions affecting the act
-author | { id : label } |
-subject_matter | { id : label } | Subject matter descriptors
-case_law_directory | { id : label } | Assigned case-law directory code
-applicant | { id : label } | Entity, who submitted the application
-defendant | { id : label }| Entity defending
-procedure_type | { id : label } | Nature and outcome (where possible) of the proceedings
+## Usage
+Please make sure an instance of MongoDB is installed and running.
+### Corpus Acquisition 
+Run `setup.py` and follow the prompts on the CLI to create a corpus of judgments for all specified languages.
+### Analysis
+Run `server.py` to start the server  on `localhost:5000`. Once running, you can send corpus and analysis requests via HTTP requests with JSON body.
 
 ## Server API
 The API accepts a JSON-body when requesting data and returns results as JSON.
@@ -32,10 +18,13 @@ Path: `/eu-judgments/api/data`, method: GET
 
 ### JSON format
 The JSON requires 3 mandatory keys to be specified:
-- "language": The language of documents to be used. Values: `en`, `de`
-- "corpus": The corpus to be used for analysis. Either `all` or specified with a Dictionary of database keys and values. 
-- "analysis": Type of analysis to perform. A List of Dictionaries, specifying a `type` and optional arguments for each.
-The keys of the JSON returned from the server match the types specified for analysis.
+key | data type | description
+----|-----------|------------
+language | `en`,`de` | language of corpus to use
+corpus | `all`, \[Dictionary\] | (sub-)corpus query. See the [schema](#database-schema) and [query example](#creating-custom-sub-corpora).
+analysis | \[Dictionary\] | Defenition of the analysis to perform. See [Analysis](#analysis-types) and [query example](#analysis-of-single-document).  
+
+The keys of the JSON returned from the server matches the types specified for analysis.
 
 #### Analysis `types`
 `type`-value | arguments | type(return value) | description
@@ -47,7 +36,7 @@ word count | `remove stop words` | int | # of words
 most frequent words | `remove stop words`, `lemmatise`, `limit` | (str, str)[ ] | Most frequently used words. Can be lemmatised and stop words removed
 sentences | | str[ ] | all sentences of the document
 sentence count | | int | # of sentences
-lemata | | (str, str)[ ] | a list of all words and their lemmata
+lemmata | | (str, str)[ ] | a list of all words and their lemmata
 pos tags | | (str, str)[ ] | a list of all tokens and their part of speech tags
 named entities | | (str, str[ ])[ ] | a list of all categories and their entities
 average word length | `remove stop words` | float | 
@@ -67,8 +56,6 @@ The following `types` specify per-doc-analysis and return a list of their respec
 - `lemmata per doc`
 - `named entities per doc`
 In addition to these, `average readability` returns the average score across the defined corpus.
-
-
 
 #### Analysis of single document
 Example:
@@ -98,7 +85,7 @@ Example:
 ```
 
 #### Creating custom sub-corpora
-Sub-corpora can be created using values that must or must included in a document to be added.  
+Sub-corpora can be created using values that must or must not be included in a document to be added. Use `column` to determine the column according to the database schema and `value` to determine its value. (Exception: `date` taking a `start date` and `end date`)  
 Set the `search identifier` flag to `true`, if you want to search for abbriviations (ids) instead of verbose descriptions (labels).  
 Set `operator` to `NOT`, if you want to exclude all documents containing this value from your sub-corpus.  
 When using an array of values, all documents matching any of the values in the array will be in- or exluded.  
@@ -126,3 +113,29 @@ Example custom subcorpus:
    ]
 }
 ```
+
+## Database schema
+key | value-type | description
+----|------------|------------
+_id | string | MongoDB UID
+reference | string | Cellar API reference number
+title | string | Document title
+text | string | Full text of the judgment
+keywords | string |
+parties | string | Parties involved in the judgment
+subject | string | Subject of the case
+endorsements | string |
+grounds | string | Legal grounds
+decisions_on_costs | string |
+operative_part | string | 
+celex | string | CELEX number of the judgment
+ecli | string | European 5-part unique document identifier
+date | string | Adoption, signature or publication date (varies)
+case_affecting | string[ ] | CELEX numbers of acts quoted in the operative part
+affected_by_case | string[ ] | CELEX numbers of decisions affecting the act
+author | { ids : string[], labels : string[] } |
+subject_matter | { ids : string[], labels : string[] } | Subject matter descriptors
+case_law_directory | { ids : string[], labels : string[] } | Assigned case-law directory code
+applicant | { ids : string[], labels : string[] } | Entity, who submitted the application
+defendant | { ids : string[], labels : string[] } | Entity defending
+procedure_type | { ids : string[], labels : string[] } | Nature and outcome (where possible) of the proceedings
