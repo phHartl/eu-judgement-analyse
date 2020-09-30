@@ -3,7 +3,7 @@ from analysis import CorpusAnalysis
 from flask import render_template, Flask, request, jsonify, make_response
 from flask_pymongo import PyMongo
 from collections import OrderedDict
-from api_functions import Api
+from api_functions import *
 
 # Create the application instance
 app = Flask(__name__)
@@ -12,7 +12,6 @@ app.config['TESTING'] = True
 mongo = PyMongo(app)
 db = mongo.db
 collection = mongo.db.judgements
-API = Api()
 
 
 def __singular_doc_requested(args):
@@ -56,22 +55,16 @@ def query():
         return "incorrect request parameters"
 
     # define the corpus
-    # whole corpus, single document or custom subcorpus
+    # whole corpus or custom subcorpus
     if corpus_args == 'all':
         corpus = get_all_docs(language)
-        analysis_data = API.analyse_corpus(corpus, analysis_args, language)
-    # elif __singular_doc_requested(corpus_args):
-    #     corpus = get_docs_by_value(column=corpus_args.get('column'),
-    #                                 value=corpus_args.get('value'),
-    #                                 language=language)[0]
-    #     analysis_data = API.analyse_singular_doc(corpus, analysis_args, language)
     else:
         corpus = get_docs_by_custom_query(corpus_args, language)
-        analysis_data = API.analyse_corpus(corpus, analysis_args, language)
 
     # analyse and save for in every way specified in the request
     # for arg in analysis_args:
     #     analysis_data[arg] = analyse_selected_corpus(corpus, arg)
+    analysis_data = analyse_corpus(corpus, analysis_args, language)
     response = make_response(jsonify(analysis_data))
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
