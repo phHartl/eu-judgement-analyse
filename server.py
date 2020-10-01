@@ -19,7 +19,7 @@ def __singular_doc_requested(args):
         return False
     # https://www.geeksforgeeks.org/python-get-the-first-key-in-dictionary/
     if isinstance(args.get('value'), list):
-        return False
+        return Falseh
     uids = ['celex', 'ecli', 'reference']
     if args.get('column') not in uids:
         return False
