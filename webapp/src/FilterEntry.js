@@ -2,9 +2,9 @@
 import React from "react";
 import {START_DATE_API_DESC} from "./Constants";
 
-const FilterEntry = ({elements, index, text, onChange}) => {
+const FilterEntry = ({elements, index, text, onChange, onDelete}) => {
     const [isNegated, setNegated] = React.useState(false);
-    console.debug(elements[index]);
+    console.debug(elements);
     console.debug(elements[index][Object.keys(elements[index])[0]].inputType);
     let inputType = elements[index][Object.keys(elements[index])[0]].inputType;
     let name = elements[index][Object.keys(elements[index])[0]].key;
@@ -31,6 +31,7 @@ const FilterEntry = ({elements, index, text, onChange}) => {
                         <input type={inputType} className="input-large" name="endDate" onChange={onChange}/>
                     </div>
                 </div>
+                <button className="remove-filter-entry"/>
             </div>
         )
     }
@@ -43,6 +44,9 @@ const FilterEntry = ({elements, index, text, onChange}) => {
 
             <div className="col-75">
                 <input type={inputType} className="input-large" name={name} onChange={onChange}/>
+            </div>
+            <div className="col-5">
+                <a className="remove-filter-entry" onClick={onDelete(index)}><i className="fas fa-trash"/></a>
             </div>
         </div>
     )

@@ -5,8 +5,6 @@ let dataBackup;
 let filterData;
 const DropdownCard = ({data = [], setOpen, addFilterEntry, filterEntries}) => (
     <div className="dropdown-item-container">
-        {console.debug(data)}
-
         {fillFilterNames(data)}
         {filterData.map((item, i) => (
                     <button className="dropdown-item" key={i} onClick={() => {

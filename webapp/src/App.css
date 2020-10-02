@@ -82,6 +82,12 @@ input, select {
   float: left;
 }
 
+.col-5 {
+  float: left;
+  width: 5%;
+  margin-top: 6px;
+}
+
 
 /* Floating column for labels: 25% width */
 .col-25 {
@@ -107,6 +113,18 @@ input, select {
 .col-66 {
   float: left;
   width: 66%;
+  margin-top: 6px;
+}
+
+.col-65 {
+  float: left;
+  width: 65%;
+  margin-top: 6px;
+}
+
+.col-70 {
+  float: left;
+  width: 70%;
   margin-top: 6px;
 }
 
@@ -156,6 +174,21 @@ input, select {
 .dropdown {
   position: relative;
   display: inline-block;
+}
+
+.remove-filter-entry {
+  background-color: #4a505c;
+  color: lightgray;
+  cursor: pointer;
+  min-width: 30px;
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 15px;
+  padding: 2px;
+}
+
+.remove-filter-entry:hover {
+  color: #b81d1d;
 }
 
 

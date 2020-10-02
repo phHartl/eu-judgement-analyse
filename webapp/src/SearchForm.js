@@ -25,6 +25,7 @@ import {
 } from "./Constants";
 import DropdownParent from "./DropdownComponents/DropdownParent";
 import FilterEntry from "./FilterEntry";
+import FilterEntryParent from "./FilterEntryParent";
 
 
 let requestJSON = "";
@@ -141,7 +142,8 @@ class SearchForm extends React.Component {
                     displayed: false,
                     inputType: "text"
                 }
-            }],
+            }
+            ],
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -149,93 +151,14 @@ class SearchForm extends React.Component {
         this.handleVisualizationChange = this.handleVisualizationChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.addFilterEntry = this.addFilterEntry.bind(this);
-    }
-
-    setSearchFilterElements() {
-        this.setState((state) => {
-            state.searchFilterElements = {
-                parties: {
-                    key: PARTIES_API_DESC,
-                    text: PARTIES,
-                    displayed: false,
-                    inputType: "text"
-                },
-                date: {
-                    key: DATE_API_DESC,
-                    text: DATE,
-                    displayed: false,
-                    inputType: "date"
-                },
-                author: {
-                    key: AUTHOR_API_DESC,
-                    text: AUTHOR,
-                    displayed: false,
-                    inputType: "text"
-                },
-                subject: {
-                    key: SUBJECT_API_DESC,
-                    text: SUBJECT,
-                    displayed: false,
-                    inputType: "text"
-                },
-                celex: {
-                    key: CELEX_API_DESC,
-                    text: CELEX,
-                    displayed: false,
-                    inputType: "text"
-                },
-                title: {
-                    key: TITLE_API_DESC,
-                    text: TITLE,
-                    displayed: false,
-                    inputType: "text"
-                },
-                endorsements: {
-                    key: ENDORSEMENTS_API_DESC,
-                    text: ENDORSEMENTS,
-                    displayed: false,
-                    inputType: "text"
-                },
-                grounds: {
-                    key: GROUNDS_API_DESC,
-                    text: GROUNDS,
-                    displayed: false,
-                    inputType: "text"
-                },
-                decisionsOnCost: {
-                    key: DECISIONS_ON_COST_API_DESC,
-                    text: DECISIONS_ON_COST,
-                    displayed: false,
-                    inputType: "text"
-                },
-                operativePart: {
-                    key: OPERATIVE_PART_API_DESC,
-                    text: OPERATIVE_PART,
-                    displayed: false,
-                    inputType: "text"
-                },
-                ecli: {
-                    key: ECLI_API_DESC,
-                    text: ECLI,
-                    displayed: false,
-                    inputType: "text"
-                },
-                keywords: {
-                    key: KEYWORDS_API_DESC,
-                    text: KEYWORDS,
-                    displayed: false,
-                    inputType: "text"
-                }
-            }
-        });
+        this.removeFilterEntry = this.removeFilterEntry.bind(this);
     }
 
     searchInputChange(event) {
-        console.debug("search input changed");
         const target = event.target;
         const value = target.value;
         const name = target.name;
-        this.modifySearchArray(name, value);
+        // this.modifySearchArray(name, value);
 
         this.handleInputChange(event);
     }
@@ -253,15 +176,9 @@ class SearchForm extends React.Component {
     modifySearchArray(name, value) {
         // add element to search array on new input
         if (!this.state.elementsToSearchFor.includes(name) && value !== "") {
-            // this.setState((state) => {
-            //     let array = state.elementsToSearchFor;
-            //     array.push(name);
-            //     // array = array.slice(1);
-            //     return {elementsToSearchFor: array};
-            // });
             let array = this.state.elementsToSearchFor;
             array.push(name);
-            this.state.elementsToSearchFor = array;
+            this.setState({elementsToSearchFor: array});
         }
 
         // remove element from search array if the input is deleted
@@ -273,7 +190,6 @@ class SearchForm extends React.Component {
                         array.splice(i, 1);
                     }
                 }
-                return {elementsToSearchFor: array};
             });
         }
         console.debug(this.state.elementsToSearchFor);
@@ -298,24 +214,12 @@ class SearchForm extends React.Component {
         let json = {};
 
         json.language = this.getSelectedLanguage();
-        json.corpus = this.getSearchInputValues();
-        // json.corpus = this.getFilterValues();
+        // json.corpus = this.getSearchInputValues();
+        json.corpus = this.getFilterValues();
         json.analysis = this.addAnalysisOptionsToJson();
         this.props.onResponse(json);
         console.debug(json);
     }
-
-    getFilterValues() {
-        let filterEntries = this.state.filterEntries;
-        let corpus = [];
-
-        for (const input in filterEntries) {
-            let entry = {
-
-            }
-        }
-    }
-
 
     addAnalysisOptionsToJson() {
         let analysisTypes = [];
@@ -381,7 +285,7 @@ class SearchForm extends React.Component {
         return this.state.language === "english" ? "en" : "de";
     }
 
-
+    // deprecated, need to copy pasta date function later
     getSearchInputValues() {
         let elementsToSearchFor = this.state.elementsToSearchFor;
         let corpus = [];
@@ -403,6 +307,23 @@ class SearchForm extends React.Component {
             corpus.push(date);
         }
         console.debug(corpus);
+        return corpus;
+    }
+
+    getFilterValues() {
+        let filterEntries = this.state.filterEntries;
+        let corpus = [];
+
+        for (const input of filterEntries) {
+            let entry = {
+                column: input.key,
+                value: this.state[input.key]
+            }
+
+            if (entry.value.trim() !== "") {
+                corpus.push(entry);
+            }
+        }
         return corpus;
     }
 
@@ -442,96 +363,26 @@ class SearchForm extends React.Component {
         }
     }
 
-    // componentDidMount() {
-    //     this.getDropdownData();
-    // }
 
-    // getDropdownData() {
-    //     let filterElements = this.state.searchFilterElements;
-    //     let returnData = [];
-    //
-    //     for (let element of filterElements) {
-    //         returnData.push(element[Object.keys(element)[0]].text)
-    //     }
-    //     this.setState({dropdownData: returnData});
-    // }
-
-    // addCloseListener() {
-    //     window.onclick = function (event) {
-    //         if (!event.target.matches('dropdown')) {
-    //             let dropdowns = document.getElementsByClassName("dropdown-content");
-    //             for (let i = 0; i < dropdowns.length; i++) {
-    //                 let openDropdown = dropdowns[i];
-    //                 if (openDropdown.classList.contains('show')) {
-    //                     openDropdown.classList.remove('show');
-    //                 }
-    //             }
-    //
-    //         }
-    //     }
-    // }
-
-    // showDropdownContent() {
-    //     // this.addCloseListener()
-    //     console.debug("showing dropdown");
-    //     let filterDropdown = document.getElementById('filter-dropdown');
-    //
-    //     // remove old options first
-    //     while (filterDropdown.firstChild) {
-    //         filterDropdown.removeChild(filterDropdown.firstChild);
-    //     }
-    //
-    //     let filterElements = this.state.searchFilterElements;
-    //     console.debug(filterElements);
-    //
-    //     // add new options
-    //     for (let element of filterElements) {
-    //         console.debug(element[Object.keys(element)[0]]);
-    //         let dropdownOption = document.createElement('a');
-    //         dropdownOption.innerHTML = element[Object.keys(element)[0]].text;
-    //         dropdownOption.onclick = () => this.addFilterToForm(element[Object.keys(element)[0]]);
-    //         filterDropdown.classList.add("show");
-    //         filterDropdown.appendChild(dropdownOption);
-    //     }
-    // }
-    //
-    // addFilterToForm(element) {
-    //     let filterContainer = document.getElementById('additional-filter-container');
-    //
-    //     let addedFilterContainer = document.createElement('div');
-    //     addedFilterContainer.className = "row";
-    //
-    //     let addedFilterLabelContainer = document.createElement('div');
-    //     addedFilterLabelContainer.className = "col-25";
-    //
-    //     let addedFilterLabel = document.createElement('label');
-    //     addedFilterLabel.setAttribute("htmlFor", element['key']);
-    //     addedFilterLabel.className = "search-label";
-    //     addedFilterLabel.innerHTML = element.text
-    //
-    //     addedFilterLabelContainer.appendChild(addedFilterLabel);
-    //     addedFilterContainer.appendChild(addedFilterLabelContainer);
-    //
-    //     let addedFilterInputContainer = document.createElement('div');
-    //     addedFilterInputContainer.className = "col-75";
-    //
-    //     let addedFilterInput = document.createElement('input');
-    //     addedFilterInput.setAttribute("type", element.inputType);
-    //     addedFilterInput.setAttribute("name", element.key);
-    //     addedFilterInput.className = "input-large";
-    //
-    //     addedFilterInputContainer.appendChild(addedFilterInput);
-    //     addedFilterContainer.appendChild(addedFilterInputContainer);
-    //
-    //     filterContainer.appendChild(addedFilterContainer);
-    // }
-
-    addFilterEntry(index, text) {
-        console.debug(index + ": " + text);
+    addFilterEntry(index) {
         let array = this.state.filterEntries;
         let elements = this.state.searchFilterElements;
-        array.push(<FilterEntry elements={elements} index={index} text={text} onChange={this.searchInputChange}/>);
+        // array.push(<FilterEntry elements={elements} index={index} text={text} onChange={this.searchInputChange} onDelete={this.removeFilterEntry}/>);
+        array.push(elements[index][Object.keys(elements[index])]);
         this.setState({filterEntries: array});
+    }
+
+    removeFilterEntry(item) {
+        console.debug("test");
+        let array = this.state.filterEntries;
+        for (let i = 0; i < array.length; i++) {
+            if (array[i] === item) {
+                console.debug("removing filter entry");
+                array.splice(i, 1);
+                this.setState({filterEntries: array});
+                console.debug(array);
+            }
+        }
     }
 
 
@@ -547,7 +398,7 @@ class SearchForm extends React.Component {
                     <div className="col-25">
                         <label htmlFor="quickSearch" className="search-label">Quick Search</label>
                     </div>
-                    <div className="col-75">
+                    <div className="col-70">
                         <input type="text" name="quickSearch" id="quickSearch" className="input-large"
                                onChange={this.searchInputChange}/>
                     </div>
@@ -557,7 +408,7 @@ class SearchForm extends React.Component {
                     <div className="col-25">
                         <label htmlFor="language" className="search-label">Language</label>
                     </div>
-                    <div className="col-75">
+                    <div className="col-70">
                         <select name="language" id="language" className="input-large" onChange={this.searchInputChange}>
                             <option value="english">English</option>
                             <option value="german">German</option>
@@ -567,7 +418,8 @@ class SearchForm extends React.Component {
                 </div>
 
                 <div className="row additional-filter-container" id="additional-filter-container">
-                    {this.state.filterEntries}
+                    {/*{this.state.filterEntries}*/}
+                    <FilterEntryParent data={this.state.filterEntries} onChange={this.searchInputChange} onDelete={(item) => this.removeFilterEntry(item)}/>
                 </div>
 
                 <div className="row dropdown">
