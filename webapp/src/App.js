@@ -26,10 +26,11 @@ class App extends React.Component {
         this.state = {
             error: false,
             // dataFetched: false,
-            data: '',
+            data: '', // used to store downloaded json data
             nGramVisualization: BAR_CHART,
             tokenVisualization: WORDCLOUD,
             mostFrequentWordVisualization: BAR_CHART,
+            dataLoading: false // true if a query is currently in progress. used to prevent multiple requests before search is finished
         }
         this.handleFormSubmit = this.handleFormSubmit.bind(this);
         this.handleVisualizationSelected = this.handleVisualizationSelected.bind(this);
@@ -92,11 +93,16 @@ class App extends React.Component {
 
 
     handleFormSubmit(json) {
-        this.downloadData(json);
-
+        if (this.state.dataLoading) {
+            alert("Please wait until the current data download is finished");
+        } else {
+            this.downloadData(json);
+        }
     }
 
     downloadData(json) {
+        this.setState({error: false});
+        this.setState({dataLoading: true});
         const request = new Request("http://127.0.0.1:5000/eu-judgments/api/data", {
             method: 'POST',
             body: JSON.stringify(json)
@@ -113,12 +119,13 @@ class App extends React.Component {
                 })
                 .then(response => {
                     console.debug(response);
-                    this.setState({error: false});
                     this.setState({data: response});
+                    this.setState({dataLoading: false});
                     // this.setState({dataFetched: true});
                 }).catch(error => {
                     console.error(error);
                     this.setState({error: true});
+                    this.setState({dataLoading: false});
             }));
 
     }

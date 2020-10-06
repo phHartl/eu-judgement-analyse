@@ -170,7 +170,6 @@ class SearchForm extends React.Component {
         this.setState({
             [name]: value
         });
-        console.debug(this.state);
     }
 
     modifySearchArray(name, value) {
@@ -315,9 +314,11 @@ class SearchForm extends React.Component {
         let corpus = [];
 
         for (const input of filterEntries) {
+            let operator = this.getOperatorFromItem(input);
             let entry = {
                 column: input.key,
-                value: this.state[input.key]
+                value: this.state[input.key],
+                operator: operator
             }
 
             if (entry.value.trim() !== "") {
@@ -325,6 +326,14 @@ class SearchForm extends React.Component {
             }
         }
         return corpus;
+    }
+
+    getOperatorFromItem(item) {
+        if (item.hasOwnProperty('operator')) {
+            return item.operator
+        } else {
+            return "";
+        }
     }
 
     getDateForSearch() {
@@ -373,22 +382,57 @@ class SearchForm extends React.Component {
     }
 
     removeFilterEntry(item) {
-        console.debug("test");
         let array = this.state.filterEntries;
         for (let i = 0; i < array.length; i++) {
             if (array[i] === item) {
-                console.debug("removing filter entry");
                 array.splice(i, 1);
                 this.setState({filterEntries: array});
-                console.debug(array);
             }
         }
     }
 
+    setOperatorEntry(item) {
+        let array = this.state.filterEntries;
+        for (let element of array) {
+            if (element.key.localeCompare(item.key) === 0) {
+                if (element.hasOwnProperty('operator')) {
+                    if (element.operator === 'NOT') {
+                        element.operator = '';
+                    } else {
+                        element.operator = 'NOT';
+                    }
+                } else {
+                    element.operator = 'NOT';
+                }
+            }
+        }
+        this.setState({filterEntries: array});
+    }
+
+    itemIsNegated(item) {
+        if (item.hasOwnProperty('operator')) {
+            if (item.operator === 'NOT') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    getItemNegationClassName(item) {
+        if (item.hasOwnProperty('operator')) {
+            if (item.operator === 'NOT') {
+                return "negation-selector negated-true";
+            }
+        }
+        return "negation-selector negated-false";
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        // put debug logs for states here if needed
+    }
 
 
     render() {
-        console.debug(this.state.filterEntries)
         const nGramsHidden = this.state.nGramsChecked ? '' : 'none';
         const tokensHidden = this.state.tokensChecked ? '' : 'none';
 
@@ -419,7 +463,13 @@ class SearchForm extends React.Component {
 
                 <div className="row additional-filter-container" id="additional-filter-container">
                     {/*{this.state.filterEntries}*/}
-                    <FilterEntryParent data={this.state.filterEntries} onChange={this.searchInputChange} onDelete={(item) => this.removeFilterEntry(item)}/>
+                    <FilterEntryParent
+                        data={this.state.filterEntries}
+                        getNegationIconClass={(item) => this.getItemNegationClassName(item)}
+                        onChange={this.searchInputChange}
+                        onDelete={(item) => this.removeFilterEntry(item)}
+                        onSetOperator={(item) => this.setOperatorEntry(item)}
+                    />
                 </div>
 
                 <div className="row dropdown">
@@ -433,128 +483,6 @@ class SearchForm extends React.Component {
                         elements={this.state.filterEntries}
                     />
                 </div>
-
-                {/*<div className="row">*/}
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="startDate" className="search-label">Start Date</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="date" name="startDate" id="startDate" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/><br/>*/}
-                {/*    </div>*/}
-
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="endDate" className="search-label">End Date</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="date" name="endDate" id="endDate" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/><br/>*/}
-                {/*    </div>*/}
-                {/*</div>*/}
-
-                {/*<div className="row">*/}
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="author" className="search-label">Author</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="text" name="author" id="author" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/>*/}
-                {/*    </div>*/}
-
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="judge" className="search-label">Judge</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="text" name="judge" id="judge" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/>*/}
-                {/*    </div>*/}
-                {/*</div>*/}
-
-                {/*<div className="row">*/}
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="celex" className="search-label">Celex</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="text" name="celex" id="celex" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/><br/>*/}
-                {/*    </div>*/}
-
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="title" className="search-label">Title</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="text" name="title" id="title" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/><br/>*/}
-                {/*    </div>*/}
-                {/*</div>*/}
-
-                {/*<div className="row">*/}
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="subject" className="search-label">Subject</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="text" name="subject" id="subject" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/><br/>*/}
-                {/*    </div>*/}
-
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="endorsements" className="search-label">Endorsements</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="text" name="endorsements" id="endorsements" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/><br/>*/}
-                {/*    </div>*/}
-                {/*</div>*/}
-
-                {/*<div className="row">*/}
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="grounds" className="search-label">Grounds</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="text" name="grounds" id="grounds" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/><br/>*/}
-                {/*    </div>*/}
-
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="decisionsOnCost" className="search-label">Decisions on Cost</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="text" name="decisionsOnCost" id="decisionsOnCost" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/><br/>*/}
-                {/*    </div>*/}
-                {/*</div>*/}
-
-                {/*<div className="row">*/}
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="operativePart" className="search-label">Operative Part</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="text" name="operativePart" id="operativePart" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/><br/>*/}
-                {/*    </div>*/}
-
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="ecli" className="search-label">ECLI</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="text" name="ecli" id="ecli" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/><br/>*/}
-                {/*    </div>*/}
-                {/*</div>*/}
-
-                {/*<div className="row">*/}
-                {/*    <div className="col-25">*/}
-                {/*        <label htmlFor="keywords" className="search-label">Keywords</label>*/}
-                {/*    </div>*/}
-                {/*    <div className="col-25">*/}
-                {/*        <input type="text" name="keywords" id="keywords" className="input-large"*/}
-                {/*               onChange={this.searchInputChange}/><br/>*/}
-                {/*    </div>*/}
-
-                {/*    // new elements here*/}
-
-
-                {/*</div>*/}
 
 
                 <div className="row" style={{paddingTop: "30px"}}>

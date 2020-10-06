@@ -104,14 +104,9 @@ class DataVisualizer extends React.Component {
 
 
     render() {
-        // if (!this.props.dataFetched) {
-        //     return null;
-        // }
         if (this.props.data === '') {
             return null;
         }
-
-        console.debug(this.state);
 
         return (
             <div className={"feature-container"} style={{paddingTop: "20px"}}>

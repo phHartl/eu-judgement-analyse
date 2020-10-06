@@ -82,6 +82,18 @@ input, select {
   float: left;
 }
 
+.col-2 {
+  float: left;
+  width: 2%;
+  margin-top: 6px;
+}
+
+.col-3 {
+  float: left;
+  width: 3%;
+  margin-top: 6px;
+}
+
 .col-5 {
   float: left;
   width: 5%;
@@ -189,6 +201,49 @@ input, select {
 
 .remove-filter-entry:hover {
   color: #b81d1d;
+}
+
+.negated-false::before {
+  font-family: "Font Awesome 5 Free" !important;
+  font-weight: 900;
+  font-size: 16px;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  content: "\f00c";
+}
+
+.negated-true::before {
+  font-family: "Font Awesome 5 Free" !important;
+  font-weight: 900;
+  font-size: 16px;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  content: "\f00d";
+}
+
+.negated-false {
+  color: green;
+  transform: rotate(-360deg);
+  transition: transform .3s ease-in-out;
+}
+
+.negated-true {
+  color: red;
+  transform: rotate(360deg);
+  transition: transform .3s ease-in-out;
+}
+
+.set-operator-entry {
+  background-color: #4a505c;
+  color: lightgray;
+  cursor: pointer;
+  min-width: 30px;
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 15px;
+  padding: 2px;
 }
 
 
