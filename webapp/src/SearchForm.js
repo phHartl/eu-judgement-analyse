@@ -1,23 +1,25 @@
 import React from 'react';
 import {
+    APPLICANT,
+    APPLICANT_API_DESC,
     AUTHOR,
     AUTHOR_API_DESC,
     BAR_CHART,
-    CASE_AFFECTING_API_DESC,
+    CASE_AFFECTING_API_DESC, CASE_LAW_DIRECTORY, CASE_LAW_DIRECTORY_API_DESC,
     CELEX,
     CELEX_API_DESC,
     DATE,
     DATE_API_DESC, DECISIONS_ON_COST,
-    DECISIONS_ON_COST_API_DESC,
+    DECISIONS_ON_COST_API_DESC, DEFENDANT, DEFENDANT_API_DESC,
     DOWNLOAD, ECLI, ECLI_API_DESC,
     END_DATE_API_DESC, ENDORSEMENTS, ENDORSEMENTS_API_DESC, GROUNDS, GROUNDS_API_DESC, KEYWORDS, KEYWORDS_API_DESC,
     MOST_FREQUENT_WORD_VISUALIZATION,
     N_GRAM_VISUALIZATION, OPERATIVE_PART, OPERATIVE_PART_API_DESC,
     PARTIES,
-    PARTIES_API_DESC,
+    PARTIES_API_DESC, PROCEDURE_TYPE, PROCEDURE_TYPE_API_DESC,
     START_DATE_API_DESC,
     SUBJECT,
-    SUBJECT_API_DESC,
+    SUBJECT_API_DESC, SUBJECT_MATTER, SUBJECT_MATTER_API_DESC,
     TITLE,
     TITLE_API_DESC,
     TOKEN_VISUALIZATION,
@@ -63,86 +65,154 @@ class SearchForm extends React.Component {
                     key: PARTIES_API_DESC,
                     text: PARTIES,
                     displayed: false,
-                    inputType: "text"
-                }},
-                {
-                date: {
-                    key: DATE_API_DESC,
-                    text: DATE,
-                    displayed: false,
-                    inputType: "date"
-                }},
-                {
-                author: {
-                    key: AUTHOR_API_DESC,
-                    text: AUTHOR,
-                    displayed: false,
-                    inputType: "text"
-                }},
-                {
-                subject: {
-                    key: SUBJECT_API_DESC,
-                    text: SUBJECT,
-                    displayed: false,
-                    inputType: "text"
-                }},
-                {
-                celex: {
-                    key: CELEX_API_DESC,
-                    text: CELEX,
-                    displayed: false,
-                    inputType: "text"
-                }},
-                {
-                title: {
-                    key: TITLE_API_DESC,
-                    text: TITLE,
-                    displayed: false,
-                    inputType: "text"
-                }},
-                {
-                endorsements: {
-                    key: ENDORSEMENTS_API_DESC,
-                    text: ENDORSEMENTS,
-                    displayed: false,
-                    inputType: "text"
-                }},
-                {
-                grounds: {
-                    key: GROUNDS_API_DESC,
-                    text: GROUNDS,
-                    displayed: false,
-                    inputType: "text"
-                }},
-                {
-                decisionsOnCost: {
-                    key: DECISIONS_ON_COST_API_DESC,
-                    text: DECISIONS_ON_COST,
-                    displayed: false,
-                    inputType: "text"
-                }},
-                {
-                operativePart: {
-                    key: OPERATIVE_PART_API_DESC,
-                    text: OPERATIVE_PART,
-                    displayed: false,
-                    inputType: "text"
-                }},
-                {
-                ecli: {
-                    key: ECLI_API_DESC,
-                    text: ECLI,
-                    displayed: false,
-                    inputType: "text"
-                }},
-                {
-                keywords: {
-                    key: KEYWORDS_API_DESC,
-                    text: KEYWORDS,
-                    displayed: false,
-                    inputType: "text"
+                    inputType: "text",
+                    displaySearchIdentifier: "none"
                 }
-            }
+            },
+                {
+                    date: {
+                        key: DATE_API_DESC,
+                        text: DATE,
+                        displayed: false,
+                        inputType: "date",
+                        displaySearchIdentifier: "none"
+                    }
+                },
+                {
+                    author: {
+                        key: AUTHOR_API_DESC,
+                        text: AUTHOR,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: ""
+                    }
+                },
+                {
+                    subject: {
+                        key: SUBJECT_API_DESC,
+                        text: SUBJECT,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: "none"
+                    }
+                },
+                {
+                    celex: {
+                        key: CELEX_API_DESC,
+                        text: CELEX,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: "none"
+                    }
+                },
+                {
+                    title: {
+                        key: TITLE_API_DESC,
+                        text: TITLE,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: "none"
+                    }
+                },
+                {
+                    endorsements: {
+                        key: ENDORSEMENTS_API_DESC,
+                        text: ENDORSEMENTS,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: "none"
+                    }
+                },
+                {
+                    grounds: {
+                        key: GROUNDS_API_DESC,
+                        text: GROUNDS,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: "none"
+                    }
+                },
+                {
+                    decisionsOnCost: {
+                        key: DECISIONS_ON_COST_API_DESC,
+                        text: DECISIONS_ON_COST,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: "none"
+                    }
+                },
+                {
+                    operativePart: {
+                        key: OPERATIVE_PART_API_DESC,
+                        text: OPERATIVE_PART,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: "none"
+                    }
+                },
+                {
+                    ecli: {
+                        key: ECLI_API_DESC,
+                        text: ECLI,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: "none"
+                    }
+                },
+                {
+                    keywords: {
+                        key: KEYWORDS_API_DESC,
+                        text: KEYWORDS,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: "none"
+                    }
+                },
+                {
+                    subjectMatter: {
+                        key: SUBJECT_MATTER_API_DESC,
+                        text: SUBJECT_MATTER,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: ""
+                    }
+                },
+                {
+                    caseLawDirectory: {
+                        key: CASE_LAW_DIRECTORY_API_DESC,
+                        text: CASE_LAW_DIRECTORY,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: ""
+                    }
+                },
+                {
+                    applicant: {
+                        key: APPLICANT_API_DESC,
+                        text: APPLICANT,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: ""
+                    }
+                },
+                {
+                    defendant: {
+                        key: DEFENDANT_API_DESC,
+                        text: DEFENDANT,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: ""
+                    }
+                },
+                {
+                    procedureType: {
+                        key: PROCEDURE_TYPE_API_DESC,
+                        text: PROCEDURE_TYPE,
+                        displayed: false,
+                        inputType: "text",
+                        displaySearchIdentifier: ""
+                    }
+                }
             ],
         };
 
@@ -316,6 +386,7 @@ class SearchForm extends React.Component {
 
         for (const input of filterEntries) {
             let operator = this.getOperatorFromItem(input);
+            let searchIdentifier = this.getSearchIdentifierFromItem(input);
 
             if (input.key === 'startDate' || input.key === 'endDate') {
                 continue;
@@ -324,7 +395,11 @@ class SearchForm extends React.Component {
             let entry = {
                 column: input.key,
                 value: this.state[input.key],
-                operator: operator
+                searchIdentifier: searchIdentifier
+            }
+
+            if (operator !== "") {
+                entry.operator = operator;
             }
 
             if (entry.value.trim() !== "") {
@@ -343,6 +418,14 @@ class SearchForm extends React.Component {
             return item.operator
         } else {
             return "";
+        }
+    }
+
+    getSearchIdentifierFromItem(item) {
+        if (item.hasOwnProperty('search identifier')) {
+            return item["search identifier"];
+        } else {
+            return false;
         }
     }
 
@@ -407,13 +490,15 @@ class SearchForm extends React.Component {
                 key: 'startDate',
                 text: 'Start Date',
                 displayed: false,
-                inputType: 'date'
+                inputType: 'date',
+                displaySearchIdentifier: "none"
             };
             let endDate = {
                 key: 'endDate',
                 text: 'End Date',
                 displayed: false,
-                inputType: 'date'
+                inputType: 'date',
+                displaySearchIdentifier: "none"
             };
             array.push(startDate);
             array.push(endDate);
@@ -452,6 +537,20 @@ class SearchForm extends React.Component {
         this.setState({filterEntries: array});
     }
 
+    setSearchIdentifier(item) {
+        let array = this.state.filterEntries;
+        for (let element of array) {
+            if (element.key.localeCompare(item.key) === 0) {
+                if (element.hasOwnProperty('search identifier')) {
+                    element["search identifier"] = !element["search identifier"];
+                } else {
+                    element["search identifier"] = true;
+                }
+            }
+        }
+        this.setState({filterEntries: array});
+    }
+
     itemIsNegated(item) {
         if (item.hasOwnProperty('operator')) {
             if (item.operator === 'NOT') {
@@ -470,6 +569,15 @@ class SearchForm extends React.Component {
         return "negation-selector negated-false";
     }
 
+    getSearchIdentifierClass(item) {
+        if (item.hasOwnProperty('search identifier')) {
+            if (item["search identifier"] === true) {
+                return "search-identifier-true";
+            }
+        }
+        return "search-identifier-false";
+    }
+
     componentDidUpdate(prevProps, prevState, snapshot) {
         // put debug logs for states here if needed
         console.debug(this.state);
@@ -482,7 +590,7 @@ class SearchForm extends React.Component {
 
         return (
             <form className="feature-container" onSubmit={this.handleSubmit}>
-                <div className="row">
+                <div className="row filter-entry">
                     <div className="col-25">
                         <label htmlFor="quickSearch" className="search-label">Quick Search</label>
                     </div>
@@ -492,7 +600,7 @@ class SearchForm extends React.Component {
                     </div>
                 </div>
 
-                <div className="row">
+                <div className="row filter-entry">
                     <div className="col-25">
                         <label htmlFor="language" className="search-label">Language</label>
                     </div>
@@ -510,9 +618,11 @@ class SearchForm extends React.Component {
                     <FilterEntryParent
                         data={this.state.filterEntries}
                         getNegationIconClass={(item) => this.getItemNegationClassName(item)}
+                        getSearchIdentifierClass={(item) => this.getSearchIdentifierClass(item)}
                         onChange={this.searchInputChange}
                         onDelete={(item) => this.removeFilterEntry(item)}
                         onSetOperator={(item) => this.setOperatorEntry(item)}
+                        onSetSearchIdentifier={(item) => this.setSearchIdentifier(item)}
                     />
                 </div>
 
