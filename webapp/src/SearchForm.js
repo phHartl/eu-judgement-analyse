@@ -312,9 +312,15 @@ class SearchForm extends React.Component {
     getFilterValues() {
         let filterEntries = this.state.filterEntries;
         let corpus = [];
+        let date = this.getDateForSearch();
 
         for (const input of filterEntries) {
             let operator = this.getOperatorFromItem(input);
+
+            if (input.key === 'startDate' || input.key === 'endDate') {
+                continue;
+            }
+
             let entry = {
                 column: input.key,
                 value: this.state[input.key],
@@ -324,6 +330,10 @@ class SearchForm extends React.Component {
             if (entry.value.trim() !== "") {
                 corpus.push(entry);
             }
+        }
+
+        if (date !== null) {
+            corpus.push(date);
         }
         return corpus;
     }
@@ -338,11 +348,26 @@ class SearchForm extends React.Component {
 
     getDateForSearch() {
         let startDate, endDate;
-        if (this.state.startDate !== "" && this.state.endDate !== "") {
+
+        if (this.state.startDate === "" && this.state.endDate === "") {
+            return null;
+        }
+
+        if (this.state.startDate !== "") {
             startDate = this.state.startDate;
+        } else {
+            let tempDate = new Date("January 01, 1500 00:00:00");
+            let month = tempDate.getMonth() + 1; // months start at index 0 (january = 0)
+            startDate = tempDate.getFullYear() + "-" + month + "-" + tempDate.getDate();
+        }
+
+        if (this.state.endDate !== "") {
             endDate = this.state.endDate;
         } else {
-            return null;
+            let tempDate = new Date(Date.now());
+            let month = tempDate.getMonth() + 1;
+            endDate = tempDate.getFullYear() + "-" + month + "-" + tempDate.getDate();
+            console.debug(tempDate.getMonth());
         }
 
 
@@ -377,6 +402,24 @@ class SearchForm extends React.Component {
         let array = this.state.filterEntries;
         let elements = this.state.searchFilterElements;
         // array.push(<FilterEntry elements={elements} index={index} text={text} onChange={this.searchInputChange} onDelete={this.removeFilterEntry}/>);
+        if (elements[index][Object.keys(elements[index])].key === 'date') {
+            let startDate = {
+                key: 'startDate',
+                text: 'Start Date',
+                displayed: false,
+                inputType: 'date'
+            };
+            let endDate = {
+                key: 'endDate',
+                text: 'End Date',
+                displayed: false,
+                inputType: 'date'
+            };
+            array.push(startDate);
+            array.push(endDate);
+            this.setState({filterEntries: array});
+            return;
+        }
         array.push(elements[index][Object.keys(elements[index])]);
         this.setState({filterEntries: array});
     }
@@ -429,6 +472,7 @@ class SearchForm extends React.Component {
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         // put debug logs for states here if needed
+        console.debug(this.state);
     }
 
 

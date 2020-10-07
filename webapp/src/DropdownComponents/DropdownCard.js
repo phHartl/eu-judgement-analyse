@@ -1,6 +1,5 @@
 import React from "react";
 
-let filterNames;
 let dataBackup;
 let filterData;
 const DropdownCard = ({data = [], setOpen, addFilterEntry, filterEntries}) => (
