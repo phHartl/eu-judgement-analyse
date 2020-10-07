@@ -1,11 +1,16 @@
 import re
 import pickle
+import math
 from collections import Counter
 import statistics
+from joblib import Parallel, delayed
+from functools import partialmethod, partial
+from os import sched_getaffinity
 
 import gensim
 # install version 2.1.8
 import spacy
+from spacy.util import minibatch
 from spacy_iwnlp import spaCyIWNLP
 # install version 0.9.1 here (to avoid conflicts with blackstone)
 import textacy
@@ -25,7 +30,8 @@ import stanza
 # Older text (1956 - 2003) formats always got the same headlines - remove them from the text to get better results
 english_legal_words = ["Summary", "Parties", "Subject of the case",
                        "Grounds", "Operative part", "Keywords", "Decision on costs", "++"]
-german_legal_words = ["Leitsätze", "Parteien", 'Schlüsselwörter', 'Entscheidungsgründe', 'Tenor', 'Kostenentscheidung', '++']
+german_legal_words = ["Leitsätze", "Parteien", 'Schlüsselwörter',
+                      'Entscheidungsgründe', 'Tenor', 'Kostenentscheidung', '++']
 
 UNIVERSAL_POS_TAGS = ("ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM",
                       "PART", "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM", "VERB", "X")
@@ -104,9 +110,8 @@ def normalize(language, text):
     return text.lower().strip()
 
 # TODO: Topic modeling (static, works basically but needs more parameter optimization aka running time) - on corpus basis,
-# Co-occurrences for a corpus (dynamic),
-# diachronic analysis (can be achieved by comparing different base stats of corpora),
 # judgment classification (probably quite hard),
+
 
 class CorpusAnalysis():
     """
@@ -145,10 +150,11 @@ class CorpusAnalysis():
             else:
                 print("Please only instantiate this class only once per language.")
             stanza.download("en", processors="tokenize, sentiment", logging_level="WARN")
-            self.stanza_nlp = stanza.Pipeline(lang="en", processors="tokenize, sentiment", tokenize_pretokenized=True, logging_level="WARN")
+            self.stanza_nlp = stanza.Pipeline(lang="en", processors="tokenize, sentiment",
+                                              tokenize_pretokenized=True, logging_level="WARN")
         else:
             # python -m spacy download de_core_news_md
-            self.nlp = textacy.load_spacy_lang("de_core_news_sm", disable=("textcat"))
+            self.nlp = textacy.load_spacy_lang("de_core_news_md", disable=("textcat"))
             # Textacy caches loaded pipeline components. So do not add them again if they are already present.
             if not ("sentence_segmenter" or "spacyiwnlp") in self.nlp.pipe_names:
                 iwnlp = spaCyIWNLP(lemmatizer_path='data/IWNLP.Lemmatizer_20181001.json', ignore_case=True)
@@ -158,29 +164,80 @@ class CorpusAnalysis():
             else:
                 print("Please only instantiate this class only once per language.")
             stanza.download("de", processors="tokenize, sentiment", logging_level="WARN")
-            self.stanza_nlp = stanza.Pipeline(lang="de", processors="tokenize, sentiment", tokenize_pretokenized=True, logging_level="WARN")
+            self.stanza_nlp = stanza.Pipeline(lang="de", processors="tokenize, sentiment",
+                                              tokenize_pretokenized=True, logging_level="WARN")
 
         self.corpus = None
 
-    def exec_pipeline(self, texts, normalize_texts=True):
+    def exec_pipeline(self, texts, pipeline_components, normalize_texts=True):
         """
         Starts the NLP pipeline (https://miro.medium.com/max/700/1*tRJU9bFckl0uG5_wTR8Tsw.png) of spaCy defined in the constructor for a corpus.
 
         Parameters
         ----------
-        texts : List[str] or str
-            Expects a list of document texts or a single document
+        texts : List[Dict]
+            Expects a list of document dicts with their meta data
+        pipeline_components : List[str]
+            List of analysis types to consider for this pipeline
         normalize : bool, optional
             whether to clean the texts before processing, by default True (should only be false for debugging purposes)
         """
-        if isinstance(texts, str):
-            texts = [texts]
-        if normalize_texts:
-            texts = [normalize(self.language, text) for text in texts if text is not None]
-        else:
-            print("The input texts haven't been normalized! Expect way worse results.")
+
         self.corpus = textacy.Corpus(self.nlp)
-        self.corpus.add_texts(texts, batch_size=10)
+        with self.nlp.disable_pipes(*self._remove_unused_components(pipeline_components)):
+            print(self.nlp.pipe_names)
+            partitions = minibatch(texts, math.ceil(len(texts) / len(sched_getaffinity(0))))
+            executor = Parallel(n_jobs=-1, require="sharedmem", prefer="threads")
+            do = delayed(partial(self._exec_pipeline_for_sub_corpus, normalize_texts))
+            tasks = (do(i, batch) for i, batch in enumerate(partitions))
+            sub_corpora = executor(tasks)
+            self.corpus.add_docs([doc for corpus in sub_corpora for doc in corpus])
+
+    def _remove_unused_components(self, pipeline_components):
+        # Internal function to remove unused pipeline components for the current analysis. 
+        # Saves memory and reduces calculation time.
+        disabled_components = []
+        if not any(component in pipeline_components for component in ("named_entities", "named_entities_per_doc")):
+            disabled_components.append("ner")
+            if self.language == "en":
+                disabled_components.append("merge_entities")
+                disabled_components.append("CompoundCases")
+        if not any(component in pipeline_components for component in ("tokens", "token_count", "word_count", 
+        "most_frequent_words", "tokens_per_doc", "pos_tags", "pos_tags_per_doc", "lemmata", "lemmata_per_doc")):
+            disabled_components.append("tagger")
+            if self.language == "de":
+                disabled_components.append("spaCyIWNLP")
+        
+        if not any(component in pipeline_components for component in ("sentences", "sentences_per_doc", "sentence_count")):
+            if self.language == "de":
+                if not any(component in pipeline_components for component in ("average_readability", "readability_per_doc")):
+                    disabled_components.append("parser")
+            else:
+                disabled_components.append("parser")
+        return disabled_components
+
+    def _exec_pipeline_for_sub_corpus(self, normalize_texts, batch_id, docs):
+        sub_corpus = textacy.Corpus(self.nlp)
+        for doc in docs:
+            if doc['text']:
+                if normalize_texts:
+                    spacy_doc = textacy.make_spacy_doc(
+                    (normalize(self.language, doc['text']), {'celex': doc['celex']}), self.nlp)
+                else:
+                    spacy_doc = textacy.make_spacy_doc(doc['text'], {'celex': doc['celex']}, self.nlp)
+                sub_corpus.add_doc(spacy_doc)
+        return sub_corpus
+
+    def get_celex_numbers(self):
+        """
+        Returns a list of celex numbers
+
+        Returns
+        -------
+        List[str]
+            list of ordered celex numbers as present in the corpus
+        """        
+        return [doc._.meta['celex'] for doc in self.corpus]
 
     def get_tokens(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
         """
@@ -662,7 +719,7 @@ class CorpusAnalysis():
             self.nlp.max_length = 100000000
             doc = self.nlp(merged_text)
         return list([token.text for token in textacy.extract.ngrams(doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
-        
+
     def get_n_grams_per_doc(self, n=2, filter_stop_words=True, filter_nums=True, min_freq_per_doc=2):
         """
         This functions calculates a set of all n-grams (e.g. n=2 (bigram) 'the court').
