@@ -395,7 +395,7 @@ class SearchForm extends React.Component {
             let entry = {
                 column: input.key,
                 value: this.state[input.key],
-                searchIdentifier: searchIdentifier
+                "search identifier": searchIdentifier
             }
 
             if (operator !== "") {
