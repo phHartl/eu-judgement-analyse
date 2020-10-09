@@ -7,7 +7,7 @@ import {
     DOWNLOAD,
     MOST_FREQUENT_WORD_VISUALIZATION,
     MOST_FREQUENT_WORDS,
-    N_GRAMS,
+    N_GRAMS, POS_TAGS_API_DESC,
     READABILITY,
     READABILITY_API_DESC,
     SENTENCE_COUNT,
@@ -40,10 +40,13 @@ class DataVisualizer extends React.Component {
             tokenCount: false,
             wordCount: false,
             sentenceCount: false,
-            tableData: false,
+            rawTableData: false,
+            posTags: false,
+            posTagsTableData: false
         }
         this.baseState = this.state;
-        this.addDataToTable = this.addDataToTable.bind(this);
+        this.addRawDataToTable = this.addRawDataToTable.bind(this);
+        // this.sortDataByParamater = this.sortDataByParamater.bind(this);
     }
 
 
@@ -63,6 +66,7 @@ class DataVisualizer extends React.Component {
     }
 
     setSingleAnalysisState(key) {
+        console.debug(key);
         switch (key) {
             case "n-grams":
                 // this.setState({nGrams: true});
@@ -83,17 +87,22 @@ class DataVisualizer extends React.Component {
 
             case "token count":
                 this.setState({tokenCount: true});
-                this.setState({tableData: true});
+                this.setState({rawTableData: true});
                 break;
 
             case "word count":
                 this.setState({wordCount: true});
-                this.setState({tableData: true});
+                this.setState({rawTableData: true});
                 break;
 
             case "sentence count":
                 this.setState({sentenceCount: true});
-                this.setState({tableData: true});
+                this.setState({rawTableData: true});
+                break;
+
+            case "pos tags":
+                this.setState({posTags: true});
+                this.setState({posTagsTableData: true});
                 break;
 
             default:
@@ -111,9 +120,9 @@ class DataVisualizer extends React.Component {
         return (
             <div className={"feature-container"} style={{paddingTop: "20px"}}>
 
-                <div id={"tableData"} style={{display: this.state.tableData === false ? 'none' : ''}}>
-                    {this.renderTable()}
-                    {this.addDataToTable()}
+                <div id={"rawTableData"} style={{display: this.state.rawTableData === false ? 'none' : ''}}>
+                    {this.renderRawDataTable()}
+                    {this.addRawDataToTable()}
                 </div>
 
                 <div id={"readability"} style={{display: this.state.readability === false ? 'none' : ''}}>
@@ -131,6 +140,11 @@ class DataVisualizer extends React.Component {
                 <div id={"mostFrequentWords"} style={{visibility: this.state.mostFrequentWords !== false}}>
                     {this.renderElement('most frequent words', 'mostFrequentWordVisualization', MOST_FREQUENT_WORDS, "Words")}
                 </div>
+
+                <div id={"posTagsTableData"} style={{display: this.state.posTagsTableData === false ? 'none' : ''}}>
+                    {this.renderPosTags()}
+                    {this.addPosTagsToTable()}
+                </div>
             </div>
         )
 
@@ -139,38 +153,52 @@ class DataVisualizer extends React.Component {
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         if (this.props.data !== prevProps.data) {
-            this.setDataState()
+            this.setDataState();
         }
     }
 
-    addDataToTable() {
-        if (this.state.tableData) {
-            this.deleteOldRows();
+    addRawDataToTable() {
+        if (this.state.rawTableData) {
+            this.deleteOldRows('raw-data-table-body');
         }
 
         if (this.state.tokenCount) {
-            this.insertTableRow(TOKEN_COUNT, TOKEN_COUNT_API_DESC);
+            this.insertRawDataTableRow(TOKEN_COUNT, TOKEN_COUNT_API_DESC);
         }
 
         if (this.state.wordCount) {
-            this.insertTableRow(WORD_COUNT, WORD_COUNT_API_DESC);
+            this.insertRawDataTableRow(WORD_COUNT, WORD_COUNT_API_DESC);
         }
 
         if (this.state.sentenceCount) {
-            this.insertTableRow(SENTENCE_COUNT, SENTENCE_COUNT_API_DESC);
+            this.insertRawDataTableRow(SENTENCE_COUNT, SENTENCE_COUNT_API_DESC);
         }
 
     }
 
-    deleteOldRows() {
-        let tableBody = document.getElementById('raw-data-table-body');
+    addPosTagsToTable() {
+        if (this.state.posTagsTableData) {
+            let data = this.getSortedPosTagsFromData();
+            if (data === null) {
+                return;
+            }
+
+            if (this.state.posTagsTableData) {
+                this.deleteOldRows('pos-tags-table-body');
+                this.insertPosTagsTableRow(data)
+            }
+        }
+    }
+
+    deleteOldRows(tableId) {
+        let tableBody = document.getElementById(tableId);
 
         while (tableBody.firstChild) {
             tableBody.removeChild(tableBody.firstChild);
         }
     }
 
-    insertTableRow(description, apiKey) {
+    insertRawDataTableRow(description, apiKey) {
         let tableBody = document.getElementById('raw-data-table-body');
         let row = tableBody.insertRow(0);
         let typeCell = row.insertCell(0);
@@ -180,7 +208,92 @@ class DataVisualizer extends React.Component {
         valueCell.innerHTML = this.props.data[apiKey]
     }
 
-    renderTable() {
+    insertPosTagsTableRow(data) {
+        let tableBody = document.getElementById('pos-tags-table-body');
+
+        for (let i = 0; i < data.length; i++) {
+            let row = tableBody.insertRow(0);
+            let tokenCell = row.insertCell(0);
+            let tagCell = row.insertCell(1);
+            let countCell = row.insertCell(2);
+
+            tokenCell.innerHTML = data[i].token;
+            tagCell.innerHTML = data[i].posTag;
+            countCell.innerHTML = data[i].count;
+        }
+    }
+
+    renderPosTags() {
+
+        return (
+            <div className="feature-section">
+                <h3>Part of Speech Tags</h3>
+                <div className="limiter">
+                    <div className="container-table100">
+                        <div className="wrap-table100">
+                            <div className="table100">
+                                <table id="pos-tags-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Token</th>
+                                        <th>Tag</th>
+                                        <th>Count</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="pos-tags-table-body">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        )
+    }
+
+    getSortedPosTagsFromData() {
+        if (this.props.data.hasOwnProperty(POS_TAGS_API_DESC)) {
+            let data = this.props.data[POS_TAGS_API_DESC];
+            data = this.groupPosTags(data);
+
+            // sort pos-tag data by count, with highest count at index[0]
+            data = data.sort(function (a, b) {
+                    if (a.count > b.count) {
+                        return 1;
+                    } else if (a.count < b.count) {
+                        return -1;
+                    }
+                    return 0;
+                }
+            );
+            return data;
+        }
+        return null;
+    }
+
+    groupPosTags(data) {
+        let groupedPosTags = [];
+        for (const tag of data) {
+            let entry = {
+                token: tag[0],
+                posTag: tag[1],
+                count: 1
+            }
+            if (groupedPosTags.some(item => item.token === entry.token && item.posTag === entry.posTag)) {
+                for (const existingEntry of groupedPosTags) {
+                    if (existingEntry.token === entry.token && existingEntry.posTag === entry.posTag) {
+                        groupedPosTags[groupedPosTags.indexOf(existingEntry)].count = existingEntry.count + 1;
+                    }
+                }
+            } else {
+                groupedPosTags.push(entry)
+            }
+        }
+        return groupedPosTags;
+    }
+
+    renderRawDataTable() {
         return (
             <div className="feature-section">
                 <h3>Data Table</h3>

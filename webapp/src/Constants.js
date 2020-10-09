@@ -32,6 +32,7 @@ export const CASE_LAW_DIRECTORY = 'Case Law Directory';
 export const APPLICANT = 'Applicant';
 export const DEFENDANT = 'Defendant';
 export const PROCEDURE_TYPE = 'Procedure Type';
+export const POS_TAGS = 'PoS-Tags'
 
 export const TOKEN_COUNT_API_DESC = 'token count';
 export const WORD_COUNT_API_DESC = 'word count';
@@ -57,3 +58,4 @@ export const CASE_LAW_DIRECTORY_API_DESC = 'case_law_directory';
 export const APPLICANT_API_DESC = 'applicant';
 export const DEFENDANT_API_DESC = 'Defendant';
 export const PROCEDURE_TYPE_API_DESC = 'procedure_type';
+export const POS_TAGS_API_DESC = 'pos tags';

@@ -54,6 +54,7 @@ class SearchForm extends React.Component {
             mostFrequentWordsLemmatise: false,
             sentencesChecked: false,
             sentenceCountChecked: false,
+            posTagsChecked: false,
             elementsToSearchFor: [],
             startDate: "",
             endDate: "",
@@ -346,6 +347,12 @@ class SearchForm extends React.Component {
             })
         }
 
+        if (this.state.posTagsChecked) {
+            analysisTypes.push({
+                type: "pos tags"
+            })
+        }
+
 
         return analysisTypes;
     }
@@ -580,7 +587,6 @@ class SearchForm extends React.Component {
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         // put debug logs for states here if needed
-        console.debug(this.state);
     }
 
 
@@ -882,6 +888,22 @@ class SearchForm extends React.Component {
                                    checked={this.state.sentenceCountChecked}
                                    onChange={this.handleInputChange}/>
                             <label htmlFor="sentenceCountChecked" className="checkboxes">Sentence Count</label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div className="row">
+                    {/* Begin pos tags}*/}
+                    <div className="col-50">
+                        <div className="row ks-cboxtags">
+                            <input type="checkbox"
+                                   name={"posTagsChecked"}
+                                   id={"posTagsChecked"}
+                                   className={"checkboxes"}
+                                   checked={this.state.posTagsChecked}
+                                   onChange={this.handleInputChange}/>
+                            <label htmlFor="posTagsChecked" className="checkboxes">PoS-Tags</label>
                         </div>
                     </div>
 
