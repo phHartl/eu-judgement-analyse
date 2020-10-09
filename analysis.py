@@ -185,7 +185,6 @@ class CorpusAnalysis():
 
         self.corpus = textacy.Corpus(self.nlp)
         with self.nlp.disable_pipes(*self._remove_unused_components(pipeline_components)):
-            print(self.nlp.pipe_names)
             partitions = minibatch(texts, math.ceil(len(texts) / len(sched_getaffinity(0))))
             executor = Parallel(n_jobs=-1, require="sharedmem", prefer="threads")
             do = delayed(partial(self._exec_pipeline_for_sub_corpus, normalize_texts))
@@ -217,6 +216,7 @@ class CorpusAnalysis():
         return disabled_components
 
     def _exec_pipeline_for_sub_corpus(self, normalize_texts, batch_id, docs):
+        # Internal function to enable multi-threaded pipeline execution
         sub_corpus = textacy.Corpus(self.nlp)
         for doc in docs:
             if doc['text']:
@@ -468,7 +468,7 @@ class CorpusAnalysis():
         """
         return [len(doc) for doc in self.get_tokens_per_doc()]
 
-    def get_pos_tags(self):
+    def get_pos_tags(self, include_pos=None, exclude_pos=None):
         """
         Gets all part of speech tags for the corpus.
 
@@ -477,9 +477,9 @@ class CorpusAnalysis():
         List[Tuple[str, str]]
             a list of tuples with the base word and its part of speech tag
         """
-        return [item for sublist in self.get_pos_tags_per_doc() for item in sublist]
+        return [item for sublist in self.get_pos_tags_per_doc(include_pos, exclude_pos) for item in sublist]
 
-    def get_pos_tags_per_doc(self):
+    def get_pos_tags_per_doc(self, include_pos=None, exclude_pos=None):
         """
         Gets all part of speech tags for each for grouped by document.
 
@@ -489,8 +489,12 @@ class CorpusAnalysis():
             a list of list of tuples with all base words and their part of speech tag grouped by document
         """
         pos = []
+        if include_pos is None:
+            include_pos = UNIVERSAL_POS_TAGS
+        if exclude_pos is not None:
+            include_pos = [pos_tag for pos_tag in include_pos if pos_tag not in exclude_pos]
         for doc in self.corpus:
-            pos.append([(word, word.pos_) for word in doc])
+            pos.append([(word, word.pos_) for word in doc if word.pos_ in include_pos])
         return pos
 
     def get_lemmata_per_doc(self, remove_stop_words=True, include_pos=None, exclude_pos=None):
