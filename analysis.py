@@ -5,7 +5,7 @@ from collections import Counter
 import statistics
 from joblib import Parallel, delayed
 from functools import partialmethod, partial
-from os import sched_getaffinity
+from os import cpu_count
 
 import gensim
 # install version 2.1.8
@@ -185,7 +185,7 @@ class CorpusAnalysis():
 
         self.corpus = textacy.Corpus(self.nlp)
         with self.nlp.disable_pipes(*self._remove_unused_components(pipeline_components)):
-            partitions = minibatch(texts, math.ceil(len(texts) / len(sched_getaffinity(0))))
+            partitions = minibatch(texts, math.ceil(len(texts) / cpu_count()))
             executor = Parallel(n_jobs=-1, require="sharedmem", prefer="threads")
             do = delayed(partial(self._exec_pipeline_for_sub_corpus, normalize_texts))
             tasks = (do(i, batch) for i, batch in enumerate(partitions))
