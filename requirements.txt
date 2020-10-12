@@ -15,6 +15,8 @@ textacy==0.9.1
 torch==1.6.0
 xmltodict==0.12.0
 zeep==3.4.0
+celery
+redis
 https://github.com/explosion/spacy-models/releases/download/de_core_news_md-2.1.0/de_core_news_md-2.1.0.tar.gz#egg=de_core_news_md
 https://blackstone-model.s3-eu-west-1.amazonaws.com/en_blackstone_proto-0.0.1.tar.gz#egg=en_blackstone_proto
 https://github.com/explosion/spacy-models/releases/download/en_core_web_md-2.1.0/en_core_web_md-2.1.0.tar.gz#egg=en_core_web_md

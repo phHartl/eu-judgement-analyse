@@ -1,9 +1,9 @@
 from pymongo import MongoClient, errors
 from datetime import datetime
 
-client = MongoClient('localhost', 27017)
-db = client.judgment_corpus
-collection = client.judgment_corpus.judgments_en  # english as default language
+client = None
+db = None
+collection = None
 
 PRINT_DUPLICATE_ERRORS = 0
 
@@ -35,6 +35,13 @@ AVAILABLE_LANGUAGES = {
 }
 
 
+def init_client():
+    global client, db, collection
+    client = MongoClient('localhost', 32768)
+    db = client.judgment_corpus
+    collection = client.judgment_corpus.judgments_en  # english as default language
+
+
 # accepts yyyy-mm-dd string and returns a datetime object for mongoDB
 def __get_datetime_from_string(ymd_string):
         split = ymd_string.split('-')
@@ -47,6 +54,7 @@ def change_cur_coll(language):
         return _collection
 
 def init_db(used_languages=['en']):
+    global db, collection
     collist = db.list_collection_names()
 
     for lang in used_languages:
@@ -64,6 +72,7 @@ def init_db(used_languages=['en']):
             collist = db.list_collection_names()
 
 def insert_doc(doc, language):
+    global collection
     if language in AVAILABLE_LANGUAGES.values():
         collection = change_cur_coll(language)
         try:
@@ -76,12 +85,14 @@ def insert_doc(doc, language):
         print("DB: insert_doc(): unsuported language")
 
 def get_all_docs(language):
+    global collection
     collection = change_cur_coll(language)
     cursor = collection.find({})
     return cursor
 
 # retrieves documents between two dates (dates must be in the format: y-m-dT00:00:00.000+00:00)
 def get_docs_between_dates(start, end, language):
+    global collection
     collection = change_cur_coll(language)
     start_date = __get_datetime_from_string(start)
     end_date = __get_datetime_from_string(end)
@@ -89,18 +100,21 @@ def get_docs_between_dates(start, end, language):
     return cursor
 
 def get_docs_by_object_key(column, values, language):
+    global collection
     # retrieves documents by searching a object column for a specified value
     collection = change_cur_coll(language)
     cursor = collection.find({column + "." + "ids": {"$in": values}})
     return cursor
 
 def get_docs_by_object_value(column, values, language):
+    global collection
     # retrieves documents by searching a object column for a specified value
     collection = change_cur_coll(language)
     cursor = collection.find({column + "." + "labels": {"$in": values}})
     return cursor
 
 def get_docs_search_string(column, search, language):
+    global collection
     # retrieves documents by searching a string column with specified words (words separated by whitespace)
     collection = change_cur_coll(language)
     search_words = search.split(" ")
@@ -112,11 +126,13 @@ def get_docs_search_string(column, search, language):
     return cursor
 
 def get_docs_by_value(column, value, language):
+    global collection
     collection = change_cur_coll(language)
     cursor = collection.find({column: value})
     return cursor
 
 def get_docs_by_custom_query(query_args, language):
+    global collection
     search_dict = {}
     keys_containing_dicts = ["author", "subject_matter", "case_law_directory",
                             "applicant", "defendant", "procedure_type"]
