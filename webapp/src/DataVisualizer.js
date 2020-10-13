@@ -7,7 +7,7 @@ import {
     DOWNLOAD,
     MOST_FREQUENT_WORD_VISUALIZATION,
     MOST_FREQUENT_WORDS,
-    N_GRAMS, POS_TAGS_API_DESC,
+    N_GRAMS, NO_DATA_FOUND, POS_TAGS_API_DESC,
     READABILITY,
     READABILITY_API_DESC,
     SENTENCE_COUNT,
@@ -206,6 +206,10 @@ class DataVisualizer extends React.Component {
 
         typeCell.innerHTML = description;
         valueCell.innerHTML = this.props.data[apiKey]
+
+        if (this.props.data[apiKey] === 0) {
+            valueCell.innerHTML = NO_DATA_FOUND;
+        }
     }
 
     insertPosTagsTableRow(data) {
@@ -385,6 +389,20 @@ class DataVisualizer extends React.Component {
     renderElement(element, elementVisualization, description, shortDescription = description) {
         if (!this.props.data.hasOwnProperty(element)) {
             return null;
+        }
+
+        console.log(this.props.data[element]);
+        if (this.props.data[element] === undefined || this.props.data[element].length === 0) {
+            return (
+                <div>
+                    <div className="row">
+                        <h3 className="col-100">{description}</h3>
+                    </div>
+                    <div className="row">
+                        <h5>{NO_DATA_FOUND}</h5>
+                    </div>
+                </div>
+            )
         }
 
         let visualization = this.props[elementVisualization];

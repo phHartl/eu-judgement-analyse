@@ -60,3 +60,5 @@ export const APPLICANT_API_DESC = 'applicant';
 export const DEFENDANT_API_DESC = 'Defendant';
 export const PROCEDURE_TYPE_API_DESC = 'procedure_type';
 export const POS_TAGS_API_DESC = 'pos tags';
+
+export const NO_DATA_FOUND = 'No Data has been found';
