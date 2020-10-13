@@ -1,3 +1,4 @@
+import configparser
 from pymongo import MongoClient, errors
 from datetime import datetime
 
@@ -36,8 +37,10 @@ AVAILABLE_LANGUAGES = {
 
 
 def init_client():
+    config = configparser.ConfigParser()
+    config.read("config.ini")
     global client, db, collection
-    client = MongoClient('localhost', 32768)
+    client = MongoClient(config.get("mongo_db", "host"), config.getint("mongo_db", "port"))
     db = client.judgment_corpus
     collection = client.judgment_corpus.judgments_en  # english as default language
 

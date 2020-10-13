@@ -1,38 +1,16 @@
+import configparser
 from analysis import CorpusAnalysis
 from flask import render_template, Flask, request, jsonify, make_response
-from flask_pymongo import PyMongo
-from collections import OrderedDict
-from celery import Celery
-from api_functions import *
+from mongo import init_client
+from api_functions import get_all_docs, get_docs_by_custom_query, analyse_corpus
+from tasks import execute_analyser_small, execute_analyser_big
+
+config = configparser.ConfigParser()
+config.read("config.ini")
 
 # Create the application instance
 app = Flask(__name__)
-app.config["MONGO_URI"] = "mongodb://localhost:32768/judgment_corpus"
-app.config.update(
-    # Change port here
-    backend='redis://localhost:32775',
-    broker='redis://localhost:32775',
-)
 
-def make_celery(app):
-    celery = Celery(
-        app.import_name,
-        backend=app.config['backend'],
-        broker=app.config['broker']
-    )
-    celery.conf.update(app.config)
-
-    class ContextTask(celery.Task):
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return self.run(*args, **kwargs)
-
-    celery.Task = ContextTask
-    return celery
-
-celery = make_celery(app)
-
-@celery.task(name="execute_analyser")
 def execute_analyser(corpus_args, analysis_args, language):
     # define the corpus
     # whole corpus or custom subcorpus
@@ -60,12 +38,28 @@ def query():
         # missing info
         return "incorrect request parameters"
 
-    analysis_data = execute_analyser.delay(corpus_args, analysis_args, language)
-    result = analysis_data.get()
+    if config.getboolean("execution_mode", "server_mode"):
+        init_client()
+        if corpus_args == 'all':
+            corpus = get_all_docs(language)
+        else:
+            corpus = get_docs_by_custom_query(corpus_args, language)
+        print(corpus.count())
+        if(corpus.count() > 10):
+            # celery -A tasks.celery worker -Q huge_corpus -c10 -Ofair
+            analysis_data = execute_analyser_big.apply_async(args=[corpus_args, analysis_args, language], queue="huge_corpus")
+            result = analysis_data.get()
+        else:
+            # celery -A tasks.celery worker -Q celery -c2
+            analysis_data = execute_analyser_small.delay(corpus_args, analysis_args, language)
+            result = analysis_data.get()
+    else:
+        result = execute_analyser(corpus_args, analysis_args, language)
+    
     response = make_response(jsonify(result))
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
     # If we're running in stand alone mode, run the application
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000)
+    app.run(host='127.0.0.1', port=5000, debug=True)

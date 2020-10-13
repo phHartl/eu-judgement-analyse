@@ -3,9 +3,11 @@ import pickle
 import math
 from collections import Counter
 import statistics
+import configparser
 from joblib import Parallel, delayed
 from functools import partialmethod, partial
 from os import cpu_count
+from sys import platform
 
 import gensim
 # install version 2.1.8
@@ -135,6 +137,10 @@ class CorpusAnalysis():
             raise ValueError("Language not supported")
         else:
             self.language = language
+        
+        config = configparser.ConfigParser()
+        config.read("config.ini")
+        self.threads = int(config.get("analysis", "threads"))
 
         if self.language == "en":
             # pip install https://blackstone-model.s3-eu-west-1.amazonaws.com/en_blackstone_proto-0.0.1.tar.gz
@@ -185,8 +191,15 @@ class CorpusAnalysis():
 
         self.corpus = textacy.Corpus(self.nlp)
         with self.nlp.disable_pipes(*self._remove_unused_components(pipeline_components)):
-            partitions = minibatch(texts, math.ceil(len(texts) / cpu_count()))
-            executor = Parallel(n_jobs=-1, require="sharedmem", prefer="threads")
+            if (self.threads == -1):
+                if (platform.startswith('win32')):
+                    partitions = minibatch(texts, math.ceil(len(texts) / cpu_count()))
+                else:
+                    from os import sched_getaffinity                    
+                    partitions = minibatch(texts, math.ceil(len(texts) / len(sched_getaffinity(0))))
+            else:
+                partitions = minibatch(texts, math.ceil(len(texts) / self.threads))
+            executor = Parallel(n_jobs=self.threads, require="sharedmem", prefer="threads", verbose=10)
             do = delayed(partial(self._exec_pipeline_for_sub_corpus, normalize_texts))
             tasks = (do(i, batch) for i, batch in enumerate(partitions))
             sub_corpora = executor(tasks)
@@ -202,7 +215,7 @@ class CorpusAnalysis():
                 disabled_components.append("merge_entities")
                 disabled_components.append("CompoundCases")
         if not any(component in pipeline_components for component in ("tokens", "token_count", "word_count", 
-        "most_frequent_words", "tokens_per_doc", "pos_tags", "pos_tags_per_doc", "lemmata", "lemmata_per_doc")):
+        "most_frequent_words", "tokens_per_doc", "average_word_length", "pos_tags", "pos_tags_per_doc", "lemmata", "lemmata_per_doc")):
             disabled_components.append("tagger")
             if self.language == "de":
                 disabled_components.append("spaCyIWNLP")
@@ -481,7 +494,7 @@ class CorpusAnalysis():
 
     def get_pos_tags_per_doc(self, include_pos=None, exclude_pos=None):
         """
-        Gets all part of speech tags for each for grouped by document.
+        Gets all part of speech tags (https://universaldependencies.org/u/pos/) for each for grouped by document.
 
         Returns
         -------
@@ -579,9 +592,10 @@ class CorpusAnalysis():
             entities = [e.string for doc in self.corpus for e in doc.ents if label == e.label_]
             entities = list(set(entities))
             ner.append((label, entities))
-        compound_cases = [compound_case for doc in self.corpus for compound_case in doc._.compound_cases]
-        if len(compound_cases) > 0:
-            ner.append(("COMPOUND_CASES", compound_cases))
+        if self.language == "en":
+            compound_cases = [compound_case for doc in self.corpus for compound_case in doc._.compound_cases]
+            if len(compound_cases) > 0:
+                ner.append(("COMPOUND_CASES", compound_cases))
         return ner
 
     def get_named_entities_per_doc(self):
@@ -601,9 +615,10 @@ class CorpusAnalysis():
                 entities = [e.string for e in doc.ents if label == e.label_]
                 entities = list(set(entities))
                 ner_per_doc.append((label, entities))
-            compound_cases = [compound_case for compound_case in self.doc._.compound_cases]
-            if len(compound_cases) > 0:
-                ner_per_doc.append(("COMPOUND_CASES", compound_cases))
+            if self.language == "en":
+                compound_cases = [compound_case for compound_case in self.doc._.compound_cases]
+                if len(compound_cases) > 0:
+                    ner_per_doc.append(("COMPOUND_CASES", compound_cases))
             ner.append(ner_per_doc)
         return ner
 
