@@ -17,7 +17,7 @@ const AnalysisOptionsParent = ({data, state, handleInputChange, handleVisualizat
                            onChange={handleInputChange}
                     />
                     <label htmlFor={item.id} className={"checkboxes fancy-label"}
-                           style={{width: "60%"}}>{item.description}
+                           style={{width: "65%"}}>{item.description}
 
                         <div className="analysis-options row">
                                 <div className="row inner-option" style={{display: state[item.name] ? "" : "none"}}>
