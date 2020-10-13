@@ -1,5 +1,6 @@
 import React from 'react';
 import './App.css';
+import './switch.sass';
 import ReactWordcloud from 'react-wordcloud';
 import CanvasJSReact from "./canvasjs.react";
 import SearchForm from "./SearchForm";
@@ -27,9 +28,9 @@ class App extends React.Component {
             error: false,
             // dataFetched: false,
             data: '', // used to store downloaded json data
-            nGramVisualization: BAR_CHART,
+            nGramVisualization: WORDCLOUD,
             tokenVisualization: WORDCLOUD,
-            mostFrequentWordVisualization: BAR_CHART,
+            mostFrequentWordVisualization: WORDCLOUD,
             dataLoading: false // true if a query is currently in progress. used to prevent multiple requests before search is finished
         }
         this.handleFormSubmit = this.handleFormSubmit.bind(this);

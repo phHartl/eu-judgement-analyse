@@ -4,9 +4,9 @@ export const BAR_CHART = 'barchart';
 export const DOWNLOAD = 'download';
 export const COLUMN_CHART = 'columnchart';
 
-export const N_GRAM_VISUALIZATION = 'nGramVisualization';
-export const TOKEN_VISUALIZATION = 'tokenVisualization';
-export const MOST_FREQUENT_WORD_VISUALIZATION = 'mostFrequentWordVisualization';
+export const N_GRAM_VISUALIZATION = 'nGramsOptionsVisualization';
+export const TOKEN_VISUALIZATION = 'tokensOptionsVisualization';
+export const MOST_FREQUENT_WORD_VISUALIZATION = 'mostFrequentWordsOptionsVisualization';
 
 export const N_GRAMS = 'N-Grams';
 export const TOKENS = 'Tokens';
@@ -32,7 +32,8 @@ export const CASE_LAW_DIRECTORY = 'Case Law Directory';
 export const APPLICANT = 'Applicant';
 export const DEFENDANT = 'Defendant';
 export const PROCEDURE_TYPE = 'Procedure Type';
-export const POS_TAGS = 'PoS-Tags'
+export const POS_TAGS = 'PoS-Tags';
+export const SENTENCES = 'Sentences';
 
 export const TOKEN_COUNT_API_DESC = 'token count';
 export const WORD_COUNT_API_DESC = 'word count';

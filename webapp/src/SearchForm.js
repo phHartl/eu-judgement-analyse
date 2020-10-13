@@ -13,21 +13,23 @@ import {
     DECISIONS_ON_COST_API_DESC, DEFENDANT, DEFENDANT_API_DESC,
     DOWNLOAD, ECLI, ECLI_API_DESC,
     END_DATE_API_DESC, ENDORSEMENTS, ENDORSEMENTS_API_DESC, GROUNDS, GROUNDS_API_DESC, KEYWORDS, KEYWORDS_API_DESC,
-    MOST_FREQUENT_WORD_VISUALIZATION,
-    N_GRAM_VISUALIZATION, OPERATIVE_PART, OPERATIVE_PART_API_DESC,
+    MOST_FREQUENT_WORD_VISUALIZATION, MOST_FREQUENT_WORDS,
+    N_GRAM_VISUALIZATION, N_GRAMS, OPERATIVE_PART, OPERATIVE_PART_API_DESC,
     PARTIES,
-    PARTIES_API_DESC, PROCEDURE_TYPE, PROCEDURE_TYPE_API_DESC,
+    PARTIES_API_DESC, POS_TAGS, PROCEDURE_TYPE, PROCEDURE_TYPE_API_DESC, READABILITY, SENTENCE_COUNT, SENTENCES,
     START_DATE_API_DESC,
     SUBJECT,
     SUBJECT_API_DESC, SUBJECT_MATTER, SUBJECT_MATTER_API_DESC,
     TITLE,
-    TITLE_API_DESC,
-    TOKEN_VISUALIZATION,
+    TITLE_API_DESC, TOKEN_COUNT,
+    TOKEN_VISUALIZATION, TOKENS, WORD_COUNT,
     WORDCLOUD
 } from "./Constants";
 import DropdownParent from "./DropdownComponents/DropdownParent";
 import FilterEntry from "./FilterEntry";
 import FilterEntryParent from "./FilterEntryParent";
+import AnalysisOptions from "./Analysis/AnalysisOptions";
+import AnalysisOptionsParent from "./Analysis/AnalysisOptionsParent";
 
 
 let requestJSON = "";
@@ -37,30 +39,31 @@ class SearchForm extends React.Component {
         super(props);
         this.state = {
             language: "english",
-            nGramsChecked: false,
+            nGramsOptions: false,
             nLimit: "",
             n: "",
-            readabilityChecked: false,
-            tokensChecked: false,
+            readabilityOptions: false,
+            tokensOptions: false,
             tokenLimit: "",
-            tokenCountChecked: false,
+            tokenCountOptions: false,
             tokenRemoveStopWords: false,
             tokenRemovePunctuation: false,
-            wordCountChecked: false,
+            wordCountOptions: false,
             wordCountRemoveStopWords: false,
-            mostFrequentWordsChecked: false,
+            mostFrequentWordsOptions: false,
             mostFrequentWordsLimit: "",
             mostFrequentWordsRemoveStopWords: false,
             mostFrequentWordsLemmatise: false,
-            sentencesChecked: false,
-            sentenceCountChecked: false,
-            posTagsChecked: false,
+            sentencesOptions: false,
+            sentenceCountOptions: false,
+            posTagsOptions: false,
             elementsToSearchFor: [],
             startDate: "",
             endDate: "",
             dropdownData: "",
             filterEntries: [],
             filterValues: [],
+            analysisOptionsArray: [],
             searchFilterElements: [{
                 parties: {
                     key: PARTIES_API_DESC,
@@ -215,6 +218,128 @@ class SearchForm extends React.Component {
                     }
                 }
             ],
+            analysisOptions: [{
+                nGrams: {
+                    name: "nGramsOptions",
+                    id: "nGramsOptions",
+                    description: N_GRAMS,
+                    options: [{
+                        n: {
+                            inputType: "number",
+                            description: "N",
+                            name: "n"
+                        },
+                        limit: {
+                            inputType: "number",
+                            description: "Limit",
+                            name: "nOptionsLimit"
+                        }
+                    }],
+                    visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
+                },
+                readability: {
+                    name: "readabilityOptions",
+                    id: "readabilityOptions",
+                    description: READABILITY,
+                    options: null,
+                    visualizationOptions: null
+                },
+
+                tokens: {
+                    name: "tokensOptions",
+                    id: "tokensOptions",
+                    description: TOKENS,
+                    options: [{
+                        removeStopWords: {
+                            inputType: "checkbox",
+                            description: "Remove Stop Words",
+                            name: "tokensOptionsRemoveStopWords"
+                        },
+                        removePunctuation: {
+                            inputType: "checkbox",
+                            description: "Remove Punctuation",
+                            name: "tokensOptionsRemovePunctuation"
+                        },
+                        limit: {
+                            inputType: "number",
+                            description: "Limit",
+                            name: "tokensOptionsLimit"
+                        }
+                    }],
+                    visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
+                },
+
+                tokenCount: {
+                    name: "tokenCountOptions",
+                    id: "tokenCountOptions",
+                    description: TOKEN_COUNT,
+                    options: null,
+                    visualizationOptions: null
+                },
+
+                wordCount: {
+                    name: "wordCountOptions",
+                    id: "wordCountOptions",
+                    description: WORD_COUNT,
+                    options: [{
+                        removeStopWords: {
+                            inputType: "checkbox",
+                            description: "Remove Stop Words",
+                            name: "wordCountOptionsRemoveStopWords"
+                        }
+                    }],
+                    visualizationOptions: null
+                },
+
+                mostFrequentWords: {
+                    name: "mostFrequentWordsOptions",
+                    id: "mostFrequentWordsOptions",
+                    description: MOST_FREQUENT_WORDS,
+                    options: [{
+                        removeStopWords: {
+                            inputType: "checkbox",
+                            description: "Remove Stop Words",
+                            name: "mostFrequentWordsOptionsRemoveStopWords"
+                        },
+                        lemmatise: {
+                            inputType: "checkbox",
+                            description: "Lemmatise",
+                            name: "mostFrequentWordsOptionsLemmatise"
+                        },
+                        limit: {
+                            inputType: "number",
+                            description: "Limit",
+                            name: "mostFrequentWordsOptionsLimit"
+                        }
+                    }],
+                    visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
+                },
+
+                sentences: {
+                    name: "sentencesOptions",
+                    id: "sentencesOptions",
+                    description: SENTENCES,
+                    options: null,
+                    visualizationOptions: null
+                },
+
+                sentenceCount: {
+                    name: "sentenceCountOptions",
+                    id: "sentenceCountOptions",
+                    description: SENTENCE_COUNT,
+                    options: null,
+                    visualizationOptions: null
+                },
+
+                posTags: {
+                    name: "posTagsOptions",
+                    id: "posTagsOptions",
+                    description: POS_TAGS,
+                    options: null,
+                    visualizationOptions: null
+                }
+
+            }]
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -296,21 +421,21 @@ class SearchForm extends React.Component {
         if (this.state.n === "") {
             this.state.n = 2;
         }
-        if (this.state.nGramsChecked) {
+        if (this.state.nGramsOptions) {
             analysisTypes.push({
                 type: "n-grams",
                 n: parseInt(this.state.n),
-                limit: parseInt(this.state.nLimit)
+                limit: parseInt(this.state.nGramsLimit)
             })
         }
 
-        if (this.state.readabilityChecked) {
+        if (this.state.readabilityOptions) {
             analysisTypes.push({
                 type: "readability"
             })
         }
 
-        if (this.state.tokensChecked) {
+        if (this.state.tokensOptions) {
             analysisTypes.push({
                 type: "tokens",
                 "remove stop words": this.state.tokenRemoveStopWords,
@@ -319,7 +444,7 @@ class SearchForm extends React.Component {
             })
         }
 
-        if (this.state.mostFrequentWordsChecked) {
+        if (this.state.mostFrequentWordsOptions) {
             analysisTypes.push({
                 type: "most frequent words",
                 "remove stop words": this.state.mostFrequentWordsRemoveStopWords,
@@ -328,26 +453,26 @@ class SearchForm extends React.Component {
             })
         }
 
-        if (this.state.sentenceCountChecked) {
+        if (this.state.sentenceCountOptions) {
             analysisTypes.push({
                 type: "sentence count"
             })
         }
 
-        if (this.state.tokenCountChecked) {
+        if (this.state.tokenCountOptions) {
             analysisTypes.push({
                 type: "token count"
             })
         }
 
-        if (this.state.wordCountChecked) {
+        if (this.state.wordCountOptions) {
             analysisTypes.push({
                 type: "word count",
                 "remove stop words": this.state.wordCountRemoveStopWords
             })
         }
 
-        if (this.state.posTagsChecked) {
+        if (this.state.posTagsOptions) {
             analysisTypes.push({
                 type: "pos tags"
             })
@@ -585,14 +710,24 @@ class SearchForm extends React.Component {
         return "search-identifier-false";
     }
 
+    getAnalysisOptionsArray() {
+        let array = [];
+        for (const element in this.state.analysisOptions[0]) {
+            array.push(this.state.analysisOptions[0][element]);
+        }
+        this.setState({analysisOptionsArray: array});
+    }
+
     componentDidUpdate(prevProps, prevState, snapshot) {
         // put debug logs for states here if needed
     }
 
+    componentDidMount() {
+        this.getAnalysisOptionsArray();
+    }
+
 
     render() {
-        const nGramsHidden = this.state.nGramsChecked ? '' : 'none';
-        const tokensHidden = this.state.tokensChecked ? '' : 'none';
 
         return (
             <form className="feature-container" onSubmit={this.handleSubmit}>
@@ -649,269 +784,20 @@ class SearchForm extends React.Component {
                     Analysis
                 </div>
 
-
-                {/* Begin N-Grams Checkbox + Dropdown*/}
                 <div className="row">
-                    <div className="col-50">
-                        <div className="row ks-cboxtags">
-                            <input type="checkbox"
-                                   name="nGramsChecked"
-                                   id="ngrams"
-                                   className="checkboxes"
-                                   checked={this.state.nGramsChecked}
-                                   onChange={this.handleInputChange}/>
-                            <label htmlFor="ngrams" className="checkboxes">N-Grams</label>
-                        </div>
-
-                        <div className={"row"} style={{display: nGramsHidden}}>
-                            <div className="col-50">
-                                <label htmlFor="n-limit">Limit: </label>
-                            </div>
-                            <div className="col-50">
-                                <input type="number" name="nLimit" id="n-limit" className="input-large"
-                                       onChange={this.handleInputChange}/>
-                            </div>
-                        </div>
-
-                        <div className={"row"} style={{display: nGramsHidden}}>
-                            <div className="col-50">
-                                <label htmlFor={N_GRAM_VISUALIZATION}>Visualization: </label>
-                            </div>
-                            <div className="col-50">
-                                <select className="input-large" name={N_GRAM_VISUALIZATION} id={N_GRAM_VISUALIZATION}
-                                        onChange={this.handleVisualizationChange}>
-                                    <option value={BAR_CHART}>Bar Chart</option>
-                                    <option value={WORDCLOUD}>Wordcloud</option>
-                                    <option value={DOWNLOAD}>Download</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    {/*End N-Grams Dropdown*/}
-
-                    {/*Readability*/}
-                    <div className="col-50 ks-cboxtags">
-                        <input type="checkbox"
-                               name="readabilityChecked"
-                               id="readability"
-                               className="checkboxes"
-                               onChange={this.handleInputChange}/>
-                        <label htmlFor="readability" className="checkboxes">Readability</label>
-                    </div>
-                    {/*End Readability*/}
-                </div>
-                <div className="row">
-                    {/*Begin Tokens Checkbox + Dropdown*/}
-                    <div className="col-50">
-                        <div className="row ks-cboxtags">
-                            <input type="checkbox"
-                                   name="tokensChecked"
-                                   id="tokens"
-                                   className="checkboxes"
-                                   checked={this.state.tokensChecked}
-                                   onChange={this.handleInputChange}/>
-                            <label htmlFor="tokens" className="checkboxes">Tokens</label>
-                        </div>
-
-                        {/*Token settings*/}
-                        <div className={"row"} style={{display: tokensHidden}}>
-                            <div className="col-50">
-                                <label htmlFor={"tokenRemoveStopWords"}>Remove Stop Words: </label>
-                            </div>
-                            <div className="col-50">
-                                <input type="checkbox" name="tokenRemoveStopWords" id="tokenRemoveStopWords"
-                                       className="input-large"
-                                       onChange={this.handleInputChange}/>
-                            </div>
-                        </div>
-                        <div className={"row"} style={{display: tokensHidden}}>
-                            <div className="col-50">
-                                <label htmlFor={"tokenRemovePunctuation"}>Remove Punctuation: </label>
-                            </div>
-                            <div className="col-50">
-                                <input type="checkbox" name="tokenRemovePunctuation" id="tokenRemovePunctuation"
-                                       className="input-large"
-                                       onChange={this.handleInputChange}/>
-                            </div>
-                        </div>
-                        <div className={"row"} style={{display: tokensHidden}}>
-                            <div className="col-50">
-                                <label htmlFor="token-limit">Limit: </label>
-                            </div>
-                            <div className="col-50">
-                                <input type="number" name="tokenLimit" id="token-limit" className="input-large"
-                                       onChange={this.handleInputChange}/>
-                            </div>
-                        </div>
-                        <div className={"row"} style={{display: tokensHidden}}>
-                            <div className="col-50">
-                                <label htmlFor={TOKEN_VISUALIZATION}>Visualization: </label>
-                            </div>
-                            <div className="col-50">
-                                <select className="input-large" name={TOKEN_VISUALIZATION} id={TOKEN_VISUALIZATION}
-                                        onChange={this.handleVisualizationChange}>
-                                    <option value={WORDCLOUD}>Wordcloud</option>
-                                    <option value={BAR_CHART}>Bar Chart</option>
-                                    <option value={DOWNLOAD}>Download</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    {/*End Tokens Dropdown*/}
-
-                    {/*Begin Token Count*/}
-                    <div className="col-50">
-                        <div className="row ks-cboxtags">
-                            <input type="checkbox"
-                                   name={"tokenCountChecked"}
-                                   id={"tokenCount"}
-                                   className={"checkboxes"}
-                                   checked={this.state.tokenCountChecked}
-                                   onChange={this.handleInputChange}/>
-                            <label htmlFor="tokenCount" className="checkboxes">
-                                Token Count</label>
-                        </div>
-                    </div>
-                    {/* End Token Count */}
+                    <AnalysisOptionsParent
+                        data={this.state.analysisOptionsArray}
+                        state={this.state}
+                        handleInputChange={this.handleInputChange}
+                        handleVisualizationChange={this.handleVisualizationChange}
+                    />
                 </div>
 
-                <div className={"row"}>
-                    {/*Begin Word Count */}
-                    <div className={"col-50"}>
-                        <div className="row ks-cboxtags">
-                            <input type="checkbox"
-                                   name={"wordCountChecked"}
-                                   id={"wordCountChecked"}
-                                   className={"checkboxes"}
-                                   checked={this.state.wordCountChecked}
-                                   onChange={this.handleInputChange}/>
-                            <label htmlFor="wordCountChecked" className="checkboxes">Word Count</label>
-                        </div>
 
-                        <div className={"row"} style={{display: this.state.wordCountChecked ? '' : 'none'}}>
-                            <div className="col-50">
-                                <label htmlFor="wordCountRemoveStopWords">Remove stop words: </label>
-                            </div>
-                            <div className="col-50">
-                                <input type="checkbox" name="wordCountRemoveStopWords" id="wordCountRemoveStopWords"
-                                       className="input-large"
-                                       onChange={this.handleInputChange}/>
-                            </div>
-                        </div>
-                    </div>
-                    {/* End Word Count */}
-
-                    {/*Begin most frequent words */}
-                    <div className={"col-50"}>
-                        <div className="row ks-cboxtags">
-                            <input type="checkbox"
-                                   name={"mostFrequentWordsChecked"}
-                                   id={"mostFrequentWords"}
-                                   className={"checkboxes"}
-                                   checked={this.state.mostFrequentWordsChecked}
-                                   onChange={this.handleInputChange}/>
-                            <label htmlFor="mostFrequentWords" className="checkboxes">Most Frequent Words</label>
-                        </div>
-
-                        <div className={"row"} style={{display: this.state.mostFrequentWordsChecked ? '' : 'none'}}>
-                            <div className="col-50">
-                                <label htmlFor="mostFrequentWordsRemoveStopWords">Remove stop words: </label>
-                            </div>
-                            <div className="col-50">
-                                <input type="checkbox" name="mostFrequentWordsRemoveStopWords"
-                                       id="mostFrequentWordsRemoveStopWords" className="input-large"
-                                       onChange={this.handleInputChange}/>
-                            </div>
-                        </div>
-
-                        <div className={"row"} style={{display: this.state.mostFrequentWordsChecked ? '' : 'none'}}>
-                            <div className="col-50">
-                                <label htmlFor="mostFrequentWordsLemmatise">Lemmatise: </label>
-                            </div>
-                            <div className="col-50">
-                                <input type="checkbox" name="mostFrequentWordsLemmatise" id="mostFrequentWordsLemmatise"
-                                       className="input-large"
-                                       onChange={this.handleInputChange}/>
-                            </div>
-                        </div>
-
-                        <div className={"row"} style={{display: this.state.mostFrequentWordsChecked ? '' : 'none'}}>
-                            <div className="col-50">
-                                <label htmlFor="mostFrequentWordsLimit">Limit: </label>
-                            </div>
-                            <div className="col-50">
-                                <input type="number" name="mostFrequentWordsLimit" id="mostFrequentWordsLimit"
-                                       className="input-large"
-                                       onChange={this.handleInputChange}/>
-                            </div>
-
-                            <div className={"row"} style={{display: this.state.mostFrequentWordsChecked ? '' : 'none'}}>
-                                <div className="col-50">
-                                    <label htmlFor={MOST_FREQUENT_WORD_VISUALIZATION}>Visualization: </label>
-                                </div>
-                                <div className="col-50">
-                                    <select className="input-large" name={MOST_FREQUENT_WORD_VISUALIZATION}
-                                            id={MOST_FREQUENT_WORD_VISUALIZATION}
-                                            onChange={this.handleVisualizationChange}>
-                                        <option value={BAR_CHART}>Bar Chart</option>
-                                        <option value={WORDCLOUD}>Wordcloud</option>
-                                        <option value={DOWNLOAD}>Download</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {/* End most frequent words */}
-                </div>
-                <div className="row">
-                    {/* Begin sentences}*/}
-                    <div className="col-50">
-                        <div className="row ks-cboxtags">
-                            <input type="checkbox"
-                                   name={"sentencesChecked"}
-                                   id={"sentencesChecked"}
-                                   className={"checkboxes"}
-                                   checked={this.state.sentencesChecked}
-                                   onChange={this.handleInputChange}/>
-                            <label htmlFor="sentencesChecked" className="checkboxes">Sentences</label>
-                        </div>
-                    </div>
-                    {/* End Sentences */}
-
-                    {/* Begin sentence count */}
-                    <div className="col-50">
-                        <div className="row ks-cboxtags">
-                            <input type="checkbox"
-                                   name={"sentenceCountChecked"}
-                                   id={"sentenceCountChecked"}
-                                   className={"checkboxes"}
-                                   checked={this.state.sentenceCountChecked}
-                                   onChange={this.handleInputChange}/>
-                            <label htmlFor="sentenceCountChecked" className="checkboxes">Sentence Count</label>
-                        </div>
-                    </div>
-
-                </div>
 
                 <div className="row">
-                    {/* Begin pos tags}*/}
-                    <div className="col-50">
-                        <div className="row ks-cboxtags">
-                            <input type="checkbox"
-                                   name={"posTagsChecked"}
-                                   id={"posTagsChecked"}
-                                   className={"checkboxes"}
-                                   checked={this.state.posTagsChecked}
-                                   onChange={this.handleInputChange}/>
-                            <label htmlFor="posTagsChecked" className="checkboxes">PoS-Tags</label>
-                        </div>
-                    </div>
-
-
+                    <input type="submit" name="submitSearch" id="submitSearch" className="generic-button" style={{paddingTop: "10px"}}/>
                 </div>
-
-                <input type="submit" name="submitSearch" id="submitSearch" className="generic-button"/>
-
             </form>
         );
     }
