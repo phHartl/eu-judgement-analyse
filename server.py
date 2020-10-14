@@ -1,6 +1,6 @@
 from mongo import *
 from analysis import CorpusAnalysis
-from flask import render_template, Flask, request
+from flask import render_template, Flask, request, jsonify, make_response
 from flask_pymongo import PyMongo
 from collections import OrderedDict
 from api_functions import *
@@ -21,7 +21,12 @@ def __singular_doc_requested(args):
     if args.get('column') not in uids:
         return False
     return True
-           
+
+@app.before_first_request          
+def load_models():
+    add_analyser("en")
+    add_analyser("de")
+
 
 # Create a URL route in our application for "/"
 @app.route('/')
@@ -34,7 +39,7 @@ def home():
     return render_template('home.html')
 
 
-@app.route('/eu-judgments/api/data', methods=['GET'])
+@app.route('/eu-judgments/api/data', methods=['POST'])
 def query():
     req = request.get_json()
     language = req.get('language')
@@ -56,9 +61,13 @@ def query():
     else:
         corpus = get_docs_by_custom_query(corpus_args, language)
 
+    # analyse and save for in every way specified in the request
+    # for arg in analysis_args:
+    #     analysis_data[arg] = analyse_selected_corpus(corpus, arg)
     analysis_data = analyse_corpus(corpus, analysis_args, language)
-
-    return analysis_data
+    response = make_response(jsonify(analysis_data))
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
 
     # If we're running in stand alone mode, run the application
 if __name__ == '__main__':
