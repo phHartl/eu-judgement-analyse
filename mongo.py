@@ -1,11 +1,13 @@
 from pymongo import MongoClient, errors
 from datetime import datetime
 
-client = MongoClient('localhost', 27017)
+PRINT_DUPLICATE_ERRORS = 0
+SERVER_TIMEOUT_MS = 5000
+
+client = MongoClient('localhost', 27017, serverSelectionTimeoutMS = SERVER_TIMEOUT_MS)
 db = client.judgment_corpus
 collection = client.judgment_corpus.judgments_en  # english as default language
 
-PRINT_DUPLICATE_ERRORS = 0
 
 AVAILABLE_LANGUAGES = {
     'Bulgarian': 'bg',
@@ -40,6 +42,15 @@ def __get_datetime_from_string(ymd_string):
         split = ymd_string.split('-')
         date = datetime(int(split[0]), int(split[1]), int(split[2]))
         return date
+
+def db_is_running():
+    try:
+        client.server_info()
+    except:
+        print('Error connecting to MongoDB instance. Ensure MongoDB is running.')
+        return False
+    else:
+        return True
 
 def change_cur_coll(language):
     if language in AVAILABLE_LANGUAGES.values():

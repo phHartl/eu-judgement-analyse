@@ -8,16 +8,13 @@ from api_functions import *
 # Create the application instance
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/judgment_corpus"
-app.config['TESTING'] = True
 mongo = PyMongo(app)
 db = mongo.db
 collection = mongo.db.judgements
 
-
 def __singular_doc_requested(args):
     if isinstance(args, list):
         return False
-    # https://www.geeksforgeeks.org/python-get-the-first-key-in-dictionary/
     if isinstance(args.get('value'), list):
         return False
     uids = ['celex', 'ecli', 'reference']
@@ -44,9 +41,7 @@ def home():
 
 @app.route('/eu-judgments/api/data', methods=['POST'])
 def query():
-    # args = request.args
-    # print(args)
-    req = request.get_json(force=True)
+    req = request.get_json()
     language = req.get('language')
     corpus_args = req.get('corpus')
     analysis_args = req.get('analysis')
@@ -76,4 +71,5 @@ def query():
 
     # If we're running in stand alone mode, run the application
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    if db_is_running():
+        app.run(host='127.0.0.1', port=5000, debug=True, threaded=True)
