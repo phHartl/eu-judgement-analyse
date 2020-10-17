@@ -52,7 +52,6 @@ class DataVisualizer extends React.Component {
 
     setDataState() {
         let response = this.props.data;
-        console.debug(response);
         this.resetState();
         for (let key in response) {
             if (response.hasOwnProperty(key)) {
@@ -66,7 +65,6 @@ class DataVisualizer extends React.Component {
     }
 
     setSingleAnalysisState(key) {
-        console.debug(key);
         switch (key) {
             case "n-grams":
                 // this.setState({nGrams: true});

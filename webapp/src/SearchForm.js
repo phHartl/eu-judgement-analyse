@@ -25,11 +25,10 @@ import {
     TOKEN_VISUALIZATION, TOKENS, WORD_COUNT,
     WORDCLOUD
 } from "./Constants";
-import DropdownParent from "./DropdownComponents/DropdownParent";
-import FilterEntry from "./FilterEntry";
+import FilterDropdownParent from "./FilterDropdown/FilterDropdownParent";
 import FilterEntryParent from "./FilterEntryParent";
-import AnalysisOptions from "./Analysis/AnalysisOptions";
 import AnalysisOptionsParent from "./Analysis/AnalysisOptionsParent";
+import AnalysisDropdownParent from "./AnalysisDropdown/AnalysisDropdownParent";
 
 
 let requestJSON = "";
@@ -63,6 +62,7 @@ class SearchForm extends React.Component {
             dropdownData: "",
             filterEntries: [],
             filterValues: [],
+            currentAddedAnalysisOptions: [],
             analysisOptionsArray: [],
             searchFilterElements: [{
                 parties: {
@@ -218,128 +218,130 @@ class SearchForm extends React.Component {
                     }
                 }
             ],
-            analysisOptions: [{
-                nGrams: {
-                    name: "nGramsOptions",
-                    id: "nGramsOptions",
-                    description: N_GRAMS,
-                    options: [{
-                        n: {
-                            inputType: "number",
-                            description: "N",
-                            name: "n"
-                        },
-                        limit: {
-                            inputType: "number",
-                            description: "Limit",
-                            name: "nOptionsLimit"
-                        }
-                    }],
-                    visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
-                },
-                readability: {
-                    name: "readabilityOptions",
-                    id: "readabilityOptions",
-                    description: READABILITY,
-                    options: null,
-                    visualizationOptions: null
-                },
+            analysisOptions: [
+                {
+                    nGrams: {
+                        name: "nGramsOptions",
+                        id: "nGramsOptions",
+                        description: N_GRAMS,
+                        options: [{
+                            n: {
+                                inputType: "number",
+                                description: "N",
+                                name: "n"
+                            },
+                            limit: {
+                                inputType: "number",
+                                description: "Limit",
+                                name: "nOptionsLimit"
+                            }
+                        }],
+                        visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
+                    },
+                    readability: {
+                        name: "readabilityOptions",
+                        id: "readabilityOptions",
+                        description: READABILITY,
+                        options: null,
+                        visualizationOptions: null
+                    },
 
-                tokens: {
-                    name: "tokensOptions",
-                    id: "tokensOptions",
-                    description: TOKENS,
-                    options: [{
-                        removeStopWords: {
-                            inputType: "checkbox",
-                            description: "Remove Stop Words",
-                            name: "tokensOptionsRemoveStopWords"
-                        },
-                        removePunctuation: {
-                            inputType: "checkbox",
-                            description: "Remove Punctuation",
-                            name: "tokensOptionsRemovePunctuation"
-                        },
-                        limit: {
-                            inputType: "number",
-                            description: "Limit",
-                            name: "tokensOptionsLimit"
-                        }
-                    }],
-                    visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
-                },
+                    tokens: {
+                        name: "tokensOptions",
+                        id: "tokensOptions",
+                        description: TOKENS,
+                        options: [{
+                            removeStopWords: {
+                                inputType: "checkbox",
+                                description: "Remove Stop Words",
+                                name: "tokensOptionsRemoveStopWords"
+                            },
+                            removePunctuation: {
+                                inputType: "checkbox",
+                                description: "Remove Punctuation",
+                                name: "tokensOptionsRemovePunctuation"
+                            },
+                            limit: {
+                                inputType: "number",
+                                description: "Limit",
+                                name: "tokensOptionsLimit"
+                            }
+                        }],
+                        visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
+                    },
 
-                tokenCount: {
-                    name: "tokenCountOptions",
-                    id: "tokenCountOptions",
-                    description: TOKEN_COUNT,
-                    options: null,
-                    visualizationOptions: null
-                },
+                    tokenCount: {
+                        name: "tokenCountOptions",
+                        id: "tokenCountOptions",
+                        description: TOKEN_COUNT,
+                        options: null,
+                        visualizationOptions: null
+                    },
 
-                wordCount: {
-                    name: "wordCountOptions",
-                    id: "wordCountOptions",
-                    description: WORD_COUNT,
-                    options: [{
-                        removeStopWords: {
-                            inputType: "checkbox",
-                            description: "Remove Stop Words",
-                            name: "wordCountOptionsRemoveStopWords"
-                        }
-                    }],
-                    visualizationOptions: null
-                },
+                    wordCount: {
+                        name: "wordCountOptions",
+                        id: "wordCountOptions",
+                        description: WORD_COUNT,
+                        options: [{
+                            removeStopWords: {
+                                inputType: "checkbox",
+                                description: "Remove Stop Words",
+                                name: "wordCountOptionsRemoveStopWords"
+                            }
+                        }],
+                        visualizationOptions: null
+                    },
 
-                mostFrequentWords: {
-                    name: "mostFrequentWordsOptions",
-                    id: "mostFrequentWordsOptions",
-                    description: MOST_FREQUENT_WORDS,
-                    options: [{
-                        removeStopWords: {
-                            inputType: "checkbox",
-                            description: "Remove Stop Words",
-                            name: "mostFrequentWordsOptionsRemoveStopWords"
-                        },
-                        lemmatise: {
-                            inputType: "checkbox",
-                            description: "Lemmatise",
-                            name: "mostFrequentWordsOptionsLemmatise"
-                        },
-                        limit: {
-                            inputType: "number",
-                            description: "Limit",
-                            name: "mostFrequentWordsOptionsLimit"
-                        }
-                    }],
-                    visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
-                },
+                    mostFrequentWords: {
+                        name: "mostFrequentWordsOptions",
+                        id: "mostFrequentWordsOptions",
+                        description: MOST_FREQUENT_WORDS,
+                        options: [{
+                            removeStopWords: {
+                                inputType: "checkbox",
+                                description: "Remove Stop Words",
+                                name: "mostFrequentWordsOptionsRemoveStopWords"
+                            },
+                            lemmatise: {
+                                inputType: "checkbox",
+                                description: "Lemmatise",
+                                name: "mostFrequentWordsOptionsLemmatise"
+                            },
+                            limit: {
+                                inputType: "number",
+                                description: "Limit",
+                                name: "mostFrequentWordsOptionsLimit"
+                            }
+                        }],
+                        visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
+                    },
 
-                sentences: {
-                    name: "sentencesOptions",
-                    id: "sentencesOptions",
-                    description: SENTENCES,
-                    options: null,
-                    visualizationOptions: null
-                },
+                    sentences: {
+                        name: "sentencesOptions",
+                        id: "sentencesOptions",
+                        description: SENTENCES,
+                        options: null,
+                        visualizationOptions: null
+                    },
 
-                sentenceCount: {
-                    name: "sentenceCountOptions",
-                    id: "sentenceCountOptions",
-                    description: SENTENCE_COUNT,
-                    options: null,
-                    visualizationOptions: null
-                },
+                    sentenceCount: {
+                        name: "sentenceCountOptions",
+                        id: "sentenceCountOptions",
+                        description: SENTENCE_COUNT,
+                        options: null,
+                        visualizationOptions: null
+                    },
 
-                posTags: {
-                    name: "posTagsOptions",
-                    id: "posTagsOptions",
-                    description: POS_TAGS,
-                    options: null,
-                    visualizationOptions: null
-                }
+                    posTags: {
+                        name: "posTagsOptions",
+                        id: "posTagsOptions",
+                        description: POS_TAGS,
+                        options: null,
+                        visualizationOptions: null
+                    }
 
-            }]
+                }]
+
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -348,6 +350,8 @@ class SearchForm extends React.Component {
         this.handleSubmit = this.handleSubmit.bind(this);
         this.addFilterEntry = this.addFilterEntry.bind(this);
         this.removeFilterEntry = this.removeFilterEntry.bind(this);
+        this.addAnalysisOptionToDocument = this.addAnalysisOptionToDocument.bind(this);
+        this.removeAnalysisOptionFromDocument = this.removeAnalysisOptionFromDocument.bind(this);
     }
 
     searchInputChange(event) {
@@ -412,72 +416,91 @@ class SearchForm extends React.Component {
         // json.corpus = this.getSearchInputValues();
         json.corpus = this.getFilterValues();
         json.analysis = this.addAnalysisOptionsToJson();
+        if (json.analysis.length === 0) {
+            document.getElementById('analysis-hint').setAttribute("style", "color: #b81d1d");
+            return;
+        }
         this.props.onResponse(json);
         console.debug(json);
     }
 
     addAnalysisOptionsToJson() {
         let analysisTypes = [];
-        if (this.state.n === "") {
-            this.state.n = 2;
-        }
-        if (this.state.nGramsOptions) {
-            analysisTypes.push({
-                type: "n-grams",
-                n: parseInt(this.state.n),
-                limit: parseInt(this.state.nGramsLimit)
-            })
-        }
 
-        if (this.state.readabilityOptions) {
-            analysisTypes.push({
-                type: "readability"
-            })
-        }
+        for (const element of this.state.currentAddedAnalysisOptions) {
+            switch (element.description) {
+                case N_GRAMS:
+                    if (this.state.n === "") {
+                        this.state.n = 2;
+                    }
 
-        if (this.state.tokensOptions) {
-            analysisTypes.push({
-                type: "tokens",
-                "remove stop words": this.state.tokenRemoveStopWords,
-                "remove punctuation": this.state.tokenRemovePunctuation,
-                limit: parseInt(this.state.tokenLimit)
-            })
-        }
+                    analysisTypes.push({
+                        type: "n-grams",
+                        n: parseInt(this.state.n),
+                        limit: parseInt(this.state.nGramsLimit)
+                    });
 
-        if (this.state.mostFrequentWordsOptions) {
-            analysisTypes.push({
-                type: "most frequent words",
-                "remove stop words": this.state.mostFrequentWordsRemoveStopWords,
-                lemmatise: this.state.mostFrequentWordsLemmatise,
-                limit: parseInt(this.state.mostFrequentWordsLimit)
-            })
-        }
+                    break;
 
-        if (this.state.sentenceCountOptions) {
-            analysisTypes.push({
-                type: "sentence count"
-            })
-        }
+                case READABILITY:
+                    analysisTypes.push({
+                        type: "readability"
+                    });
+                    break;
 
-        if (this.state.tokenCountOptions) {
-            analysisTypes.push({
-                type: "token count"
-            })
-        }
+                case TOKENS:
+                    analysisTypes.push({
+                        type: "tokens",
+                        "remove stop words": this.state.tokenRemoveStopWords,
+                        "remove punctuation": this.state.tokenRemovePunctuation,
+                        limit: parseInt(this.state.tokenLimit)
+                    });
+                    break;
 
-        if (this.state.wordCountOptions) {
-            analysisTypes.push({
-                type: "word count",
-                "remove stop words": this.state.wordCountRemoveStopWords
-            })
-        }
+                case MOST_FREQUENT_WORDS:
+                    analysisTypes.push({
+                        type: "most frequent words",
+                        "remove stop words": this.state.mostFrequentWordsRemoveStopWords,
+                        lemmatise: this.state.mostFrequentWordsLemmatise,
+                        limit: parseInt(this.state.mostFrequentWordsLimit)
+                    });
+                    break;
 
-        if (this.state.posTagsOptions) {
-            analysisTypes.push({
-                type: "pos tags"
-            })
-        }
+                case SENTENCE_COUNT:
+                    analysisTypes.push({
+                        type: "sentence count"
+                    });
+                    break;
 
+                case TOKEN_COUNT:
+                    analysisTypes.push({
+                        type: "token count"
+                    })
+                    break;
+
+                case WORD_COUNT:
+                    analysisTypes.push({
+                        type: "word count",
+                        "remove stop words": this.state.wordCountRemoveStopWords
+                    })
+                    break;
+
+                case POS_TAGS:
+                    analysisTypes.push({
+                        type: "pos tags"
+                    })
+                    break;
+
+                case SENTENCES:
+                    analysisTypes.push({
+                        type: "sentences"
+                    })
+                    break;
+
+                default:
+                    console.info("No matching analysis option found.")
+            }
+        }
 
         return analysisTypes;
     }
@@ -718,6 +741,24 @@ class SearchForm extends React.Component {
         this.setState({analysisOptionsArray: array});
     }
 
+    addAnalysisOptionToDocument(element) {
+        let array = this.state.currentAddedAnalysisOptions;
+
+        array.push(element);
+        this.setState({currentAddedAnalysisOptions: array});
+    }
+
+    removeAnalysisOptionFromDocument(element) {
+        console.debug("removing item:");
+        let array = this.state.currentAddedAnalysisOptions;
+        for (let i = 0; i < array.length; i++) {
+            if (array[i] === element) {
+                array.splice(i, 1);
+                this.setState({currentAddedAnalysisOptions: array});
+            }
+        }
+    }
+
     componentDidUpdate(prevProps, prevState, snapshot) {
         // put debug logs for states here if needed
     }
@@ -731,72 +772,85 @@ class SearchForm extends React.Component {
 
         return (
             <form className="feature-container" onSubmit={this.handleSubmit}>
-                <div className="row filter-entry">
-                    <div className="col-25">
-                        <label htmlFor="quickSearch" className="search-label">Quick Search</label>
-                    </div>
-                    <div className="col-70">
-                        <input type="text" name="quickSearch" id="quickSearch" className="input-large"
-                               onChange={this.searchInputChange}/>
-                    </div>
-                </div>
-
-                <div className="row filter-entry">
-                    <div className="col-25">
-                        <label htmlFor="language" className="search-label">Language</label>
-                    </div>
-                    <div className="col-70">
-                        <select name="language" id="language" className="input-large" onChange={this.searchInputChange}>
-                            <option value="english">English</option>
-                            <option value="german">German</option>
-                        </select>
+                <div className="row search-option-container">
+                    <h3 className="col-100">Search Filter</h3>
+                    <div className="row filter-entry">
+                        <div className="col-25">
+                            <label htmlFor="quickSearch" className="search-label">Quick Search</label>
+                        </div>
+                        <div className="col-70">
+                            <input type="text" name="quickSearch" id="quickSearch" className="input-large"
+                                   onChange={this.searchInputChange}/>
+                        </div>
                     </div>
 
+                    <div className="row filter-entry">
+                        <div className="col-25">
+                            <label htmlFor="language" className="search-label">Language</label>
+                        </div>
+                        <div className="col-70">
+                            <select name="language" id="language" className="input-large"
+                                    onChange={this.searchInputChange}>
+                                <option value="english">English</option>
+                                <option value="german">German</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div className="row additional-filter-container" id="additional-filter-container">
+                        {/*{this.state.filterEntries}*/}
+                        <FilterEntryParent
+                            data={this.state.filterEntries}
+                            getNegationIconClass={(item) => this.getItemNegationClassName(item)}
+                            getSearchIdentifierClass={(item) => this.getSearchIdentifierClass(item)}
+                            onChange={this.searchInputChange}
+                            onDelete={(item) => this.removeFilterEntry(item)}
+                            onSetOperator={(item) => this.setOperatorEntry(item)}
+                            onSetSearchIdentifier={(item) => this.setSearchIdentifier(item)}
+                        />
+                    </div>
+
+                    <div className="row">
+                        {/*<div id="filter-dropdown" className="dropdown-content">*/}
+                        {/*    /!* Programatically add filter options here *!/*/}
+                        {/*</div>*/}
+                        {/*<a className="generic-button dropdown" id="add-filter-button" onClick={() => {this.showDropdownContent()}}>+ Filter</a>*/}
+                        <div className="col-100">
+                            <FilterDropdownParent
+                                data={this.state.searchFilterElements}
+                                addFilterEntry={this.addFilterEntry}
+                                elements={this.state.filterEntries}
+                            />
+                        </div>
+                    </div>
                 </div>
 
-                <div className="row additional-filter-container" id="additional-filter-container">
-                    {/*{this.state.filterEntries}*/}
-                    <FilterEntryParent
-                        data={this.state.filterEntries}
-                        getNegationIconClass={(item) => this.getItemNegationClassName(item)}
-                        getSearchIdentifierClass={(item) => this.getSearchIdentifierClass(item)}
-                        onChange={this.searchInputChange}
-                        onDelete={(item) => this.removeFilterEntry(item)}
-                        onSetOperator={(item) => this.setOperatorEntry(item)}
-                        onSetSearchIdentifier={(item) => this.setSearchIdentifier(item)}
-                    />
+                <div className="row search-option-container" style={{marginTop:"20px"}}>
+                    <h3 className="col-100">Analysis Options</h3>
+
+                    <div className="row">
+                        <AnalysisDropdownParent
+                            data={this.state.analysisOptions}
+                            alreadyAdded={this.state.currentAddedAnalysisOptions}
+                            addAnalysisOption={this.addAnalysisOptionToDocument}
+                        />
+                    </div>
+
+                    <div className="row">
+                        <AnalysisOptionsParent
+                            data={this.state.currentAddedAnalysisOptions}
+                            handleInputChange={this.handleInputChange}
+                            handleVisualizationChange={this.handleVisualizationChange}
+                            removeAnalysisOptionFromDocument={(item) => this.removeAnalysisOptionFromDocument(item)}
+                        />
+                    </div>
                 </div>
 
-                <div className="row dropdown">
-                    {/*<div id="filter-dropdown" className="dropdown-content">*/}
-                    {/*    /!* Programatically add filter options here *!/*/}
-                    {/*</div>*/}
-                    {/*<a className="generic-button dropdown" id="add-filter-button" onClick={() => {this.showDropdownContent()}}>+ Filter</a>*/}
-                    <DropdownParent
-                        data={this.state.searchFilterElements}
-                        addFilterEntry={this.addFilterEntry}
-                        elements={this.state.filterEntries}
-                    />
-                </div>
-
-
-                <div className="row" style={{paddingTop: "30px"}}>
-                    Analysis
-                </div>
 
                 <div className="row">
-                    <AnalysisOptionsParent
-                        data={this.state.analysisOptionsArray}
-                        state={this.state}
-                        handleInputChange={this.handleInputChange}
-                        handleVisualizationChange={this.handleVisualizationChange}
-                    />
-                </div>
-
-
-
-                <div className="row">
-                    <input type="submit" name="submitSearch" id="submitSearch" className="generic-button" style={{paddingTop: "10px"}}/>
+                    <input type="submit" name="submit-search" id="submit-search"
+                           />
                 </div>
             </form>
         );

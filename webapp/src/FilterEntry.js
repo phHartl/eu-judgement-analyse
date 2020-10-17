@@ -46,7 +46,7 @@ const FilterEntry = ({elements, index, text, onChange, onDelete}) => {
                 <input type={inputType} className="input-large" name={name} onChange={onChange}/>
             </div>
             <div className="col-5">
-                <a className="remove-filter-entry" onClick={onDelete(index)}><i className="fas fa-trash"/></a>
+                <button type={"button"} className="remove-filter-entry" onClick={onDelete(index)}><i className="fas fa-trash"/></button>
             </div>
         </div>
     )

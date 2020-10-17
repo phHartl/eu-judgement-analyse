@@ -2,7 +2,7 @@ import React from "react";
 
 let dataBackup;
 let filterData;
-const DropdownCard = ({data = [], setOpen, addFilterEntry, filterEntries}) => (
+const FilterDropdownCard = ({data = [], setOpen, addFilterEntry, filterEntries}) => (
     <div className="dropdown-item-container">
         {fillFilterNames(data)}
         {filterData.map((item, i) => (
@@ -25,4 +25,4 @@ function fillFilterNames(filterElements) {
     filterData = returnArray;
 }
 
-export default DropdownCard;
+export default FilterDropdownCard;

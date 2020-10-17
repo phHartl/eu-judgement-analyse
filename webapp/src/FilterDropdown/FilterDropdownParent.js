@@ -1,9 +1,9 @@
 
 import React from "react";
-import Button from "./DropdownButton";
-import DropdownCard from "./DropdownCard";
+import FilterDropdownButton from "./FilterDropdownButton";
+import FilterDropdownCard from "./FilterDropdownCard";
 
-const DropdownParent = ({data, addFilterEntry, filterEntries}) => {
+const FilterDropdownParent = ({data, addFilterEntry, filterEntries}) => {
     const [open, setOpen] = React.useState(false);
     const drop = React.useRef(null);
 
@@ -22,10 +22,10 @@ const DropdownParent = ({data, addFilterEntry, filterEntries}) => {
 
     return (
         <div className="dropdown" ref={drop}>
-            <Button onClick={() => setOpen(open => !open)}/>
-            {open && <DropdownCard data={data} setOpen={setOpen} addFilterEntry={addFilterEntry} filterEntries={filterEntries}/>}
+            <FilterDropdownButton onClick={() => setOpen(open => !open)}/>
+            {open && <FilterDropdownCard data={data} setOpen={setOpen} addFilterEntry={addFilterEntry} filterEntries={filterEntries}/>}
         </div>
     )
 }
 
-export default DropdownParent;
+export default FilterDropdownParent;

@@ -3,8 +3,13 @@ import AnalysisOptions from "./AnalysisOptions";
 import VisualizationOptions from "./VisualizationOptions";
 
 
-const AnalysisOptionsParent = ({data, state, handleInputChange, handleVisualizationChange}) => {
+const AnalysisOptionsParent = ({data, handleInputChange, handleVisualizationChange, removeAnalysisOptionFromDocument}) => {
 
+    if (data === undefined || data.length === 0) {
+        return (
+            <h6 id="analysis-hint">Please add at least one analysis method.</h6>
+        )
+    }
 
     return (
         data.map((item, i) => (
@@ -15,19 +20,23 @@ const AnalysisOptionsParent = ({data, state, handleInputChange, handleVisualizat
                            id={item.id}
                            className={"checkboxes fancy-checkbox"}
                            onChange={handleInputChange}
+                           checked={true}
                     />
                     <label htmlFor={item.id} className={"checkboxes fancy-label"}
                            style={{width: "65%"}}>{item.description}
-
+                        <button
+                            type={"button"}
+                            className="delete-analysis-option-button"
+                            onClick={() => removeAnalysisOptionFromDocument(item)}
+                        />
                         <div className="analysis-options row">
-                                <div className="row inner-option" style={{display: state[item.name] ? "" : "none"}}>
+                                <div className="row inner-option">
                                     <AnalysisOptions options={item.options} handleInputChange={handleInputChange}/>
                                 </div>
 
-                                <div className="row" style={{display: state[item.name] ? "" : "none"}}>
-                                    <div key={i} className="row"
-                                         style={{display: item.visualizationOptions === null ? "none" : ""}}>
-                                        <div className="col-50 inner-option">
+                                <div className="row">
+                                    <div key={i} className="row" style={{display: item.visualizationOptions === null ? "none" : ""}}>
+                                        <div className="col-50 inner-option" >
                                             <label htmlFor={item.name + "Visualization"}>Visualization</label>
                                         </div>
 

@@ -44,18 +44,18 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   color: lightgray;
   background-color: #4a505c;
-  border: none;
+  border: 1px solid black;
   cursor: pointer;
 }
 
-.add-filter-button {
+.add-search-option-button {
   padding: 10px;
   margin-top: 10px;
   font-size: 15px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   color: lightgray;
   background-color: #4a505c;
-  border: none;
+  border: 1px solid black;
   cursor: pointer;
 }
 
@@ -207,6 +207,7 @@ input, select {
 .dropdown {
   position: relative;
   display: inline-block;
+  padding-bottom: 10px;
 }
 
 .remove-filter-entry:hover {
@@ -304,7 +305,7 @@ input, select {
 
 .ks-cboxtags .fancy-label {
   padding: 8px 12px;
-  cursor: pointer;
+  cursor: inherit;
 }
 
 .ks-cboxtags .fancy-label::before {
@@ -355,6 +356,46 @@ ks-cboxtags input[type="checkbox"]:focus + .fancy-label {
   text-align: right !important;
   margin-right: 5px;
   margin-left: -5px;
+}
+
+.delete-analysis-option-button {
+  font-family: "Font Awesome 5 Free" !important;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 900;
+  font-size: 20px;
+  border: none;
+  background: none;
+  width: 35px;
+  height: 30px;
+  color: lightgray;
+  float: left;
+  cursor: pointer;
+}
+
+.delete-analysis-option-button:hover {
+  color: #b81d1d;
+}
+
+.delete-analysis-option-button::before {
+  content: "\f1f8";
+}
+
+.search-option-container {
+  border: 1px solid black;
+  background-color: #3c434d;
+}
+
+#submit-search {
+  padding: 20px 50px 20px;
+  margin: 20px;
+  font-size: 20px;
+  font-weight: bold;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  color: lightgray;
+  background-color: #4a505c;
+  border: 1px solid black;
+  cursor: pointer;
 }
 
 
