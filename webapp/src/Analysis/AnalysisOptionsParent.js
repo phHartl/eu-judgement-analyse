@@ -29,12 +29,12 @@ const AnalysisOptionsParent = ({data, handleInputChange, handleVisualizationChan
                             className="delete-analysis-option-button"
                             onClick={() => removeAnalysisOptionFromDocument(item)}
                         />
-                        <div className="analysis-options row">
-                                <div className="row inner-option">
+                        <div className="analysis-options">
+                                <div className="inner-option">
                                     <AnalysisOptions options={item.options} handleInputChange={handleInputChange}/>
                                 </div>
 
-                                <div className="row">
+                                <div>
                                     <div key={i} className="row" style={{display: item.visualizationOptions === null ? "none" : ""}}>
                                         <div className="col-50 inner-option" >
                                             <label htmlFor={item.name + "Visualization"}>Visualization</label>

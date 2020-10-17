@@ -398,6 +398,11 @@ ks-cboxtags input[type="checkbox"]:focus + .fancy-label {
   cursor: pointer;
 }
 
+input[type="number"] {
+  -moz-appearance: textfield;
+  -webkit-appearance: textfield;
+}
+
 
 /************************************
  * RAW DATA TABLE                   *
