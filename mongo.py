@@ -69,7 +69,9 @@ def init_db(used_languages=['en']):
             print("DB: collection already created for:'{}'".format(lang))
         else:
             db.create_collection(coll_name)
-            collection.create_index([('reference', -1)], unique=True)
+            db[coll_name].create_index([('reference', -1)], unique=True)
+            db[coll_name].create_index([('celex', -1)])
+            db[coll_name].create_index([('ecli', -1)])
             # possibility that two collections are created at once
             # update collist repeatedly to ensure no crashes due to "collection has already been created"
             collist = db.list_collection_names()
