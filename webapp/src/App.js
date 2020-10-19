@@ -28,6 +28,7 @@ class App extends React.Component {
             error: false,
             // dataFetched: false,
             data: '', // used to store downloaded json data
+            celex: '',
             nGramVisualization: WORDCLOUD,
             tokenVisualization: WORDCLOUD,
             mostFrequentWordVisualization: WORDCLOUD,
@@ -45,6 +46,7 @@ class App extends React.Component {
                     <h1>Justice Demo</h1>
                     <SearchForm
                         // dataFetched={this.state.dataFetched}
+                        setCelexNumber={(celex) => this.setCelexNumber(celex)}
                         data={this.state.data}
                         onResponse={json => this.handleFormSubmit(json)}
                         onVisualizationSelected={(name, value) => this.handleVisualizationSelected(name, value)}
@@ -55,16 +57,19 @@ class App extends React.Component {
                     </div>
                     <DataVisualizer
                         // dataFetched={this.state.dataFetched}
+                        celex={this.state.celex}
                         data={this.state.data}
                         nGramVisualization={this.state.nGramVisualization}
                         tokenVisualization={this.state.tokenVisualization}
                         mostFrequentWordVisualization={this.state.mostFrequentWordVisualization}
                     />
-                    {/*{this.renderDemoWordcloud()}*/}
-                    {/*{this.renderBarChart()}*/}
                 </header>
             </div>
         )
+    }
+
+    setCelexNumber(celex) {
+        this.setState({celex: celex});
     }
 
     handleVisualizationSelected(name, value) {

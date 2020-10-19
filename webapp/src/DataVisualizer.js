@@ -120,11 +120,20 @@ class DataVisualizer extends React.Component {
             <div className={"feature-container"} style={{paddingTop: "20px"}}>
                 <div>
                     <h2>Analysis Results</h2>
+                    <span>
                     <DownloadDataButton
                         description="all results"
                         data={this.props.data}
                         downloadData={(data) => this.downloadData(data, "all_results")}
                     />
+                    <a
+                        href={"https://eur-lex.europa.eu/legal-content/EN/TXT/?&uri=CELEX:" + this.props.celex}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="generic-button"
+                        style={{display: this.props.celex === '' ? 'none' : '', textDecoration:'none'}}
+                    >View Fulltext</a>
+                    </span>
                     <div id={"rawTableData"} style={{display: this.state.rawTableData === false ? 'none' : ''}}>
                         <div>
                             {this.renderRawDataTable()}

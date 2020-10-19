@@ -540,6 +540,7 @@ class SearchForm extends React.Component {
         let filterEntries = this.state.filterEntries;
         let corpus = [];
         let date = this.getDateForSearch();
+        this.props.setCelexNumber('');
 
         this.addQuickSearchToCorpus(corpus);
 
@@ -555,6 +556,10 @@ class SearchForm extends React.Component {
                 column: input.key,
                 value: this.state[input.key],
                 "search identifier": searchIdentifier
+            }
+
+            if (input.key === "celex") {
+                this.props.setCelexNumber(this.state["celex"]);
             }
 
             if (operator !== "") {
@@ -591,6 +596,7 @@ class SearchForm extends React.Component {
                 column: "celex",
                 value: this.state.quickSearch.match(celexRegex)[0]
             };
+            this.props.setCelexNumber(this.state.quickSearch.match(celexRegex)[0]);
         } else {
             entry = {
                 column: "title",
