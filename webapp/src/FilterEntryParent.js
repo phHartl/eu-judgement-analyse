@@ -28,11 +28,19 @@ const FilterEntryParent = ({data = [], getNegationIconClass, getSearchIdentifier
                     <button type="button" className="filter-option-button" onClick={() => onSetOperator(item)}>
                         <i className={getNegationIconClass(item)}/>
                     </button>
+
+                    {/*<span className="inner-input">*/}
+                    {/*<input type="checkbox" className="toggle negated-checkbox" onChange={() => onSetOperator(item)}/>*/}
+                    {/*</span>*/}
+
                 </div>
                 <div className="col-5" style={{display: item.displaySearchIdentifier}}>
-                    <button type="button" className="filter-option-button" onClick={() => onSetSearchIdentifier(item)}>
-                        <i className={getSearchIdentifierClass(item)}/>
-                    </button>
+                    {/*<button type="button" className="filter-option-button" onClick={() => onSetSearchIdentifier(item)}>*/}
+                    {/*    <i className={getSearchIdentifierClass(item)}/>*/}
+                    {/*</button>*/}
+                    <span className="inner-input">
+                    <input type="checkbox" className="toggle search-identifier-checkbox" onChange={() => onSetSearchIdentifier(item)}/>
+                    </span>
                 </div>
 
             </div>

@@ -240,10 +240,28 @@ input, select {
   transition: transform .3s ease-in-out;
 }
 
+.negated-false::after {
+  content: "Include";
+  color: lightgray;
+  font-size: 13px;
+  float: right;
+  margin-top: 1px;
+  font-style: italic;
+}
+
 .negated-true {
   color: red;
   transform: rotate(360deg);
   transition: transform .3s ease-in-out;
+}
+
+.negated-true::after {
+  content: "Exclude";
+  color: lightgray;
+  font-size: 13px;
+  float: right;
+  margin-top: 1px;
+  font-style: italic;
 }
 
 .filter-option-button {
@@ -406,6 +424,63 @@ input[type="number"] {
 .download-data-button.generic-button {
   margin-bottom: 30px;
   margin-top: 5px;
+}
+
+.negated-checkbox:checked::before {
+  content: "Excl.";
+  float: left;
+  margin-top: 4px;
+  margin-left: 4px;
+}
+
+.negated-checkbox::before {
+  content: "Incl.";
+  float: right;
+  margin-top: 4px;
+  margin-right: 4px;
+  font-size: 13px;
+}
+
+.inner-input input[type="checkbox"].negated-checkbox:checked:after {
+  background: #b81d1d !important;
+}
+
+.inner-input input[type="checkbox"].negated-checkbox:after {
+  background: green;
+}
+
+.search-identifier-checkbox {
+  background: #4a505c !important;
+  border: 1px solid black !important;
+}
+
+.search-identifier-checkbox:checked::before {
+  content: "ID";
+  float: left;
+  margin-top: 6px;
+  margin-left: 4px;
+}
+
+.search-identifier-checkbox::before {
+  content: "Name";
+  float: right;
+  margin-top: 6px;
+  margin-right: 4px;
+  font-size: 13px;
+}
+
+.inner-input input[type="checkbox"].search-identifier-checkbox:after {
+  width: 26px;
+  height: 26px;
+  top: 2px;
+}
+
+.inner-input input[type="checkbox"].search-identifier-checkbox:checked:after {
+  background: #b81d1d !important;
+}
+
+.inner-input input[type="checkbox"].search-identifier-checkbox:after {
+  background: green;
 }
 
 
