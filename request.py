@@ -4,6 +4,7 @@ import sys
 
 from zeep import Client
 from zeep import xsd
+from bs4 import BeautifulSoup as bs
 
 from mongo import insert_doc
 from plugin import prevent_escaping_characters_in_cdata

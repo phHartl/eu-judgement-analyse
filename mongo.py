@@ -1,11 +1,13 @@
 from pymongo import MongoClient, errors
 from datetime import datetime
 
-client = MongoClient('localhost', 27017)
+PRINT_DUPLICATE_ERRORS = 0
+SERVER_TIMEOUT_MS = 5000
+
+client = MongoClient('localhost', 27017, serverSelectionTimeoutMS = SERVER_TIMEOUT_MS)
 db = client.judgment_corpus
 collection = client.judgment_corpus.judgments_en  # english as default language
 
-PRINT_DUPLICATE_ERRORS = 0
 
 AVAILABLE_LANGUAGES = {
     'Bulgarian': 'bg',
@@ -41,6 +43,15 @@ def __get_datetime_from_string(ymd_string):
         date = datetime(int(split[0]), int(split[1]), int(split[2]))
         return date
 
+def db_is_running():
+    try:
+        client.server_info()
+    except:
+        print('Error connecting to MongoDB instance. Ensure MongoDB is running.')
+        return False
+    else:
+        return True
+
 def change_cur_coll(language):
     if language in AVAILABLE_LANGUAGES.values():
         _collection = db["judgments_{}".format(language)]
@@ -58,7 +69,9 @@ def init_db(used_languages=['en']):
             print("DB: collection already created for:'{}'".format(lang))
         else:
             db.create_collection(coll_name)
-            collection.create_index([('reference', -1)], unique=True)
+            db[coll_name].create_index([('reference', -1)], unique=True)
+            db[coll_name].create_index([('celex', -1)])
+            db[coll_name].create_index([('ecli', -1)])
             # possibility that two collections are created at once
             # update collist repeatedly to ensure no crashes due to "collection has already been created"
             collist = db.list_collection_names()
@@ -120,7 +133,7 @@ def get_docs_by_custom_query(query_args, language):
     search_dict = {}
     keys_containing_dicts = ["author", "subject_matter", "case_law_directory",
                             "applicant", "defendant", "procedure_type"]
-    change_cur_coll(language)
+    collection = change_cur_coll(language)
 
     # encapsule in list if only one column is specified.
     if not isinstance(query_args, list):

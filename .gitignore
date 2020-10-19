@@ -220,3 +220,9 @@ response.txt
 /.idea
 
 dump_backup/
+
+
+# Webapp
+webapp/node_modules
+webapp/.idea
+

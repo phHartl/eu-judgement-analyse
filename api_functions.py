@@ -1,6 +1,23 @@
 from collections import Counter
 from mongo import *
-from analysis import Analysis, CorpusAnalysis
+from analysis import CorpusAnalysis
+
+# Converted all API functions to class for faster processing. This way, the Analysis class doesn't need to load the models from disk on each api request.
+# On systems with a lot of available memory both models can be kept in memory (about 2.5 GB of RAM per language) hence no switching (~10 seconds) would be needed
+analysers = {
+    "en": None,
+    "de": None
+}
+
+def add_analyser(language):
+    global analysers
+    if language == "en" and not analysers.get("en"):
+        print("Loading english models...")
+        analysers["en"] = CorpusAnalysis("en")
+    elif language == "de" and not analysers.get("de"):
+        print("Loading german models")
+        analysers["de"] = CorpusAnalysis("de")
+    
 
 def __get_top_occurrences(_list, limit=None):
     # create list with parsed strings because custom types like Token cannot be string compared
@@ -17,9 +34,6 @@ def __get_top_occurrences(_list, limit=None):
     return occurrence_list
 
 def __get_top_n_grams(analyser, args):
-    # prevent present bug, when getting n-grams from a corpus
-    if not isinstance(analyser, Analysis):
-        return None
     # get n-grams
     n_grams = []
     if args.get('n'):
@@ -49,12 +63,13 @@ def __to_tuple_list(token_tuples):
         tuples.append((str(item[0]), str(item[1])))
     return tuples
 
-def __analyse_generic_parameters(analyser, args, language):
+def __run_analysis(analyser, args):
     analysis_data = None
     arg_type = args.get('type')
+
     if arg_type == 'n-grams':
         analysis_data = __get_top_n_grams(analyser, args)
-    elif arg_type == 'readability':
+    elif arg_type == 'average_readability':
         analysis_data = analyser.get_readability_score()
     elif arg_type == 'tokens':
         analysis_data = __get_top_tokens(analyser, args)
@@ -62,96 +77,73 @@ def __analyse_generic_parameters(analyser, args, language):
         analysis_data = __to_sentence_list(analyser.get_sentences())
     elif arg_type == 'lemmata':
         analysis_data = __to_tuple_list(analyser.get_lemmata())
-    elif arg_type == 'pos tags':
+    elif arg_type == 'pos_tags':
         analysis_data = __to_tuple_list(analyser.get_pos_tags())
-    elif arg_type == 'named entities':
+    elif arg_type == 'named_entities':
         analysis_data = analyser.get_named_entities()
-    elif arg_type == 'sentence count':
-        analysis_data = analyser.get_sentence_count()
-    elif arg_type == 'average word length':
-        analysis_data = analyser.get_average_word_length(args.get('remove stop words'))
-    elif arg_type == 'token count':
+    elif arg_type == 'sentence_count':
+        analysis_data = len(analyser.get_sentences())
+    elif arg_type == 'average_word_length':
+        analysis_data = analyser.get_average_token_length(True, args.get('remove_stopwords'))
+    elif arg_type == 'token_count':
         analysis_data = analyser.get_token_count()
-    elif arg_type == 'word count':
-        analysis_data = analyser.get_word_count(args.get('remove stop words'))
-    elif arg_type == 'most frequent words':
-        analysis_data = analyser.get_most_frequent_words(args.get('remove stop words'),
+    elif arg_type == 'word_count':
+        analysis_data = analyser.get_token_count(True, args.get('remove_stopwords'))
+    elif arg_type == 'most_frequent_words':
+        analysis_data = analyser.get_most_frequent_words(args.get('remove_stopwords'),
             args.get('lemmatise'), args.get('limit'))
+    elif arg_type == 'named_entities_per_doc':
+        analysis_data = analyser.get_named_entities_per_doc()
+    elif arg_type == 'average_readability':
+        analysis_data = analyser.get_average_readability_score() 
+    elif arg_type == 'sentences_per_doc':
+        results = []
+        for doc_result in analyser.get_sentences_per_doc():
+            results.append(__to_sentence_list(doc_result))
+        analysis_data = results
+    elif arg_type == 'pos tags per doc':
+        results = []
+        for doc_result in analyser.get_pos_tags_per_doc():
+            results.append(__to_tuple_list(doc_result))
+        analysis_data = results
+    elif arg_type == 'lemmata_per_doc':
+        results = []
+        for doc_result in analyser.get_lemmata_per_doc(args.get('remove_stopwords')):
+            results.append(__to_tuple_list(doc_result))
+        analysis_data = results
+    elif arg_type == 'tokens_per_doc':
+        results = []
+        for doc_result in analyser.get_tokens_per_doc(args.get('remove_punctuation'),
+            args.get('remove_stopwords')):
+            results.append(__get_top_occurrences(doc_result))
+        analysis_data = results
 
     return analysis_data
 
 def analyse_corpus(corpus, args_list, language):
-    # setup
-    analyser = CorpusAnalysis(language)
+    global analysers
+    if not analysers.get(language):
+        add_analyser(language)
+    
     texts = []
     analysis_data = {}
 
     for doc in corpus:
-        texts.append(doc.get('text'))
-    analyser.init_pipeline(texts)
+        texts.append(doc)
+        if not doc.get('text'):
+            print("No text found for: " + doc.get('celex'))
+
+    analysis_types = []
+    for args in args_list:
+        analysis_types.append(args.get('type'))
+    
+    analysers[language].exec_pipeline(texts, pipeline_components = analysis_types)
 
     for args in args_list:
         arg_type = args.get('type')
-        # generic analysis
-        analysis_data[arg_type] = __analyse_generic_parameters(analyser, args, language)
-        
-        if analysis_data.get(arg_type):
-            continue
+        analysis_data[arg_type] = __run_analysis(analysers.get(language), args)
 
-        # corpus specific analysis
-        if arg_type == 'tokens per doc':
-            results = []
-            for doc_result in analyser.get_tokens_per_doc(args.get('remove punctuation'),
-                args.get('remove stop words')):
-                results.append(__get_top_occurrences(doc_result))
-            analysis_data[arg_type] = results
-        elif arg_type == 'sentences per doc':
-            results = []
-            for doc_result in analyser.get_sentences_per_doc():
-                results.append(__to_sentence_list(doc_result))
-            analysis_data[arg_type] = results
-        elif arg_type == 'pos tags per doc':
-            results = []
-            for doc_result in analyser.get_pos_tags_per_doc():
-                results.append(__to_tuple_list(doc_result))
-            analysis_data[arg_type] = results
-        elif arg_type == 'lemmata per doc':
-            results = []
-            for doc_result in analyser.get_lemmata_per_doc(args.get('remove stop words')):
-                results.append(__to_tuple_list(doc_result))
-            analysis_data[arg_type] = results
-        elif arg_type == 'named entities per doc':
-            analysis_data[arg_type] = analyser.get_named_entities_per_doc()
-        elif arg_type == 'average readability':
-            analysis_data[arg_type] = analyser.get_average_readability_score()
-
-    del analyser
-    return analysis_data
-
-def analyse_singular_doc(doc, args_list, language):
-    # setup
-    analyser = Analysis(language)
-    analysis_data = {}
-    analyser.init_pipeline(doc.get('text'))
-
-    # analysis
-    for args in args_list:
-        arg_type = args.get('type')
-        # generic analysis
-        analysis_data[arg_type] = __analyse_generic_parameters(analyser, args, language)
-
-        if analysis_data.get(arg_type):
-            continue
-
-        # singular doc specific analysis
-        if arg_type == 'similarity':
-            other_analyser = Analysis(language)
-            text = get_docs_by_value('celex', args.get('other celex'), language)[0].get('text')
-            other_analyser.init_pipeline(text)
-            analysis_data[arg_type] = analyser.get_document_cosine_similarity(other_analyser)
-            del other_analyser
-
-    del analyser
+    # del analyser
     return analysis_data
 
 #-------------------
