@@ -203,7 +203,7 @@ def __run_analysis(analyser, args):
     elif arg_type == 'similarity':
         analysis_data = analyser.get_document_cosine_similarity()
     elif arg_type == 'celex_numbers':
-        analysis_data = get_celex_numbers()
+        analysis_data = analyser.get_celex_numbers()
 
     return analysis_data
 
