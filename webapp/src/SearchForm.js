@@ -120,42 +120,42 @@ class SearchForm extends React.Component {
                         displaySearchIdentifier: "none"
                     }
                 },
-                {
-                    endorsements: {
-                        key: ENDORSEMENTS_API_DESC,
-                        text: ENDORSEMENTS,
-                        displayed: false,
-                        inputType: "text",
-                        displaySearchIdentifier: "none"
-                    }
-                },
-                {
-                    grounds: {
-                        key: GROUNDS_API_DESC,
-                        text: GROUNDS,
-                        displayed: false,
-                        inputType: "text",
-                        displaySearchIdentifier: "none"
-                    }
-                },
-                {
-                    decisionsOnCost: {
-                        key: DECISIONS_ON_COST_API_DESC,
-                        text: DECISIONS_ON_COST,
-                        displayed: false,
-                        inputType: "text",
-                        displaySearchIdentifier: "none"
-                    }
-                },
-                {
-                    operativePart: {
-                        key: OPERATIVE_PART_API_DESC,
-                        text: OPERATIVE_PART,
-                        displayed: false,
-                        inputType: "text",
-                        displaySearchIdentifier: "none"
-                    }
-                },
+                // { elements that are probably not used as as search filters, commented out for now
+                //     endorsements: {
+                //         key: ENDORSEMENTS_API_DESC,
+                //         text: ENDORSEMENTS,
+                //         displayed: false,
+                //         inputType: "text",
+                //         displaySearchIdentifier: "none"
+                //     }
+                // },
+                // {
+                //     grounds: {
+                //         key: GROUNDS_API_DESC,
+                //         text: GROUNDS,
+                //         displayed: false,
+                //         inputType: "text",
+                //         displaySearchIdentifier: "none"
+                //     }
+                // },
+                // {
+                //     decisionsOnCost: {
+                //         key: DECISIONS_ON_COST_API_DESC,
+                //         text: DECISIONS_ON_COST,
+                //         displayed: false,
+                //         inputType: "text",
+                //         displaySearchIdentifier: "none"
+                //     }
+                // },
+                // {
+                //     operativePart: {
+                //         key: OPERATIVE_PART_API_DESC,
+                //         text: OPERATIVE_PART,
+                //         displayed: false,
+                //         inputType: "text",
+                //         displaySearchIdentifier: "none"
+                //     }
+                // },
                 {
                     ecli: {
                         key: ECLI_API_DESC,
