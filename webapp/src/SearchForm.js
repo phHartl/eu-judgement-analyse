@@ -44,16 +44,16 @@ class SearchForm extends React.Component {
             n: "",
             readabilityOptions: false,
             tokensOptions: false,
-            tokenLimit: "",
+            tokensOptionsLimit: "",
             tokenCountOptions: false,
-            tokenRemoveStopWords: false,
-            tokenRemovePunctuation: false,
+            tokensOptionsRemoveStopWords: false,
+            tokensOptionsRemovePunctuation: false,
             wordCountOptions: false,
-            wordCountRemoveStopWords: false,
+            wordCountOptionsRemoveStopWords: false,
             mostFrequentWordsOptions: false,
-            mostFrequentWordsLimit: "",
-            mostFrequentWordsRemoveStopWords: false,
-            mostFrequentWordsLemmatise: false,
+            mostFrequentWordsOptionsLimit: "",
+            mostFrequentWordsOptionsRemoveStopWords: false,
+            mostFrequentWordsOptionsLemmatise: false,
             sentencesOptions: false,
             sentenceCountOptions: false,
             posTagsOptions: false,
@@ -65,7 +65,8 @@ class SearchForm extends React.Component {
             filterValues: [],
             currentAddedAnalysisOptions: [],
             analysisOptionsArray: [],
-            searchFilterElements: [{
+            searchFilterElements: [
+                {
                 parties: {
                     key: PARTIES_API_DESC,
                     text: PARTIES,
@@ -237,7 +238,7 @@ class SearchForm extends React.Component {
                                 name: "nOptionsLimit"
                             }
                         }],
-                        visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
+                        visualizationOptions: [WORDCLOUD, BAR_CHART]
                     },
                     readability: {
                         name: "readabilityOptions",
@@ -268,7 +269,7 @@ class SearchForm extends React.Component {
                                 name: "tokensOptionsLimit"
                             }
                         }],
-                        visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
+                        visualizationOptions: [WORDCLOUD, BAR_CHART]
                     },
 
                     tokenCount: {
@@ -314,16 +315,16 @@ class SearchForm extends React.Component {
                                 name: "mostFrequentWordsOptionsLimit"
                             }
                         }],
-                        visualizationOptions: [WORDCLOUD, BAR_CHART, DOWNLOAD]
+                        visualizationOptions: [WORDCLOUD, BAR_CHART]
                     },
 
-                    sentences: {
-                        name: "sentencesOptions",
-                        id: "sentencesOptions",
-                        description: SENTENCES,
-                        options: null,
-                        visualizationOptions: null
-                    },
+                    // sentences: {
+                    //     name: "sentencesOptions",
+                    //     id: "sentencesOptions",
+                    //     description: SENTENCES,
+                    //     options: null,
+                    //     visualizationOptions: null
+                    // },
 
                     sentenceCount: {
                         name: "sentenceCountOptions",
@@ -452,18 +453,18 @@ class SearchForm extends React.Component {
                 case TOKENS:
                     analysisTypes.push({
                         type: "tokens",
-                        "remove stop words": this.state.tokenRemoveStopWords,
-                        "remove punctuation": this.state.tokenRemovePunctuation,
-                        limit: parseInt(this.state.tokenLimit)
+                        "remove stop words": this.state.tokensOptionsRemoveStopWords,
+                        "remove punctuation": this.state.tokensOptionsRemovePunctuation,
+                        limit: parseInt(this.state.tokensOptionsLimit)
                     });
                     break;
 
                 case MOST_FREQUENT_WORDS:
                     analysisTypes.push({
                         type: "most frequent words",
-                        "remove stop words": this.state.mostFrequentWordsRemoveStopWords,
-                        lemmatise: this.state.mostFrequentWordsLemmatise,
-                        limit: parseInt(this.state.mostFrequentWordsLimit)
+                        "remove stop words": this.state.mostFrequentWordsOptionsRemoveStopWords,
+                        lemmatise: this.state.mostFrequentWordsOptionsLemmatise,
+                        limit: parseInt(this.state.mostFrequentWordsOptionsLimit)
                     });
                     break;
 
@@ -482,7 +483,7 @@ class SearchForm extends React.Component {
                 case WORD_COUNT:
                     analysisTypes.push({
                         type: "word count",
-                        "remove stop words": this.state.wordCountRemoveStopWords
+                        "remove stop words": this.state.wordCountOptionsRemoveStopWords
                     })
                     break;
 

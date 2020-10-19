@@ -403,6 +403,11 @@ input[type="number"] {
   -webkit-appearance: textfield;
 }
 
+.download-data-button.generic-button {
+  margin-bottom: 30px;
+  margin-top: 5px;
+}
+
 
 /************************************
  * RAW DATA TABLE                   *

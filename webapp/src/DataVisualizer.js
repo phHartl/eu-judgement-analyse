@@ -22,6 +22,7 @@ import {
 
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/animations/scale.css';
+import DownloadDataButton from "./DownloadDataButton";
 
 var CanvasJS = CanvasJSReact.CanvasJS;
 var CanvasJSChart = CanvasJSReact.CanvasJSChart;
@@ -117,36 +118,81 @@ class DataVisualizer extends React.Component {
 
         return (
             <div className={"feature-container"} style={{paddingTop: "20px"}}>
+                <div>
+                    <h2>Analysis Results</h2>
+                    <DownloadDataButton
+                        description="all results"
+                        data={this.props.data}
+                        downloadData={(data) => this.downloadData(data, "all_results")}
+                    />
+                    <div id={"rawTableData"} style={{display: this.state.rawTableData === false ? 'none' : ''}}>
+                        <div>
+                            {this.renderRawDataTable()}
+                        </div>
+                        {this.addRawDataToTable()}
+                        <div>
+                            <DownloadDataButton
+                                description={"Data Table"}
+                                data={this.getDataFromProps(READABILITY_API_DESC)}
+                                downloadData={(data) => this.downloadRawTableData(data, READABILITY)}
+                            />
+                        </div>
+                    </div>
 
-                <div id={"rawTableData"} style={{display: this.state.rawTableData === false ? 'none' : ''}}>
-                    {this.renderRawDataTable()}
-                    {this.addRawDataToTable()}
-                </div>
+                    <div id={"readability"} style={{display: this.state.readability === false ? 'none' : ''}}>
+                        <div>
+                            {this.renderReadability()}
+                        </div>
+                        <div>
+                            <DownloadDataButton
+                                description={READABILITY}
+                                data={this.getDataFromProps(READABILITY_API_DESC)}
+                                downloadData={(data) => this.downloadData(data, READABILITY)}
+                            />
+                        </div>
+                    </div>
 
-                <div id={"readability"} style={{display: this.state.readability === false ? 'none' : ''}}>
-                    {this.renderReadability()}
-                </div>
+                    <div id={"nGrams"} style={{display: this.state.nGrams === false ? 'none' : ''}}>
+                        {this.renderElement("n-grams", "nGramVisualization", N_GRAMS)}
+                    </div>
 
-                <div id={"nGrams"} style={{visibility: this.state.nGrams !== false}}>
-                    {this.renderElement("n-grams", "nGramVisualization", N_GRAMS)}
-                </div>
+                    <div id={"tokens"} style={{display: this.state.tokens === false ? 'none' : ''}}>
+                        {this.renderElement('tokens', 'tokenVisualization', TOKENS)}
+                    </div>
 
-                <div id={"tokens"} style={{visibility: this.state.tokens !== false}}>
-                    {this.renderElement('tokens', 'tokenVisualization', TOKENS)}
-                </div>
+                    <div id={"mostFrequentWords"}
+                         style={{display: this.state.mostFrequentWords === false ? 'none' : ''}}>
+                        <div>
+                            {this.renderElement('most frequent words', 'mostFrequentWordVisualization', MOST_FREQUENT_WORDS, "Words")}
+                        </div>
+                    </div>
 
-                <div id={"mostFrequentWords"} style={{visibility: this.state.mostFrequentWords !== false}}>
-                    {this.renderElement('most frequent words', 'mostFrequentWordVisualization', MOST_FREQUENT_WORDS, "Words")}
-                </div>
-
-                <div id={"posTagsTableData"} style={{display: this.state.posTagsTableData === false ? 'none' : ''}}>
-                    {this.renderPosTags()}
-                    {this.addPosTagsToTable()}
+                    <div id={"posTagsTableData"} style={{display: this.state.posTagsTableData === false ? 'none' : ''}}>
+                        <div>
+                            {this.renderPosTags()}
+                        </div>
+                        {this.addPosTagsToTable()}
+                        <div>
+                            <DownloadDataButton
+                                description="PoS-Tags"
+                                data={this.getDataFromProps(POS_TAGS_API_DESC)}
+                                downloadData={(data) => this.downloadData(data, "pos_tags")}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
         )
 
 
+    }
+
+    getDataFromProps(identifier) {
+        if (!this.props.data.hasOwnProperty(identifier)) {
+            return {};
+        }
+
+        return this.props.data[identifier];
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
@@ -409,11 +455,11 @@ class DataVisualizer extends React.Component {
         switch (visualization) {
             case BAR_CHART:
                 elements = this.getElementsFromResponse(this.props.data[element], BAR_CHART);
-                return (this.renderBarChart(elements, description, shortDescription));
+                return (this.renderBarChart(elements, description, shortDescription, element));
 
             case WORDCLOUD:
                 elements = this.getElementsFromResponse(this.props.data[element], WORDCLOUD);
-                return (this.renderWordcloud(elements, description));
+                return (this.renderWordcloud(elements, description, element));
 
             case DOWNLOAD:
                 this.downloadData(this.getElementsFromResponse(this.props.data[element], WORDCLOUD), description);
@@ -473,7 +519,7 @@ class DataVisualizer extends React.Component {
 
     }
 
-    renderBarChart(words, description, shortDescription = description) {
+    renderBarChart(words, description, shortDescription = description, element) {
         const options = {
             animationEnabled: true,
             theme: "dark2",
@@ -498,14 +544,23 @@ class DataVisualizer extends React.Component {
 
         return (
             <div>
-                <CanvasJSChart options={options}
-                               onRef={ref => this.chart = ref}
-                />
+                <div>
+                    <CanvasJSChart options={options}
+                                   onRef={ref => this.chart = ref}
+                    />
+                </div>
+                <div>
+                    <DownloadDataButton
+                        description={description}
+                        data={this.getDataFromProps(element)}
+                        downloadData={(data) => this.downloadData(data, description)}
+                    />
+                </div>
             </div>
         );
     }
 
-    renderWordcloud(words, description) {
+    renderWordcloud(words, description, element) {
         return (
             <div>
                 <h3 className={"feature-section"}>{description}</h3>
@@ -524,6 +579,13 @@ class DataVisualizer extends React.Component {
                         }}
                     />
                 </div>
+                <div>
+                    <DownloadDataButton
+                        description={description}
+                        data={this.getDataFromProps(element)}
+                        downloadData={(data) => this.downloadData(data, description)}
+                    />
+                </div>
             </div>
         )
     }
@@ -535,6 +597,29 @@ class DataVisualizer extends React.Component {
         let dl = document.createElement('a');
         dl.setAttribute('href', dataStr);
         dl.setAttribute("download", description + ".json");
+        dl.click();
+    }
+
+    downloadRawTableData() {
+        let data = {};
+        if (this.state.tokenCount) {
+            data.tokenCount = this.props.data["token count"];
+        }
+
+        if (this.state.wordCount) {
+            data.wordCount = this.props.data["word count"];
+        }
+
+        if (this.state.sentenceCount) {
+            data.sentenceCount = this.props.data["sentence count"];
+        }
+
+        console.debug(data);
+
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+        let dl = document.createElement('a');
+        dl.setAttribute('href', dataStr);
+        dl.setAttribute("download", "raw_data.json");
         dl.click();
     }
 }
