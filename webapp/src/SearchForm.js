@@ -38,6 +38,7 @@ class SearchForm extends React.Component {
         super(props);
         this.state = {
             language: "english",
+            quickSearch: "",
             nGramsOptions: false,
             nLimit: "",
             n: "",
@@ -539,6 +540,8 @@ class SearchForm extends React.Component {
         let corpus = [];
         let date = this.getDateForSearch();
 
+        this.addQuickSearchToCorpus(corpus);
+
         for (const input of filterEntries) {
             let operator = this.getOperatorFromItem(input);
             let searchIdentifier = this.getSearchIdentifierFromItem(input);
@@ -566,6 +569,35 @@ class SearchForm extends React.Component {
             corpus.push(date);
         }
         return corpus;
+    }
+
+    addQuickSearchToCorpus(corpus) {
+        if (this.state.quickSearch === undefined || this.state.quickSearch === "") {
+            return;
+        }
+
+        let ecliRegex = new RegExp('ECLI:\\w{2}:\\w{1,7}:\\d{4}:[\\d.]{1,25}');
+        let celexRegex = new RegExp('[\\dCE]\\d{4}\\w{1,2}\\d{4,}');
+        let entry;
+
+        if (ecliRegex.test(this.state.quickSearch)) {
+            entry = {
+                column: "ecli",
+                value: this.state.quickSearch.match(ecliRegex)[0]
+            };
+        } else if (celexRegex.test(this.state.quickSearch)) {
+            entry = {
+                column: "celex",
+                value: this.state.quickSearch.match(celexRegex)[0]
+            };
+        } else {
+            entry = {
+                column: "title",
+                value: this.state.quickSearch
+            };
+        }
+
+        corpus.push(entry);
     }
 
     getOperatorFromItem(item) {
@@ -776,10 +808,11 @@ class SearchForm extends React.Component {
                     <h3 className="col-100">Search Filter</h3>
                     <div className="row filter-entry">
                         <div className="col-25">
-                            <label htmlFor="quickSearch" className="search-label">Quick Search</label>
+                            <label htmlFor="quick-search" className="search-label">Quick Search</label>
                         </div>
                         <div className="col-70">
                             <input type="text" name="quickSearch" id="quickSearch" className="input-large"
+                                   placeholder="Search for Title, ECLI, or CELEX"
                                    onChange={this.searchInputChange}/>
                         </div>
                     </div>
