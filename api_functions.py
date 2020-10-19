@@ -33,24 +33,6 @@ def __get_top_occurrences(_list, limit=None):
         occurrence_list = Counter(string_list).most_common()
     return occurrence_list
 
-def __get_top_n_grams(analyser, args):
-    # get n-grams
-    n_grams = []
-    if args.get('n'):
-        n_grams = analyser.get_n_grams(n=args['n'])
-    else:
-        n_grams = analyser.get_n_grams()
-    ngram_occurrences = __get_top_occurrences(n_grams, args.get('limit'))
-    return ngram_occurrences
-
-def __get_top_tokens(analyser, args):
-    rem_punct = args.get('remove punctuation')
-    rem_stopw = args.get('remove stop words')
-    tokens = analyser.get_tokens(remove_punctuation = rem_punct,
-                                remove_stop_words = rem_stopw)
-    token_occurrences = __get_top_occurrences(tokens, args.get('limit'))
-    return token_occurrences
-
 def __to_sentence_list(span_list):
     sentences = []
     for span in span_list:
@@ -64,59 +46,164 @@ def __to_tuple_list(token_tuples):
     return tuples
 
 def __run_analysis(analyser, args):
+    #--------------------------------------------------------------------------
+    # please refer to analysis.py for documentation on every analysis operation
+    #--------------------------------------------------------------------------
     analysis_data = None
     arg_type = args.get('type')
 
+    # n-grams
     if arg_type == 'n-grams':
-        analysis_data = __get_top_n_grams(analyser, args)
-    elif arg_type == 'average_readability':
+        analysis_data = __get_top_occurrences(
+            analyser.get_n_grams(args.get('n'),
+                                args.get('remove_stopwords'),
+                                args.get('filter_nums'),
+                                args.get('min_freq')),
+            args.get('limit')
+        )
+    elif arg_type == 'n-grams_per_doc':
+        results = []
+        ngram_list = analyser.get_n_grams_per_doc(args.get('n'),
+                                                args.get('remove_stopwords'),
+                                                args.get('filter_nums'),
+                                                args.get('min_freq'))
+        for entry in ngram_list:
+            results.append(__get_top_occurrences(entry, args.get('limit'))) 
+        analysis_data = results
+
+    # readability
+    elif arg_type == 'readability':
         analysis_data = analyser.get_readability_score()
-    elif arg_type == 'tokens':
-        analysis_data = __get_top_tokens(analyser, args)
-    elif arg_type == 'sentences':
-        analysis_data = __to_sentence_list(analyser.get_sentences())
-    elif arg_type == 'lemmata':
-        analysis_data = __to_tuple_list(analyser.get_lemmata())
-    elif arg_type == 'pos_tags':
-        analysis_data = __to_tuple_list(analyser.get_pos_tags())
-    elif arg_type == 'named_entities':
-        analysis_data = analyser.get_named_entities()
-    elif arg_type == 'sentence_count':
-        analysis_data = len(analyser.get_sentences())
-    elif arg_type == 'average_word_length':
-        analysis_data = analyser.get_average_token_length(True, args.get('remove_stopwords'))
-    elif arg_type == 'token_count':
-        analysis_data = analyser.get_token_count()
-    elif arg_type == 'word_count':
-        analysis_data = analyser.get_token_count(True, args.get('remove_stopwords'))
-    elif arg_type == 'most_frequent_words':
-        analysis_data = analyser.get_most_frequent_words(args.get('remove_stopwords'),
-            args.get('lemmatise'), args.get('limit'))
-    elif arg_type == 'named_entities_per_doc':
-        analysis_data = analyser.get_named_entities_per_doc()
+    elif arg_type == 'readability_per_doc':
+        analysis_data = analyser.get_readability_score_per_doc()
     elif arg_type == 'average_readability':
         analysis_data = analyser.get_average_readability_score() 
+
+    # tokens
+    elif arg_type == 'tokens':
+        analysis_data = __get_top_occurrences(
+            analyser.get_tokens(args.get('remove_punctuation'),
+                                args.get('remove_stopwords'),
+                                args.get('include_pos'),
+                                args.get('exclude_pos'),
+                                args.get('min_freq')),
+            args.get('limit')
+        )
+    elif arg_type == 'tokens_per_doc':
+        results = []
+        docs = analyser.get_tokens_per_doc(args.get('remove_punctuation'),
+                                            args.get('remove_stopwords'),
+                                            args.get('include_pos'),
+                                            args.get('exclude_pos'),
+                                            args.get('min_freq'))
+        for doc_result in docs:
+            results.append(__get_top_occurrences(doc_result), args.get('limit'))
+        analysis_data = results
+    elif arg_type == 'unique_tokens':
+        analysis_data = analyser.get_unique_tokens(args.get('remove_punctuation'),
+                                            args.get('remove_stopwords'),
+                                            args.get('include_pos'),
+                                            args.get('exclude_pos'),
+                                            args.get('min_freq'))
+    elif arg_type == 'unique_tokens_per_doc':
+        analysis_data = analyser.get_unique_tokens_per_doc(args.get('remove_punctuation'),
+                                            args.get('remove_stopwords'),
+                                            args.get('include_pos'),
+                                            args.get('exclude_pos'),
+                                            args.get('min_freq'))
+    elif arg_type == 'average_token_length':
+        analysis_data = analyser.get_average_token_length(args.get('remove_punctuation'),
+                                                        args.get('remove_stopwords'),
+                                                        args.get('include_pos'),
+                                                        args.get('exclude_pos'),
+                                                        args.get('min_freq'))
+    elif arg_type == 'token_count':
+        analysis_data = analyser.get_token_count(args.get('remove_punctuation'),
+                                                args.get('remove_stopwords'),
+                                                args.get('include_pos'),
+                                                args.get('exclude_pos'),
+                                                args.get('min_freq'))
+    elif arg_type == 'token_count_per_doc':
+        analysis_data = analyser.get_token_count_per_doc(args.get('remove_punctuation'),
+                                                        args.get('remove_stopwords'),
+                                                        args.get('include_pos'),
+                                                        args.get('exclude_pos'),
+                                                        args.get('min_freq'))
+    elif arg_type == 'most_frequent_words':
+        analysis_data = analyser.get_most_frequent_words(args.get('remove_stopwords'),
+                                                        args.get('lemmatise'),
+                                                        args.get('limit'))
+    elif arg_type == 'most_frequent_words_per_doc':
+        analysis_data = analyser.get_most_frequent_words(args.get('remove_stopwords'),
+                                                        args.get('lemmatise'),
+                                                        args.get('limit'))
+
+    # lemmata
+    elif arg_type == 'lemmata':
+        analysis_data = __to_tuple_list(
+            analyser.get_lemmata(args.get('remove_stopwords'),
+                                args.get('include_pos'),
+                                args.get('exclude_pos'))
+        )
+    elif arg_type == 'lemmata_per_doc':
+        results = []
+        docs = analyser.get_pos_tags_per_doc(args.get('remove_stopwords'),
+                                            args.get('incl_pos'),
+                                            args.get('excl_pos'))
+        for doc_result in docs:
+            results.append(__to_tuple_list(doc_result))
+        analysis_data = results
+
+    # pos tags
+    elif arg_type == 'pos_tags':
+        analysis_data = __to_tuple_list(
+            analyser.get_pos_tags(args.get('incl_pos'),
+                                args.get('excl_pos'))
+        )
+    elif arg_type == 'pos_tags_per_doc':
+        results = []
+        docs = analyser.get_pos_tags_per_doc(args.get('incl_pos'),
+                                            args.get('excl_pos'))
+        for doc_result in docs:
+            results.append(__to_tuple_list(doc_result))
+        analysis_data = results
+
+    # entities
+    elif arg_type == 'named_entities':
+        analysis_data = analyser.get_named_entities()
+    elif arg_type == 'named_entities_per_doc':
+        analysis_data = analyser.get_named_entities_per_doc()
+
+    # sentences
+    elif arg_type == 'sentences':
+        analysis_data = __to_sentence_list(analyser.get_sentences())
     elif arg_type == 'sentences_per_doc':
         results = []
         for doc_result in analyser.get_sentences_per_doc():
             results.append(__to_sentence_list(doc_result))
         analysis_data = results
-    elif arg_type == 'pos tags per doc':
-        results = []
-        for doc_result in analyser.get_pos_tags_per_doc():
-            results.append(__to_tuple_list(doc_result))
-        analysis_data = results
-    elif arg_type == 'lemmata_per_doc':
-        results = []
-        for doc_result in analyser.get_lemmata_per_doc(args.get('remove_stopwords')):
-            results.append(__to_tuple_list(doc_result))
-        analysis_data = results
-    elif arg_type == 'tokens_per_doc':
-        results = []
-        for doc_result in analyser.get_tokens_per_doc(args.get('remove_punctuation'),
-            args.get('remove_stopwords')):
-            results.append(__get_top_occurrences(doc_result))
-        analysis_data = results
+    elif arg_type == 'sentence_count':
+        analysis_data = len(analyser.get_sentences())
+    elif arg_type == 'sentence_count_per_doc':
+        analysis_data = analyser.get_sentence_count_per_doc()
+
+    # sentiment
+    elif arg_type == 'sentiment':
+        analysis_data = analyser.get_sentiment()
+    elif arg_type == 'sentiment_per_doc':
+        analysis_data = analyser.get_sentiment_per_doc()
+
+    # keywords
+    elif arg_type == 'keywords':
+        analysis_data = analyser.get_keywords(args.get('limit'))
+    elif arg_type == 'keywords_per_doc':
+        analysis_data = analyser.get_keywords_per_doc(args.get('limit'))
+
+    # misc
+    elif arg_type == 'similarity':
+        analysis_data = analyser.get_document_cosine_similarity()
+    elif arg_type == 'celex_numbers':
+        analysis_data = get_celex_numbers()
 
     return analysis_data
 
