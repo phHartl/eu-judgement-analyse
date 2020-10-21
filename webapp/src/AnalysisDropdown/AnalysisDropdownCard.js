@@ -2,7 +2,6 @@ import React from "react";
 
 function getAnalysisOptionsArray(data) {
     let array = [];
-    console.debug(data);
     for (const element in data[0]) {
         array.push(data[0][element]);
     }

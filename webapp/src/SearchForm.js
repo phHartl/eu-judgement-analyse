@@ -63,6 +63,7 @@ class SearchForm extends React.Component {
             dropdownData: "",
             filterEntries: [],
             filterValues: [],
+            currentAddedFilterOptions: [],
             currentAddedAnalysisOptions: [],
             analysisOptionsArray: [],
             searchFilterElements: [
@@ -537,14 +538,14 @@ class SearchForm extends React.Component {
     }
 
     getFilterValues() {
-        let filterEntries = this.state.filterEntries;
+        let entries = this.state.filterEntries;
         let corpus = [];
         let date = this.getDateForSearch();
         this.props.setCelexNumber('');
 
         this.addQuickSearchToCorpus(corpus);
 
-        for (const input of filterEntries) {
+        for (const input of entries) {
             let operator = this.getOperatorFromItem(input);
             let searchIdentifier = this.getSearchIdentifierFromItem(input);
 
@@ -566,7 +567,7 @@ class SearchForm extends React.Component {
                 entry.operator = operator;
             }
 
-            if (entry.value.trim() !== "") {
+            if (entry.value !== undefined && entry.value.trim() !== "") {
                 corpus.push(entry);
             }
         }
@@ -574,6 +575,11 @@ class SearchForm extends React.Component {
         if (date !== null) {
             corpus.push(date);
         }
+
+        if (corpus.length === 0) {
+            corpus = "all";
+        }
+
         return corpus;
     }
 
@@ -675,34 +681,6 @@ class SearchForm extends React.Component {
     }
 
 
-    addFilterEntry(index) {
-        let array = this.state.filterEntries;
-        let elements = this.state.searchFilterElements;
-        // array.push(<FilterEntry elements={elements} index={index} text={text} onChange={this.searchInputChange} onDelete={this.removeFilterEntry}/>);
-        if (elements[index][Object.keys(elements[index])].key === 'date') {
-            let startDate = {
-                key: 'startDate',
-                text: 'Start Date',
-                displayed: false,
-                inputType: 'date',
-                displaySearchIdentifier: "none"
-            };
-            let endDate = {
-                key: 'endDate',
-                text: 'End Date',
-                displayed: false,
-                inputType: 'date',
-                displaySearchIdentifier: "none"
-            };
-            array.push(startDate);
-            array.push(endDate);
-            this.setState({filterEntries: array});
-            return;
-        }
-        array.push(elements[index][Object.keys(elements[index])]);
-        this.setState({filterEntries: array});
-    }
-
     removeFilterEntry(item) {
         let array = this.state.filterEntries;
         for (let i = 0; i < array.length; i++) {
@@ -778,6 +756,36 @@ class SearchForm extends React.Component {
             array.push(this.state.analysisOptions[0][element]);
         }
         this.setState({analysisOptionsArray: array});
+    }
+
+    addFilterEntry(item) {
+        let array = this.state.filterEntries;
+        item = item[Object.keys(item)[0]];
+
+        // array.push(<FilterEntry elements={elements} index={index} text={text} onChange={this.searchInputChange} onDelete={this.removeFilterEntry}/>);
+        if (item.key === 'date') {
+            let startDate = {
+                key: 'startDate',
+                text: 'Start Date',
+                displayed: false,
+                inputType: 'date',
+                displaySearchIdentifier: "none"
+            };
+            let endDate = {
+                key: 'endDate',
+                text: 'End Date',
+                displayed: false,
+                inputType: 'date',
+                displaySearchIdentifier: "none"
+            };
+            array.push(startDate);
+            array.push(endDate);
+            this.setState({filterEntries: array});
+            return;
+        }
+        array.push(item);
+        this.setState({filterEntries: array});
+        this.setState({currentAddedFilterOptions: array});
     }
 
     addAnalysisOptionToDocument(element) {
@@ -860,6 +868,7 @@ class SearchForm extends React.Component {
                             <FilterDropdownParent
                                 data={this.state.searchFilterElements}
                                 addFilterEntry={this.addFilterEntry}
+                                alreadyAdded={this.state.currentAddedFilterOptions}
                                 elements={this.state.filterEntries}
                             />
                         </div>

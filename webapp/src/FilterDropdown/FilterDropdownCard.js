@@ -4,24 +4,32 @@ let dataBackup;
 let filterData;
 const FilterDropdownCard = ({data = [], setOpen, addFilterEntry, filterEntries}) => (
     <div className="dropdown-item-container">
-        {fillFilterNames(data)}
-        {filterData.map((item, i) => (
+        {/*{debugData(data)}*/}
+        {data.map((item, i) => (
                     <button className="dropdown-item" key={i} onClick={() => {
                         setOpen(false);
-                        addFilterEntry(i, item, dataBackup, filterEntries);
+                        addFilterEntry(item);
                     }}>
-                        {item}
+                        {item[Object.keys(item)[0]].text}
                     </button>
         ))}
     </div>
 );
 
+function debugData(data) {
+    console.debug(data[0][Object.keys(data[0])[0]].text);
+}
+
 function fillFilterNames(filterElements) {
     let returnArray = [];
     dataBackup = filterElements;
-    for (let element of filterElements) {
+    for (const element of filterElements) {
+        if (typeof element === "undefined") {
+            continue;
+        }
         returnArray.push(element[Object.keys(element)[0]].text)
     }
+    console.debug(returnArray);
     filterData = returnArray;
 }
 

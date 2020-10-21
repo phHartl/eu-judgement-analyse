@@ -469,10 +469,16 @@ input[type="number"] {
   font-size: 13px;
 }
 
+.inner-input input[type="checkbox"].search-identifier-checkbox {
+  margin-top: 2px;
+  margin-bottom: -11px;
+  height: 30px;
+}
+
 .inner-input input[type="checkbox"].search-identifier-checkbox:after {
   width: 26px;
   height: 26px;
-  top: 2px;
+  top: 1px;
 }
 
 .inner-input input[type="checkbox"].search-identifier-checkbox:checked:after {
