@@ -1,7 +1,7 @@
 lxml==4.5.2
-spacy==2.1.8
+spacy==2.1.9
 beautifulsoup4==4.9.2
-blackstone==0.1.15
+./data/blackstone-0.1.16.tar.gz
 Flask==1.1.2
 flask_pymongo==2.3.0
 fuzzywuzzy==0.18.0
