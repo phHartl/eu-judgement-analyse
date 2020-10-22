@@ -211,7 +211,7 @@ class CorpusAnalysis():
 
         if not any(component in pipeline_components for component in ("sentences", "sentences_per_doc", "sentence_count")):
             if self.language == "de":
-                if not any(component in pipeline_components for component in ("average_readability", "readability_per_doc")):
+                if not any(component in pipeline_components for component in ("readability", "readability_per_doc")):
                     disabled_components.append("parser")
             else:
                 disabled_components.append("parser")

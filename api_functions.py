@@ -89,8 +89,6 @@ def __run_analysis(analyser, args):
         analysis_data = analyser.get_readability_score()
     elif arg_type == 'readability_per_doc':
         analysis_data = analyser.get_readability_score_per_doc()
-    elif arg_type == 'average_readability':
-        analysis_data = analyser.get_average_readability_score()
 
     # tokens
     elif arg_type == 'tokens':
