@@ -193,7 +193,7 @@ class CorpusAnalysis():
             self.corpus.add_docs([doc for corpus in sub_corpora for doc in corpus])
 
     def _remove_unused_components(self, pipeline_components):
-        # Internal function to remove unused pipeline components for the current analysis. 
+        # Internal function to remove unused pipeline components for the current analysis.
         # Saves memory and reduces calculation time.
         disabled_components = []
         if not any(component in pipeline_components for component in ("named_entities", "named_entities_per_doc")):
@@ -201,15 +201,17 @@ class CorpusAnalysis():
             if self.language == "en":
                 disabled_components.append("merge_entities")
                 disabled_components.append("CompoundCases")
-        if not any(component in pipeline_components for component in ("tokens", "token_count", "word_count", 
-        "most_frequent_words", "tokens_per_doc", "pos_tags", "pos_tags_per_doc", "lemmata", "lemmata_per_doc")):
+        if not any(component in pipeline_components for component in ("tokens", "token_count", "word_count", "average_token_length", "average_word_length",
+                                                                      "most_frequent_words", "most_frequent_words_per_doc", "tokens_per_doc", "pos_tags", 
+                                                                      "pos_tags_per_doc", "lemmata", "lemmata_per_doc", "unique_tokens", 
+                                                                      "unique_tokens_per_doc", "keywords", "keywords_per_doc")):
             disabled_components.append("tagger")
             if self.language == "de":
                 disabled_components.append("spaCyIWNLP")
-        
+
         if not any(component in pipeline_components for component in ("sentences", "sentences_per_doc", "sentence_count")):
             if self.language == "de":
-                if not any(component in pipeline_components for component in ("average_readability", "readability_per_doc")):
+                if not any(component in pipeline_components for component in ("readability", "readability_per_doc")):
                     disabled_components.append("parser")
             else:
                 disabled_components.append("parser")
@@ -222,7 +224,7 @@ class CorpusAnalysis():
             if doc['text']:
                 if normalize_texts:
                     spacy_doc = textacy.make_spacy_doc(
-                    (normalize(self.language, doc['text']), {'celex': doc['celex']}), self.nlp)
+                        (normalize(self.language, doc['text']), {'celex': doc['celex']}), self.nlp)
                 else:
                     spacy_doc = textacy.make_spacy_doc(doc['text'], {'celex': doc['celex']}, self.nlp)
                 sub_corpus.add_doc(spacy_doc)
@@ -236,10 +238,10 @@ class CorpusAnalysis():
         -------
         List[str]
             list of ordered celex numbers as present in the corpus
-        """        
+        """
         return [doc._.meta['celex'] for doc in self.corpus]
 
-    def get_tokens(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
+    def get_tokens(self, remove_punctuation=False, remove_stopwords=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
         """
         Returns a list of all tokens in the corpus.
 
@@ -247,7 +249,7 @@ class CorpusAnalysis():
         ----------
         remove_punctuation : bool, optional
             whether to remove punctuation, by default False
-        remove_stop_words : bool, optional
+        remove_stopwords : bool, optional
             whether to remove stop words, by default False
         include_pos : tuple/list(str), optional
             part of speech tags which should be included, by default None (defaults to all tokens)
@@ -262,9 +264,9 @@ class CorpusAnalysis():
             a customizable list of all tokens in the corpus (if you exclude punctuation, it returns words instead).
         """
         # Flatten per document list and return it
-        return [item for sublist in self.get_tokens_per_doc(remove_punctuation, remove_stop_words, include_pos, exclude_pos, min_freq_per_doc) for item in sublist]
+        return [item for sublist in self.get_tokens_per_doc(remove_punctuation, remove_stopwords, include_pos, exclude_pos, min_freq_per_doc) for item in sublist]
 
-    def get_tokens_per_doc(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
+    def get_tokens_per_doc(self, remove_punctuation=False, remove_stopwords=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
         """
         Returns a list of all tokens in the corpus grouped by document.
 
@@ -272,7 +274,7 @@ class CorpusAnalysis():
         ----------
         remove_punctuation : bool, optional
             whether to remove punctuation, by default False
-        remove_stop_words : bool, optional
+        remove_stopwords : bool, optional
             whether to remove stop words, by default False
         include_pos : tuple/list(str), optional
             part of speech tags which should be included, by default None (defaults to all tags)
@@ -294,7 +296,7 @@ class CorpusAnalysis():
         for doc in self.corpus:
             tokens_per_doc = []
             for token in doc:
-                if remove_stop_words:
+                if remove_stopwords:
                     if remove_punctuation:
                         if token.is_punct != True and token.is_stop != True and token.is_space != True:
                             tokens_per_doc.append(token)
@@ -314,7 +316,7 @@ class CorpusAnalysis():
             tokens.append(tokens_per_doc)
         return tokens
 
-    def get_unique_tokens(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
+    def get_unique_tokens(self, remove_punctuation=False, remove_stopwords=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
         """
         Returns a list of all unique tokens in the corpus.
 
@@ -322,7 +324,7 @@ class CorpusAnalysis():
         ----------
         remove_punctuation : bool, optional
             whether to remove punctuation, by default False
-        remove_stop_words : bool, optional
+        remove_stopwords : bool, optional
             whether to remove stop words, by default False
         include_pos : tuple/list(str), optional
             part of speech tags which should be included, by default None (defaults to all tags)
@@ -336,9 +338,9 @@ class CorpusAnalysis():
         Set[str]
             a customizable set of all unique tokens in the corpus (if you exclude punctuation, it returns words instead).
         """
-        return set(self.get_tokens(remove_punctuation, remove_stop_words, include_pos, exclude_pos, min_freq_per_doc))
+        return list(set(self.get_tokens(remove_punctuation, remove_stopwords, include_pos, exclude_pos, min_freq_per_doc)))
 
-    def get_unique_tokens_per_doc(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
+    def get_unique_tokens_per_doc(self, remove_punctuation=False, remove_stopwords=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
         """
         Returns a list of all unique tokens in the corpus.
 
@@ -346,7 +348,7 @@ class CorpusAnalysis():
         ----------
         remove_punctuation : bool, optional
             whether to remove punctuation, by default False
-        remove_stop_words : bool, optional
+        remove_stopwords : bool, optional
             whether to remove stop words, by default False
         include_pos : tuple/list(str), optional
             part of speech tags which should be included, by default None (defaults to all tags)
@@ -360,7 +362,7 @@ class CorpusAnalysis():
         Set[str]
             a customizable set of all unique tokens in the corpus grouped by document (if you exclude punctuation, it returns words instead).
         """
-        return [set(doc) for doc in self.get_tokens_per_doc(remove_punctuation, remove_stop_words, include_pos, exclude_pos, min_freq_per_doc)]
+        return [list(set(doc)) for doc in self.get_tokens_per_doc(remove_punctuation, remove_stopwords, include_pos, exclude_pos, min_freq_per_doc)]
 
     def get_sentences(self):
         """
@@ -395,7 +397,7 @@ class CorpusAnalysis():
         """
         return [len(list(doc.sents)) for doc in [doc for doc in self.corpus]]
 
-    def get_average_token_length(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq=1):
+    def get_average_token_length(self, remove_punctuation=False, remove_stopwords=False, include_pos=None, exclude_pos=None, min_freq=1):
         """
         Calculates the mean token length in the corpus in dependence of various filters. Acts as a wrapper for get_tokens()
 
@@ -403,7 +405,7 @@ class CorpusAnalysis():
         ----------
         remove_punctuation : bool, optional
             whether to remove punctuation, by default False
-        remove_stop_words : bool, optional
+        remove_stopwords : bool, optional
             whether to remove stop words, by default False
         include_pos : tuple/list(str), optional
             part of speech tags which should be included, by default None (defaults to all tags)
@@ -417,10 +419,10 @@ class CorpusAnalysis():
         float
             average token length
         """
-        tokens = self.get_tokens(remove_punctuation, remove_stop_words, include_pos, exclude_pos, min_freq)
+        tokens = self.get_tokens(remove_punctuation, remove_stopwords, include_pos, exclude_pos, min_freq)
         return sum(map(len, tokens)) / len(tokens)
 
-    def get_token_count(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq=1):
+    def get_token_count(self, remove_punctuation=False, remove_stopwords=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
         """
         Calculates the amount of tokens present in the text.
 
@@ -428,7 +430,7 @@ class CorpusAnalysis():
         ----------
         remove_punctuation : bool, optional
             whether to remove punctuation, by default False
-        remove_stop_words : bool, optional
+        remove_stopwords : bool, optional
             whether to remove stop words, by default False
         include_pos : tuple/list(str), optional
             part of speech tags which should be included, by default None (defaults to all tags)
@@ -442,9 +444,9 @@ class CorpusAnalysis():
         int
             quantity of tokens in the corpus
         """
-        return len(self.get_tokens(remove_punctuation, remove_stop_words, include_pos, exclude_pos, min_freq))
+        return len(self.get_tokens(remove_punctuation, remove_stopwords, include_pos, exclude_pos, min_freq_per_doc))
 
-    def get_token_count_per_doc(self, remove_punctuation=False, remove_stop_words=False, include_pos=None, exclude_pos=None, min_freq=1):
+    def get_token_count_per_doc(self, remove_punctuation=False, remove_stopwords=False, include_pos=None, exclude_pos=None, min_freq_per_doc=1):
         """
         Calculates the amount of tokens present in the text grouped by document.
 
@@ -452,7 +454,7 @@ class CorpusAnalysis():
         ----------
         remove_punctuation : bool, optional
             whether to remove punctuation, by default False
-        remove_stop_words : bool, optional
+        remove_stopwords : bool, optional
             whether to remove stop words, by default False
         include_pos : tuple/list(str), optional
             part of speech tags which should be included, by default None (defaults to all tags)
@@ -466,7 +468,7 @@ class CorpusAnalysis():
         List[int]
             quantity of tokens in the corpus grouped by document
         """
-        return [len(doc) for doc in self.get_tokens_per_doc()]
+        return [len(doc) for doc in self.get_tokens_per_doc(remove_punctuation, remove_stopwords, include_pos, exclude_pos, min_freq_per_doc)]
 
     def get_pos_tags(self, include_pos=None, exclude_pos=None):
         """
@@ -497,13 +499,13 @@ class CorpusAnalysis():
             pos.append([(word, word.pos_) for word in doc if word.pos_ in include_pos])
         return pos
 
-    def get_lemmata_per_doc(self, remove_stop_words=True, include_pos=None, exclude_pos=None):
+    def get_lemmata_per_doc(self, remove_stopwords=True, include_pos=None, exclude_pos=None):
         """
         Gets all lemmata of each word present in the corpus grouped by document.
 
         Parameters
         ----------
-        remove_stop_words : bool, optional
+        remove_stopwords : bool, optional
             whether stop words should be removed, by default True
         include_pos : List|Tuple, optional
             which part of speech tags should be kept, by default None (defaults to all tags)
@@ -524,7 +526,7 @@ class CorpusAnalysis():
             lemmata_per_doc = []
             for token in doc:
                 if token.is_punct != True and token.is_space != True and token.pos_ in include_pos:
-                    if remove_stop_words:
+                    if remove_stopwords:
                         if token.is_stop != True:
                             if self.language == "en":
                                 lemmata_per_doc.append((token, token.lemma_))
@@ -544,13 +546,13 @@ class CorpusAnalysis():
             lemmata.append(lemmata_per_doc)
         return lemmata
 
-    def get_lemmata(self, remove_stop_words=True, include_pos=None, exclude_pos=None):
+    def get_lemmata(self, remove_stopwords=True, include_pos=None, exclude_pos=None):
         """
         Gets all lemmata of each word present in the corpus.
 
         Parameters
         ----------
-        remove_stop_words : bool, optional
+        remove_stopwords : bool, optional
             whether stop words should be removed, by default True
         include_pos : List|Tuple, optional
             which part of speech tags should be kept, by default None (defaults to all tags)
@@ -562,7 +564,7 @@ class CorpusAnalysis():
         List[Tuple[str, str]]
             list of tuples with base word and its lemma for the whole corpus
         """
-        return [item for sublist in self.get_lemmata_per_doc(remove_stop_words, include_pos, exclude_pos) for item in sublist]
+        return [item for sublist in self.get_lemmata_per_doc(remove_stopwords, include_pos, exclude_pos) for item in sublist]
 
     def get_named_entities(self):
         """
@@ -601,19 +603,19 @@ class CorpusAnalysis():
                 entities = [e.string for e in doc.ents if label == e.label_]
                 entities = list(set(entities))
                 ner_per_doc.append((label, entities))
-            compound_cases = [compound_case for compound_case in self.doc._.compound_cases]
+            compound_cases = [compound_case for compound_case in doc._.compound_cases]
             if len(compound_cases) > 0:
                 ner_per_doc.append(("COMPOUND_CASES", compound_cases))
             ner.append(ner_per_doc)
         return ner
 
-    def get_most_frequent_words(self, remove_stop_words=True, lemmatize=True, n=10):
+    def get_most_frequent_words(self, remove_stopwords=True, lemmatize=True, n=10):
         """
         Calculates the most frequent words in the corpus/document.
 
         Parameters
         ----------
-        remove_stop_words : bool, optional
+        remove_stopwords : bool, optional
             whether stop words should be removed, by default True
         lemmatize : bool, optional
             whether all words should be lemmatized before calculation, by default True
@@ -627,19 +629,19 @@ class CorpusAnalysis():
         """
         if lemmatize:
             # Lemmatization is a good way to account for multiple variation of the same word
-            lemmata = self.get_lemmata(remove_stop_words)
+            lemmata = self.get_lemmata(remove_stopwords)
             tokens = [tupl[1] for tupl in lemmata]
         else:
-            tokens = self.get_tokens(True, remove_stop_words)
+            tokens = self.get_tokens(True, remove_stopwords)
         return Counter(tokens).most_common(n)
 
-    def get_most_frequent_words_per_doc(self, remove_stop_words=True, lemmatize=True, n=10):
+    def get_most_frequent_words_per_doc(self, remove_stopwords=True, lemmatize=True, n=10):
         """
         Calculates the most frequent words in the corpus/document.
 
         Parameters
         ----------
-        remove_stop_words : bool, optional
+        remove_stopwords : bool, optional
             whether stop words should be removed, by default True
         lemmatize : bool, optional
             whether all words should be lemmatized before calculation, by default True
@@ -653,7 +655,7 @@ class CorpusAnalysis():
         """
         if lemmatize:
             # Lemmatization is a good way to account for multiple variation of the same word
-            lemmata = self.get_lemmata_per_doc(remove_stop_words)
+            lemmata = self.get_lemmata_per_doc(remove_stopwords)
             tokens_per_doc = []
             for doc in lemmata:
                 tokens = []
@@ -661,7 +663,7 @@ class CorpusAnalysis():
                     tokens.append(tupl[1])
                 tokens_per_doc.append(tokens)
         else:
-            tokens_per_doc = self.get_tokens_per_doc(True, remove_stop_words)
+            tokens_per_doc = self.get_tokens_per_doc(True, remove_stopwords)
         return [Counter(doc).most_common(n) for doc in tokens_per_doc]
 
     def get_readability_score_per_doc(self):
@@ -737,7 +739,7 @@ class CorpusAnalysis():
             whether stop words should be removed, by default True
         filter_nums : bool, optional
             whether numerics should be removed, by default True
-        min_freq : int, optional
+        min_freq_per_doc : int, optional
             minimum occurrence in the corpus, by default 5
 
         Returns
@@ -748,7 +750,7 @@ class CorpusAnalysis():
         n_grams_per_doc = []
         for doc in self.corpus:
             n_grams = list([token.text for token in textacy.extract.ngrams(
-                doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
+                doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq_per_doc)])
             n_grams_per_doc.append(n_grams)
         return n_grams_per_doc
 
