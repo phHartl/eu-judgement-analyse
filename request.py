@@ -79,7 +79,7 @@ def request_all_data_for_language(lang):
 
     for i in range(1, math.ceil(int(total_documents) / 100) + 1):
         response = request_data(page_size=100, page=i, language=lang)
-        docs = parse_response_for_mongo(response, dump_mode="response", iteration_num=i)
+        docs = parse_response_for_mongo(response)
         for doc in docs:
             insert_doc(doc, lang)
 
