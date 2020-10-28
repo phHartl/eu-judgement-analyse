@@ -64,7 +64,7 @@ def request_data(page_size=1, page=1, language='en'):
     # We need to use a raw request here (https://stackoverflow.com/questions/57730340/how-to-fix-str-object-has-no-attribute-keys-in-python-zeep-module)
     with client.settings(raw_response=True):
         response = client.service.doQuery(
-            expertQuery="<![CDATA[SELECT TI_DISPLAY, TE, IX, I1, I2, VS , MO, CO, DI, DN, AU, CT, RJ, RJ_NEW,  ECLI, DD,  AJ,  LB, AP, DF, CD, PR WHERE DTS_SUBDOM = EU_CASE_LAW AND (EMBEDDED_MANIFESTATION-TYPE = html OR xhtml or pdf) AND CASE_LAW_SUMMARY = false AND (DTT=C? AND DTS = 6) AND (FM_CODED = JUDG) ORDER BY DN ASC]]>",
+            expertQuery="<![CDATA[SELECT TI_DISPLAY, TE, IX, I1, I2, VS , MO, CO, DI, DN, AU, CT, RJ, RJ_NEW,  ECLI, DD,  AJ,  LB, AP, DF, CD, PR WHERE DTS_SUBDOM = EU_CASE_LAW AND (EMBEDDED_MANIFESTATION-TYPE = html OR xhtml or pdf) AND CASE_LAW_SUMMARY = false AND (DTT=C? AND DTS = 6) AND (FM_CODED = JUDG) ORDER BY DD ASC]]>",
             page=page,
             pageSize=page_size,
             searchLanguage=language,
@@ -83,7 +83,7 @@ def request_all_data_for_language(lang, to_csv):
         response = request_data(page_size=100, page=i, language=lang)
         docs = parse_response_for_mongo(response)
         if to_csv:
-            csv_export.export_to_csv(docs)
+            csv_export.export_to_csv(docs, "corpus_" + lang + ".csv")
         else:
             for doc in docs:
                 insert_doc(doc, lang)
@@ -140,15 +140,10 @@ if WRITE_TO_FILE_DEBUG:
     response_file = open("response.txt", "w+", encoding="UTF8")
     response_file.write(str(root.prettify()))
 
-## Benchmark section:
-# t1 = timeit.Timer(functools.partial(parse_response_for_mongo, response))
-# print(t1.timeit(100))
-# t2 = timeit.Timer(functools.partial(parse_response_for_mongo_xml, response))
-# print(t2.timeit(100))
 
-if __name__ == "__main__":
-    # main()
-    response = request_data(20, 1, 'en')
-    docs = parse_response_for_mongo(response)
-    for doc in docs:
-        csv_export.export_to_csv(doc)
+# if __name__ == "__main__":
+#     # main()
+#     response = request_data(20, 1, 'en')
+#     docs = parse_response_for_mongo(response)
+#     for doc in docs:
+#         csv_export.export_to_csv(doc)

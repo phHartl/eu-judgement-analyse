@@ -1,6 +1,7 @@
 import os
 import csv
 
+
 def __to_whitespace_string(value_list):
     temp_string = ""
     for item in value_list:
@@ -9,24 +10,29 @@ def __to_whitespace_string(value_list):
     temp_string = temp_string[:-1]
     return temp_string
 
+
 def __convert_dict(mongo_dict):
     csv_dict = {}
-    for k,v in mongo_dict.items():
+    for k, v in mongo_dict.items():
         if isinstance(v, dict):
             csv_dict[k + "_ids"] = __to_whitespace_string(v.get("ids"))
             csv_dict[k + "_labels"] = __to_whitespace_string(v.get("labels"))
         elif isinstance(v, list):
             __to_whitespace_string(v)
+        # Split dicts correctly instead of inserting only their key and None
+        elif (k is k in ("case_law_directory", "subject_matter", "applicant", "defendant", "procedure_type")):
+            csv_dict[k + "_ids"] = None
+            csv_dict[k + "_labels"] = None
         else:
             csv_dict[k] = v
     return csv_dict
 
-def export_to_csv(data):
+
+def export_to_csv(data, filename):
     directory = os.path.dirname(__file__)
-    filename = 'corpus.csv'
     file_exists = os.path.isfile(filename)
     with open(filename, 'a+', newline='') as csvfile:
-        fieldnames =[
+        fieldnames = [
             "reference",
             "celex",
             "ecli",
