@@ -29,18 +29,17 @@ The keys of the JSON returned from the server matches the types specified for an
 #### Analysis `metrics`: whole corpus
 `metric` | arguments | type(return value) | description
 ---------|--------------|---------|------------
-tokens | `remove_punctuation`, `remove_stop_words`,`include_pos`, `exclude_pos`, `min_freq_per_doc` | List[str] | A customizable list of all tokens in the corpus.
-unique tokens | `remove_punctuation`, `remove_stop_words`,`include_pos`, `exclude_pos`, `min_freq_per_doc` | Set[str] | A customizable set of all unique tokens in the corpus.
-token count | | int | # of all tokens.
-average token length | `remove_punctuation`, `remove_stop_words`,`include_pos`, `exclude_pos`, `min_freq_per_doc` | float | Mean token length in corpus based on different filter options.
-word count | `remove_stop_words` | int | # of all words.
-average word length | `remove_stop_words`| float | Mean word length in corpus.
-most frequent words | `remove_stop_words`, `lemmatise`, `n` | List[Tuple[str, int]] | Most frequently used words. Can be lemmatised and stop words removed
+tokens | `remove_punctuation`, `remove_stop_words`,`include_pos`, `exclude_pos`, `min_freq_per_doc` , `limit` | List[str] | A customizable list of all tokens in the corpus.
+unique_tokens | `remove_punctuation`, `remove_stop_words`,`include_pos`, `exclude_pos`, `min_freq_per_doc` | Set[str] | A customizable set of all unique tokens in the corpus.
+token_count | `remove_punctuation`, `remove_stop_words`,`include_pos`, `exclude_pos`, `min_freq_per_doc` | int | # of all tokens.
+average_token_length | `remove_punctuation`, `remove_stop_words`,`include_pos`, `exclude_pos`, `min_freq` | float | Mean token length in corpus based on different filter options.
+average_word_length | `remove_stop_words`,`include_pos`, `exclude_pos`, `min_freq`| float | Mean word length in corpus.
+most_frequent_words | `remove_stop_words`, `lemmatise`, `n` | List[Tuple[str, int]] | Most frequently used words. Can be lemmatised and stop words removed
 sentences | | List[str] | All sentences in the corpus.
-sentence count | | int | # of sentences.
-lemmata | | List[Tuple[str, str] | A list of all words and their lemmata.
-pos tags | | (List[Tuple[str, str] | A list of all tokens and their part of speech tags.
-named entities | | List[Tuple[str, List[str]]] | Calculates all named entities in the corpus and groups them by their label.
+sentence_count | | int | # of sentences.
+lemmata | `remove_stop_words`,`include_pos`, `exclude_pos` | List[Tuple[str, str] | A list of all words and their lemmata.
+pos_tags | `include_pos`, `exclude_pos` | (List[Tuple[str, str] | A list of all tokens and their part of speech tags.
+named_entities | | List[Tuple[str, List[str]]] | Calculates all named entities in the corpus and groups them by their label.
 readability | | float | The average readability score of the corpus ([Flesch-Reading-Ease](https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease))
 n-grams | `n`, `filter_stop_words`, `filter_nums`, `min_freq` | List[str] | The most common n-grams (collocations) with length n (default 2). Can be optionally be filtered.
 sentiment | | int | A normalized sentiment value for the whole corpus (0 - negative, 1 - neutral, 2 - positive sentiment ([Paper](https://arxiv.org/abs/1408.5882)). 
@@ -53,16 +52,21 @@ similarity |  | float | Calculates the vector similarity of two documents. Only 
 
 #### Specific `metrics` : sub-corpus
 The following `metrics` specify per-doc-analysis and return a list of their respective `metric` for each document described above:
-- `tokens per doc`
-- `sentences per doc`
-- `pos tags per doc`
-- `lemmata per doc`
-- `named entities per doc`
-- `readbility per doc`
-- `sentiment per doc`
-- `keywords per doc`
+- `tokens_per_doc`
+- `token_count_per_doc`
+- `unique_tokens_per_doc`
+- `most_frequent_words_per_doc`
+- `sentences_per_doc`
+- `sentence_count_per_doc`
+- `pos_tags_per_doc`
+- `lemmata_per_doc`
+- `named_entities_per_doc`
+- `readability_per_doc`
+- `sentiment_per_doc`
+- `keywords_per_doc`
+- `n-grams_per_doc`
 
-Note: `keywords per doc` is only available per document and cannot be computed on a corus at once, because PositionRank is not suited for more than one document.
+Note: `keywords` is only available per document and cannot be computed on a corpus at once, because PositionRank is not suited for more than one document.
 
 #### Analysis of single document
 Example:
