@@ -159,15 +159,7 @@ def parse_to_json(response):
 
         memberlist = work.get('CASE-LAW_IS_ABOUT_CONCEPT.MEMBERLIST')
         if memberlist:
-            # MongoDB cannot handle dots in key-strings. replace them with commas
-            _temp_dict = extract_data(memberlist)
-            _dict_dots_replaced = {}
-            for key, value in _temp_dict.items():
-                if '.' in key:
-                    _dict_dots_replaced[key.replace('.', ',')] = value
-                else:
-                    _dict_dots_replaced[key] = value
-            mongo_dict['case_law_directory'] = _dict_dots_replaced
+            mongo_dict['case_law_directory'] = extract_data(memberlist)
 
         author_data = work.get('WORK_CREATED_BY_AGENT')
         if author_data:
@@ -216,12 +208,12 @@ def parse_to_json(response):
     return mongo_dict
 
 
-def parse_response_for_mongo(response, debug_mode=False, dump_mode=None):
+def parse_response_for_mongo(response, debug_mode=False, dump_mode=None, iteration_num=0):
     data_dict = xmltodict.parse(response.content)
     results_dict = data_dict["S:Envelope"]["S:Body"]["searchResults"]["result"]
 
     if dump_mode == 'response' or dump_mode == 'all':
-        dump_to_files(results_dict, dump_type='response')
+        dump_to_files(results_dict, dump_type='response', iteration_num=iteration_num)
 
     if debug_mode:
         global DEBUG
@@ -232,7 +224,7 @@ def parse_response_for_mongo(response, debug_mode=False, dump_mode=None):
         parsed_responses.append(parse_to_json(response))
 
     if dump_mode == 'parse' or dump_mode == 'all':
-        dump_to_files(parsed_responses, dump_type='parse')
+        dump_to_files(parsed_responses, dump_type='parse', iteration_num=iteration_num)
 
     if DEBUG:
         print()
