@@ -14,7 +14,7 @@ import {
     SENTENCE_COUNT_API_DESC,
     TOKEN_COUNT,
     TOKEN_COUNT_API_DESC,
-    TOKENS,
+    TOKENS, UNIVERSAL_POS_TAGS, UNIVERSAL_POS_TAGS_HINTS,
     WORD_COUNT,
     WORD_COUNT_API_DESC,
     WORDCLOUD
@@ -24,6 +24,7 @@ import 'tippy.js/dist/tippy.css';
 import 'tippy.js/animations/scale.css';
 import DownloadDataButton from "./DownloadDataButton";
 import PerDocSelector from "./PerDocSelector";
+import PosTagsTableHeader from "./PosTagsTableHeader";
 
 var CanvasJS = CanvasJSReact.CanvasJS;
 var CanvasJSChart = CanvasJSReact.CanvasJSChart;
@@ -264,6 +265,23 @@ class DataVisualizer extends React.Component {
                             </div>
                         </div>
                     </div>
+
+                    <div className="row search-option-container">
+                        <div id={"posTagsPerDoc"}
+                             style={{display: this.state.posTagsPerDoc === false ? 'none' : ''}}>
+                            <div>
+                                {this.renderPosTagsPerDoc()}
+                            </div>
+                            {this.addPosTagsPerDocToTable()}
+                            <div>
+                                <DownloadDataButton
+                                    description="PoS-Tags"
+                                    data={this.getDataFromProps('pos_tags_per_doc')}
+                                    downloadData={(data) => this.downloadData(data, "pos_tags")}
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         )
@@ -411,6 +429,19 @@ class DataVisualizer extends React.Component {
 
     }
 
+    addPosTagsPerDocToTable() {
+        if (this.state.posTagsPerDoc) {
+            let data = this.getPosTagsPerDocFromData();
+            if (data === null) {
+                return;
+            }
+
+            this.deleteOldRows('pos-tags-per-doc-table-body')
+            this.insertPosTagsPerDocTableRow(data);
+        }
+
+    }
+
     addPosTagsToTable() {
         if (this.state.posTagsTableData) {
             let data = this.getSortedPosTagsFromData();
@@ -420,7 +451,7 @@ class DataVisualizer extends React.Component {
 
             if (this.state.posTagsTableData) {
                 this.deleteOldRows('pos-tags-table-body');
-                this.insertPosTagsTableRow(data)
+                this.insertPosTagsTableRow(data);
             }
         }
     }
@@ -469,6 +500,35 @@ class DataVisualizer extends React.Component {
         }
     }
 
+    insertPosTagsPerDocTableRow(data) {
+        let tableBody = document.getElementById('pos-tags-per-doc-table-body');
+
+        if (data === null) {
+            let row = tableBody.insertRow(0);
+            let cell = row.insertCell(0);
+
+            cell.innerHTML = "No data found";
+        }
+
+        for (let i = 0; i < data.length; i++) {
+            let row = tableBody.insertRow(0);
+            let documentCell = row.insertCell(0);
+            documentCell.classList.add("pos-tags-document-cell");
+            documentCell.innerHTML = this.props.data['celex_numbers'][i];
+
+            for (let j = 0; j < UNIVERSAL_POS_TAGS.length; j++) {
+                let tagCell = row.insertCell(j + 1);
+                tagCell.classList.add("pos-tags-per-doc-cell");
+                if (data[i].tags[j] !== undefined) {
+                    tagCell.innerHTML = data[i].tags[j]['count'];
+                } else {
+                    tagCell.innerHTML = "" + 0;
+                }
+
+            }
+        }
+    }
+
     renderPosTags() {
 
         return (
@@ -498,10 +558,39 @@ class DataVisualizer extends React.Component {
         )
     }
 
+    renderPosTagsPerDoc() {
+        return (
+            <div className="feature-section">
+                <h3>Part of Speech Tags</h3>
+                <div className="limiter">
+                    <div className="container-table100">
+                        <div className="wrap-table100">
+                            <div className="table100">
+                                <table id="pos-tags-per-doc-table">
+                                    <thead>
+                                    <tr>
+                                        <th className="pos-tags-per-doc-header" title="CELEX-Number of Document">
+                                            Document
+                                        </th>
+                                        <PosTagsTableHeader/>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="pos-tags-per-doc-table-body">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        )
+    }
+
     getSortedPosTagsFromData() {
         if (this.props.data.hasOwnProperty(POS_TAGS_API_DESC)) {
             let data = this.props.data[POS_TAGS_API_DESC];
-            data = this.groupPosTags(data);
+            data = this.groupPosTagsByToken(data);
 
             if (data === null) {
                 return null;
@@ -521,8 +610,76 @@ class DataVisualizer extends React.Component {
         }
         return null;
     }
+    getPosTagsPerDocFromData() {
+        if (this.props.data.hasOwnProperty('pos_tags_per_doc')) {
+            let data = this.props.data['pos_tags_per_doc'];
+            data = this.groupPosTagsByTag(data);
 
-    groupPosTags(data) {
+            if (data === null) {
+                return null;
+            }
+
+            console.debug(data);
+            for (const document of data) {
+                console.debug(document);
+                let tags = document.tags;
+                tags.sort(function (a,b) {
+                    return a.posTag.localeCompare(b.posTag);
+                })
+            }
+            console.debug(data);
+
+            return data;
+        }
+        return null;
+    }
+
+    groupPosTagsByTag(data) {
+        let groupedPosTags = []
+        if (data === null) {
+            return null;
+        }
+
+        console.debug(data);
+
+        for (let i = 0; i < data.length; i++) {
+            let document = data[i];
+            let tags = [];
+            let entry = {
+                document: this.props.data['celex_numbers'][i],
+                tags: tags
+            }
+
+            for (const tag of UNIVERSAL_POS_TAGS) {
+                let tagEntry = {
+                    posTag: tag,
+                    count: 0
+                }
+                tags.push(tagEntry);
+            }
+
+
+            for (const tag of document) {
+                let tagEntry = {
+                    posTag: tag[1],
+                    count: 1
+                }
+                if (tags.some(item => item.posTag === tagEntry.posTag)) {
+                    for (const existingEntry of tags) {
+                        if (existingEntry.posTag === tagEntry.posTag) {
+                            tags[tags.indexOf(existingEntry)].count = existingEntry.count + 1;
+                        }
+                    }
+                } else {
+                    tags.push(tagEntry)
+                }
+            }
+            groupedPosTags.push(entry);
+        }
+        return groupedPosTags;
+    }
+
+    groupPosTagsByToken(data) {
         let groupedPosTags = [];
         if (data === null) {
             return null;
@@ -699,7 +856,6 @@ class DataVisualizer extends React.Component {
 
     // sort the elements from the response body into arrays that the visualization libraries can read
     getElementsFromResponse(array, visualization) {
-        console.debug(array);
         let returnData = [];
         if (!this.isIterable(array)) {
             let value = array;

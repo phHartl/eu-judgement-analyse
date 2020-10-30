@@ -1,4 +1,3 @@
-
 export const WORDCLOUD = 'wordlcoud';
 export const BAR_CHART = 'barchart';
 export const DOWNLOAD = 'download';
@@ -62,3 +61,10 @@ export const PROCEDURE_TYPE_API_DESC = 'procedure_type';
 export const POS_TAGS_API_DESC = 'pos_tags';
 
 export const NO_DATA_FOUND = 'No Data has been found';
+
+export const UNIVERSAL_POS_TAGS = ["ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM",
+    "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM", "VERB", "X"]
+
+export const UNIVERSAL_POS_TAGS_HINTS = ["Adjective", "Adposition", "Adverb", "Auxiliary", "Coordinating Conjunction",
+    "Determiner", "Interjection", "Noun", "Numeral", "Particle", "Pronoun", "Proper Noun", "Punctuatuin",
+    "Subordinating Conjunction", "Symbol", "Verb", "Other"]

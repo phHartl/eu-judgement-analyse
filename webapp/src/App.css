@@ -493,6 +493,30 @@ input[type="number"] {
   width: 15%;
 }
 
+.pos-tags-document-cell {
+  /*background-color: #2D3138;*/
+  font-weight: bold;
+}
+
+th {
+  background-color: #2D3138;
+  width: 5%;
+}
+
+@media screen and (min-width: 1200px) {
+  th {
+    font-size: 20px;
+  }
+}
+
+.pos-tags-per-doc-header {
+  text-align: center;
+}
+
+.pos-tags-per-doc-cell {
+  text-align: center;
+}
+
 /************************************
  * RAW DATA TABLE                   *
  ************************************/
@@ -646,24 +670,7 @@ tbody tr:hover {
     left: 30px;
     top: 0;
   }
-  table tbody tr td:nth-child(1):before {
-    content: "Date";
-  }
-  table tbody tr td:nth-child(2):before {
-    content: "Order ID";
-  }
-  table tbody tr td:nth-child(3):before {
-    content: "Name";
-  }
-  table tbody tr td:nth-child(4):before {
-    content: "Price";
-  }
-  table tbody tr td:nth-child(5):before {
-    content: "Quantity";
-  }
-  table tbody tr td:nth-child(6):before {
-    content: "Total";
-  }
+
 
   .column4,
   .column5,
