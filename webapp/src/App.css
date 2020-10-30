@@ -517,6 +517,10 @@ th {
   text-align: center;
 }
 
+.pos-tags-document-link {
+  color: white;
+}
+
 /************************************
  * RAW DATA TABLE                   *
  ************************************/

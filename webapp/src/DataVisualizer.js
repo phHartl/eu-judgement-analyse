@@ -512,10 +512,23 @@ class DataVisualizer extends React.Component {
 
         for (let i = 0; i < data.length; i++) {
             let row = tableBody.insertRow(0);
+
+            // cell that contains the celex number of the coument as a link
             let documentCell = row.insertCell(0);
             documentCell.classList.add("pos-tags-document-cell");
-            documentCell.innerHTML = this.props.data['celex_numbers'][i];
 
+            // create the link and add it to the table cell
+            let documentLink = document.createElement("a");
+            documentLink.classList.add("pos-tags-document-link");
+            documentLink.innerHTML = this.props.data['celex_numbers'][i];
+            documentLink.setAttribute("href",
+                "https://eur-lex.europa.eu/legal-content/EN/TXT/?&uri=CELEX:" + this.props.data['celex_numbers'][i]);
+            documentLink.setAttribute("target", "_blank");
+
+            documentCell.appendChild(documentLink);
+
+            
+            // add the counted tag appearances to the table
             for (let j = 0; j < UNIVERSAL_POS_TAGS.length; j++) {
                 let tagCell = row.insertCell(j + 1);
                 tagCell.classList.add("pos-tags-per-doc-cell");
