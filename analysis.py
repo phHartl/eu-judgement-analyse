@@ -3,9 +3,11 @@ import pickle
 import math
 from collections import Counter
 import statistics
+import configparser
 from joblib import Parallel, delayed
 from functools import partialmethod, partial
 from os import cpu_count
+from sys import platform
 
 import gensim
 # install version 2.1.8
@@ -135,6 +137,10 @@ class CorpusAnalysis():
             raise ValueError("Language not supported")
         else:
             self.language = language
+        
+        config = configparser.ConfigParser()
+        config.read("config.ini")
+        self.threads = int(config.get("analysis", "threads"))
 
         if self.language == "en":
             # pip install https://blackstone-model.s3-eu-west-1.amazonaws.com/en_blackstone_proto-0.0.1.tar.gz
@@ -185,8 +191,15 @@ class CorpusAnalysis():
 
         self.corpus = textacy.Corpus(self.nlp)
         with self.nlp.disable_pipes(*self._remove_unused_components(pipeline_components)):
-            partitions = minibatch(texts, math.ceil(len(texts) / cpu_count()))
-            executor = Parallel(n_jobs=-1, require="sharedmem", prefer="threads")
+            if (self.threads == -1):
+                if (platform.startswith('win32')):
+                    partitions = minibatch(texts, math.ceil(len(texts) / cpu_count()))
+                else:
+                    from os import sched_getaffinity                    
+                    partitions = minibatch(texts, math.ceil(len(texts) / len(sched_getaffinity(0))))
+            else:
+                partitions = minibatch(texts, math.ceil(len(texts) / self.threads))
+            executor = Parallel(n_jobs=self.threads, require="sharedmem", prefer="threads", verbose=10)
             do = delayed(partial(self._exec_pipeline_for_sub_corpus, normalize_texts))
             tasks = (do(i, batch) for i, batch in enumerate(partitions))
             sub_corpora = executor(tasks)
@@ -483,7 +496,7 @@ class CorpusAnalysis():
 
     def get_pos_tags_per_doc(self, include_pos=None, exclude_pos=None):
         """
-        Gets all part of speech tags for each for grouped by document.
+        Gets all part of speech tags (https://universaldependencies.org/u/pos/) for each for grouped by document.
 
         Returns
         -------
@@ -581,9 +594,10 @@ class CorpusAnalysis():
             entities = [e.string for doc in self.corpus for e in doc.ents if label == e.label_]
             entities = list(set(entities))
             ner.append((label, entities))
-        compound_cases = [compound_case for doc in self.corpus for compound_case in doc._.compound_cases]
-        if len(compound_cases) > 0:
-            ner.append(("COMPOUND_CASES", compound_cases))
+        if self.language == "en":
+            compound_cases = [compound_case for doc in self.corpus for compound_case in doc._.compound_cases]
+            if len(compound_cases) > 0:
+                ner.append(("COMPOUND_CASES", compound_cases))
         return ner
 
     def get_named_entities_per_doc(self):
@@ -603,9 +617,10 @@ class CorpusAnalysis():
                 entities = [e.string for e in doc.ents if label == e.label_]
                 entities = list(set(entities))
                 ner_per_doc.append((label, entities))
-            compound_cases = [compound_case for compound_case in doc._.compound_cases]
-            if len(compound_cases) > 0:
-                ner_per_doc.append(("COMPOUND_CASES", compound_cases))
+            if self.language == "en":
+                compound_cases = [compound_case for compound_case in self.doc._.compound_cases]
+                if len(compound_cases) > 0:
+                    ner_per_doc.append(("COMPOUND_CASES", compound_cases))
             ner.append(ner_per_doc)
         return ner
 
@@ -871,163 +886,3 @@ class CorpusAnalysis():
             if spacy_token._.iwnlp_lemmas is not None:
                 return spacy_token._.iwnlp_lemmas[0]
         return spacy_token.lemma_
-
-    # # LDA (static)
-    # def prepare_text_for_lda(self):
-    #     pos_tagged_tokens = self.get_pos_tags()
-    #     tokens = [tupl[0] for tupl in pos_tagged_tokens if tupl[1] == "NOUN"]
-    #     tokens = [token.text.strip() for token in tokens if len(token) > 3]
-    #     # lemmata = self.get_pos_tags()
-    #     # tokens = [tupl[1] for tupl in lemmata]
-    #     return tokens
-
-    # def compute_coherence_values_(self, corpus, texts, dictionary, k, a, b):
-    #     lda_model = gensim.models.LdaMulticore(corpus=corpus,
-    #                                            id2word=dictionary,
-    #                                            num_topics=k,
-    #                                            random_state=100,
-    #                                            chunksize=10,
-    #                                            passes=10,
-    #                                            alpha=a,
-    #                                            eta=b,
-    #                                            per_word_topics=True,
-    #                                            workers=4)
-
-    #     coherence_model_lda = gensim.models.CoherenceModel(
-    #         model=lda_model, texts=texts, dictionary=dictionary, coherence='c_v')
-
-    #     return coherence_model_lda.get_coherence()
-
-    # def train_lda_parameters(self):
-    #     import numpy as np
-    #     import pandas as pd
-    #     import tqdm
-    #     tokens = []
-    #     for doc in self.corpus:
-    #         for token in doc:
-    #             if not token.is_stop and not token.is_punct and (token.pos_ == "NOUN" or token.pos_ == "VERB" or token.pos_ == "ADJ") and len(token) > 3:
-    #                 tokens.append(token.text)
-    #     dictionary = gensim.corpora.Dictionary([d.split() for d in tokens])
-    #     docs = []
-    #     for doc in self.corpus:
-    #         tokens_per_doc = []
-    #         for token in doc:
-    #             if not token.is_punct and not token.is_stop and (token.pos_ == "NOUN" or token.pos_ == "VERB" or token.pos_ == "ADJ") and len(token) > 3:
-    #                 tokens_per_doc.append(token.text)
-    #         docs.append(tokens_per_doc)
-    #     corpus = [dictionary.doc2bow(text) for text in docs]
-    #     grid = {}
-    #     grid['Validation_Set'] = {}  # Topics range
-    #     min_topics = 10
-    #     max_topics = 15
-    #     step_size = 1
-    #     topics_range = range(min_topics, 150, 20)  # Alpha parameter
-    #     alpha = list(np.arange(0.01, 1, 0.3))
-    #     alpha.append('symmetric')
-    #     alpha.append('asymmetric')  # Beta parameter
-    #     beta = list(np.arange(0.01, 1, 0.3))
-    #     beta.append('symmetric')  # Validation sets
-    #     num_of_docs = len(corpus)
-    #     corpus_sets = [  # gensim.utils.ClippedCorpus(corpus, num_of_docs*0.25),
-    #         # gensim.utils.ClippedCorpus(corpus, num_of_docs*0.5),
-    #         gensim.utils.ClippedCorpus(corpus, int(num_of_docs*0.75)),
-    #         corpus]
-    #     corpus_title = ['75% Corpus', '100% Corpus']
-    #     model_results = {'Validation_Set': [],
-    #                      'Topics': [],
-    #                      'Alpha': [],
-    #                      'Beta': [],
-    #                      'Coherence': []
-    #                      }
-    #     # Can take a long time to run
-    #     if 1 == 1:
-    #         pbar = tqdm.tqdm(total=len(corpus_sets)*len(topics_range)*len(alpha)*len(beta))
-
-    #         # iterate through validation corpuses
-    #         for i in range(len(corpus_sets)):
-    #             # iterate through number of topics
-    #             for k in topics_range:
-    #                 # iterate through alpha values
-    #                 for a in alpha:
-    #                     # iterare through beta values
-    #                     for b in beta:
-    #                         # get the coherence score for the given parameters
-    #                         cv = self.compute_coherence_values(corpus=corpus_sets[i], dictionary=dictionary, texts=docs,
-    #                                                            k=k, a=a, b=b)
-    #                         # Save the model results
-    #                         model_results['Validation_Set'].append(corpus_title[i])
-    #                         model_results['Topics'].append(k)
-    #                         model_results['Alpha'].append(a)
-    #                         model_results['Beta'].append(b)
-    #                         model_results['Coherence'].append(cv)
-
-    #                         pbar.update(1)
-    #         pd.DataFrame(model_results).to_csv('lda_tuning_results.csv', index=False)
-    #         pbar.close()
-
-    # def make_bigrams(self, docs, bigram_mod):
-    #     return [bigram_mod[doc] for doc in docs]
-
-    # def make_trigrams(self, docs, trigram_mod, bigram_mod):
-    #     return [trigram_mod[bigram_mod[doc]] for doc in docs]
-
-    # def generate_topic_models(self, topics=10):
-    #     # Build the bigram and trigram models
-    #     tokens_per_doc = []
-    #     for doc in self.get_lemmata_per_doc(True, include_pos=("NOUN", "ADJ", "VERB", "ADV")):
-    #         tokens = []
-    #         for tupl in doc:
-    #             tokens.append(tupl[1])
-    #         tokens_per_doc.append(tokens)
-    #     bigram = gensim.models.Phrases(tokens_per_doc, min_count=5, threshold=10)
-    #     trigram = gensim.models.Phrases(bigram[tokens_per_doc], threshold=10)
-
-    #     # Faster way to get a sentence clubbed as a trigram/bigram
-    #     bigram_mod = gensim.models.phrases.Phraser(bigram)
-    #     trigram_mod = gensim.models.phrases.Phraser(trigram)
-
-    #     tokens_bigrams = self.make_trigrams(tokens_per_doc, trigram_mod, bigram_mod)
-
-    #     id2word = gensim.corpora.Dictionary(tokens_bigrams)
-    #     docs = tokens_bigrams
-    #     corpus = [id2word.doc2bow(text) for text in docs]
-    #     # model_list, coherence_values = self.compute_coherence_values(id2word,corpus,docs,200,50,10)
-    #     # print("")
-    #     # lda_model = gensim.models.wrappers.LdaMallet('data/mallet-2.0.8/bin/mallet',corpus, num_topics=topics, id2word=id2word)
-    #     # coherence_model_lda = gensim.models.CoherenceModel(
-    #     #     model=lda_model, texts=docs, dictionary=id2word, coherence='c_v'
-    #     # )
-    #     # coherence_lda = coherence_model_lda.get_coherence()
-    #     # print(coherence_lda)
-    #     # topics = lda_model.print_topics()
-    #     # doc_lda = lda_model[corpus]
-    #     # for topic in topics:
-    #     #     print(topic)
-
-    # def compute_coherence_values(self, dictionary, corpus, texts, limit, start=2, step=3):
-    #     """
-    #     Compute c_v coherence for various number of topics
-
-    #     Parameters:
-    #     ----------
-    #     dictionary : Gensim dictionary
-    #     corpus : Gensim corpus
-    #     texts : List of input texts
-    #     limit : Max num of topics
-
-    #     Returns:
-    #     -------
-    #     model_list : List of LDA topic models
-    #     coherence_values : Coherence values corresponding to the LDA model with respective number of topics
-    #     """
-    #     coherence_values = []
-    #     model_list = []
-    #     for num_topics in range(start, limit, step):
-    #         model = gensim.models.wrappers.LdaMallet(
-    #             "data/mallet-2.0.8/bin/mallet", corpus=corpus, id2word=dictionary, num_topics=num_topics)
-    #         model_list.append(model)
-    #         coherencemodel = gensim.models.CoherenceModel(
-    #             model=model, texts=texts, dictionary=dictionary, coherence='c_v')
-    #         coherence_values.append(coherencemodel.get_coherence())
-
-    #     return model_list, coherence_values

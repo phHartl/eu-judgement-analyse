@@ -1,43 +1,25 @@
-from mongo import *
+import configparser
 from analysis import CorpusAnalysis
 from flask import render_template, Flask, request, jsonify, make_response
-from flask_pymongo import PyMongo
-from collections import OrderedDict
-from api_functions import *
+from mongo import init_client, db_is_running
+from api_functions import get_all_docs, get_docs_by_custom_query, analyse_corpus
+from tasks import execute_analyser_small, execute_analyser_big
+
+config = configparser.ConfigParser()
+config.read("config.ini")
 
 # Create the application instance
 app = Flask(__name__)
-app.config["MONGO_URI"] = "mongodb://localhost:27017/judgment_corpus"
-mongo = PyMongo(app)
-db = mongo.db
-collection = mongo.db.judgements
 
-def __singular_doc_requested(args):
-    if isinstance(args, list):
-        return False
-    if isinstance(args.get('value'), list):
-        return False
-    uids = ['celex', 'ecli', 'reference']
-    if args.get('column') not in uids:
-        return False
-    return True
-
-@app.before_first_request          
-def load_models():
-    add_analyser("en")
-    add_analyser("de")
-
-
-# Create a URL route in our application for "/"
-@app.route('/')
-def home():
-    """
-    This function just responds to the browser ULR
-    localhost:5000/
-    :return:        the rendered template 'home.html'
-    """
-    return render_template('home.html')
-
+def execute_analyser(corpus_args, analysis_args, language):
+    # define the corpus
+    # whole corpus or custom subcorpus
+    init_client()
+    if corpus_args == 'all':
+        corpus = get_all_docs(language)
+    else:
+        corpus = get_docs_by_custom_query(corpus_args, language)
+    return analyse_corpus(corpus, analysis_args, language)
 
 @app.route('/eu-judgments/api/data', methods=['POST'])
 def query():
@@ -54,18 +36,25 @@ def query():
         # missing info
         return "incorrect request parameters"
 
-    # define the corpus
-    # whole corpus or custom subcorpus
-    if corpus_args == 'all':
-        corpus = get_all_docs(language)
+    if config.getboolean("execution_mode", "server_mode"):
+        init_client()
+        if corpus_args == 'all':
+            corpus = get_all_docs(language)
+        else:
+            corpus = get_docs_by_custom_query(corpus_args, language)
+        print(corpus.count())
+        if(corpus.count() > 10):
+            # celery -A tasks.celery worker -Q huge_corpus -c10 -Ofair
+            analysis_data = execute_analyser_big.apply_async(args=[corpus_args, analysis_args, language], queue="huge_corpus")
+            result = analysis_data.get()
+        else:
+            # celery -A tasks.celery worker -Q celery -c2
+            analysis_data = execute_analyser_small.delay(corpus_args, analysis_args, language)
+            result = analysis_data.get()
     else:
-        corpus = get_docs_by_custom_query(corpus_args, language)
-
-    # analyse and save for in every way specified in the request
-    # for arg in analysis_args:
-    #     analysis_data[arg] = analyse_selected_corpus(corpus, arg)
-    analysis_data = analyse_corpus(corpus, analysis_args, language)
-    response = make_response(jsonify(analysis_data))
+        result = execute_analyser(corpus_args, analysis_args, language)
+    
+    response = make_response(jsonify(result))
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 

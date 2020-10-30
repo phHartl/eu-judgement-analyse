@@ -13,7 +13,7 @@ from request_parser import parse_response_for_mongo
 WRITE_TO_FILE_DEBUG = 0
 
 config = configparser.ConfigParser()
-config.read("config.ini")
+config.read("eur_lex.ini")
 
 client = Client(
     wsdl="https://eur-lex.europa.eu/eurlex-ws?wsdl",
