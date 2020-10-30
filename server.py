@@ -1,7 +1,7 @@
 import configparser
 from analysis import CorpusAnalysis
 from flask import render_template, Flask, request, jsonify, make_response
-from mongo import init_client, db_is_running
+from mongo import init_client, db_is_running, close_client
 from api_functions import get_all_docs, get_docs_by_custom_query, analyse_corpus
 from tasks import execute_analyser_small, execute_analyser_big
 
@@ -19,7 +19,9 @@ def execute_analyser(corpus_args, analysis_args, language):
         corpus = get_all_docs(language)
     else:
         corpus = get_docs_by_custom_query(corpus_args, language)
-    return analyse_corpus(corpus, analysis_args, language)
+    data = analyse_corpus(corpus, analysis_args, language)
+    close_client()
+    return data
 
 @app.route('/eu-judgments/api/data', methods=['POST'])
 def query():

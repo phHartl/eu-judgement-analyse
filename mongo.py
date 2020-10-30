@@ -46,6 +46,9 @@ def init_client():
     db = client.judgment_corpus
     collection = client.judgement_corpus.judgments_en # english as default language
 
+def close_client():
+    client.close()
+
 # accepts yyyy-mm-dd string and returns a datetime object for mongoDB
 def __get_datetime_from_string(ymd_string):
     split = ymd_string.split('-')
