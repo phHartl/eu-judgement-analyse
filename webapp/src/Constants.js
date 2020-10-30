@@ -35,9 +35,9 @@ export const PROCEDURE_TYPE = 'Procedure Type';
 export const POS_TAGS = 'PoS-Tags';
 export const SENTENCES = 'Sentences';
 
-export const TOKEN_COUNT_API_DESC = 'token count';
-export const WORD_COUNT_API_DESC = 'word count';
-export const SENTENCE_COUNT_API_DESC = 'sentence count';
+export const TOKEN_COUNT_API_DESC = 'token_count';
+export const WORD_COUNT_API_DESC = 'word_count';
+export const SENTENCE_COUNT_API_DESC = 'sentence_count';
 export const READABILITY_API_DESC = 'readability';
 export const START_DATE_API_DESC = 'start date';
 export const END_DATE_API_DESC = 'end date';
@@ -59,6 +59,6 @@ export const CASE_LAW_DIRECTORY_API_DESC = 'case_law_directory';
 export const APPLICANT_API_DESC = 'applicant';
 export const DEFENDANT_API_DESC = 'Defendant';
 export const PROCEDURE_TYPE_API_DESC = 'procedure_type';
-export const POS_TAGS_API_DESC = 'pos tags';
+export const POS_TAGS_API_DESC = 'pos_tags';
 
 export const NO_DATA_FOUND = 'No Data has been found';

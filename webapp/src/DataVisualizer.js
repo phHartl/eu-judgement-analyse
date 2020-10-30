@@ -23,6 +23,7 @@ import {
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/animations/scale.css';
 import DownloadDataButton from "./DownloadDataButton";
+import PerDocSelector from "./PerDocSelector";
 
 var CanvasJS = CanvasJSReact.CanvasJS;
 var CanvasJSChart = CanvasJSReact.CanvasJSChart;
@@ -43,10 +44,19 @@ class DataVisualizer extends React.Component {
             sentenceCount: false,
             rawTableData: false,
             posTags: false,
-            posTagsTableData: false
+            posTagsTableData: false,
+            readabilityPerDoc: false,
+            tokensPerDoc: false,
+            posTagsPerDoc: false,
+            selectedReadabilityItem: [],
+            selectedReadabilityItemValue: [],
+            selectedTokensItem: [],
+            selectedTokensItemValue: [],
         }
         this.baseState = this.state;
         this.addRawDataToTable = this.addRawDataToTable.bind(this);
+        this.handleReadabilityItemSelected = this.handleReadabilityItemSelected.bind(this);
+        this.handleTokensItemSelected = this.handleTokensItemSelected.bind(this);
         // this.sortDataByParamater = this.sortDataByParamater.bind(this);
     }
 
@@ -80,29 +90,42 @@ class DataVisualizer extends React.Component {
                 this.setState({tokens: true});
                 break;
 
-            case "most frequent words":
+            case "most_frequent_words":
                 this.setState({mostFrequentWords: true});
                 break;
 
-            case "token count":
+            case "token_count":
                 this.setState({tokenCount: true});
                 this.setState({rawTableData: true});
                 break;
 
-            case "word count":
+            case "word_count":
                 this.setState({wordCount: true});
                 this.setState({rawTableData: true});
                 break;
 
-            case "sentence count":
+            case "sentence_count":
                 this.setState({sentenceCount: true});
                 this.setState({rawTableData: true});
                 break;
 
-            case "pos tags":
+            case "pos_tags":
                 this.setState({posTags: true});
                 this.setState({posTagsTableData: true});
                 break;
+
+            case "readability_per_doc":
+                this.setState({readabilityPerDoc: true});
+                break;
+
+            case "tokens_per_doc":
+                this.setState({tokensPerDoc: true});
+                break;
+
+            case "pos_tags_per_doc":
+                this.setState({posTagsPerDoc: true});
+                break;
+
 
             default:
 
@@ -131,7 +154,7 @@ class DataVisualizer extends React.Component {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="generic-button"
-                        style={{display: this.props.celex === '' ? 'none' : '', textDecoration:'none'}}
+                        style={{display: this.props.celex === '' ? 'none' : '', textDecoration: 'none'}}
                     >View Fulltext</a>
                     </span>
                     <div id={"rawTableData"} style={{display: this.state.rawTableData === false ? 'none' : ''}}>
@@ -150,7 +173,7 @@ class DataVisualizer extends React.Component {
 
                     <div id={"readability"} style={{display: this.state.readability === false ? 'none' : ''}}>
                         <div>
-                            {this.renderReadability()}
+                            {this.renderReadability(this.getElementsFromResponse(this.props.data[READABILITY_API_DESC], COLUMN_CHART))}
                         </div>
                         <div>
                             <DownloadDataButton
@@ -189,6 +212,58 @@ class DataVisualizer extends React.Component {
                             />
                         </div>
                     </div>
+
+                    <div className="row search-option-container">
+                        <div id={"readabilityPerDoc"}
+                             style={{display: this.state.readabilityPerDoc === false ? 'none' : ''}}>
+                            <div>
+                                <PerDocSelector
+                                    data={this.getDataFromProps("readability_per_doc")}
+                                    onChange={this.handleReadabilityItemSelected}
+                                    onOptionSelected={function () {
+                                    }}
+                                    id={"readabilitySelector"}
+                                    celexNumbers={this.props.data['celex_numbers']}
+                                />
+                            </div>
+                            <div>
+                                {this.renderReadability(this.state.selectedReadabilityItemValue)}
+                            </div>
+                            <div>
+                                <DownloadDataButton
+                                    description={READABILITY}
+                                    data={this.getDataFromProps("readability_per_doc")}
+                                    downloadData={(data) => this.downloadData(data, READABILITY)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="row search-option-container">
+                        <div id={"tokensPerDoc"}
+                             style={{display: this.state.tokensPerDoc === false ? 'none' : ''}}>
+                            <div>
+                                <span className="row">
+                                     <h5 style={{display: "inline-block", paddingRight: "20px"}}>Select Document (CELEX):</h5>
+                                <PerDocSelector
+                                    data={this.getDataFromProps("tokens_per_doc")}
+                                    onChange={function () {
+                                    }}
+                                    onOptionSelected={this.handleTokensItemSelected}
+                                    id={"tokenSelector"}
+                                    celexNumbers={this.props.data['celex_numbers']}
+                                />
+                                </span>
+                            </div>
+                            <div>
+                                {this.renderPerDocElement(this.state.selectedTokensItemValue,
+                                    TOKENS + " of selected document",
+                                    "tokenVisualization",
+                                    "tokens_per_doc"
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         )
@@ -196,9 +271,108 @@ class DataVisualizer extends React.Component {
 
     }
 
+    sanitizeReadabilityPerDocData(data) {
+        let returnVal = [];
+        let entry;
+        if (data.length === 0) {
+            entry = {
+                x: 1,
+                y: 0
+            }
+        } else {
+            entry = {
+                x: 1,
+                y: parseFloat(data)
+            }
+        }
+
+        returnVal.push(entry);
+        console.debug(returnVal);
+        this.setState({selectedReadabilityItemValue: returnVal});
+
+    }
+
+    sanitizeTokensPerDocData(data) {
+        let returnData = [];
+        let visualization = this.props.tokenVisualization;
+
+        for (const word of data) {
+            let entry = {};
+            switch (visualization) {
+                case WORDCLOUD:
+                    entry = {
+                        text: word[0],
+                        value: word[1]
+                    }
+                    break;
+
+                case BAR_CHART:
+                    entry = {
+                        y: word[1],
+                        label: word[0]
+                    }
+                    break;
+
+                case COLUMN_CHART:
+                    entry = {
+                        x: 1,
+                        y: word
+                    }
+                    break;
+
+                default:
+
+            }
+
+            returnData.push(entry);
+        }
+
+        this.setState({selectedReadabilityItemValue: returnData});
+    }
+
+    handleTokensItemSelected(key) {
+        let tokensPerDoc = this.props.data['tokens_per_doc'];
+        console.debug(tokensPerDoc);
+        console.debug(tokensPerDoc[key]);
+        this.setState({selectedTokensItemValue: tokensPerDoc[key]})
+    }
+
+    handleReadabilityItemSelected(event) {
+        if (event === null) {
+            let selector = document.getElementById("readabilitySelector-0");
+
+            if (selector.value === undefined || selector.value === null) {
+                return;
+            }
+
+            let tempValue = selector.value;
+
+            this.setState({selectedReadabilityItem: tempValue});
+            this.sanitizeReadabilityPerDocData(tempValue);
+            return;
+        }
+
+        const target = event.target;
+        const value = target.value;
+
+
+        this.setState({selectedReadabilityItem: value});
+        this.sanitizeReadabilityPerDocData(value);
+    }
+
+    setPerDocSelectedItem(analysisName) {
+        switch (analysisName) {
+            case "readability":
+
+                break;
+            default:
+
+        }
+    }
+
     getDataFromProps(identifier) {
         if (!this.props.data.hasOwnProperty(identifier)) {
-            return {};
+            return null;
         }
 
         return this.props.data[identifier];
@@ -207,6 +381,14 @@ class DataVisualizer extends React.Component {
     componentDidUpdate(prevProps, prevState, snapshot) {
         if (this.props.data !== prevProps.data) {
             this.setDataState();
+        }
+
+        if (this.state.tokensPerDoc && !prevState.tokensPerDoc) {
+            this.handleTokensItemSelected(0);
+        }
+
+        if (this.state.readabilityPerDoc && !prevState.readabilityPerDoc) {
+            this.handleReadabilityItemSelected(null);
         }
     }
 
@@ -268,6 +450,13 @@ class DataVisualizer extends React.Component {
     insertPosTagsTableRow(data) {
         let tableBody = document.getElementById('pos-tags-table-body');
 
+        if (data === null) {
+            let row = tableBody.insertRow(0);
+            let cell = row.insertCell(0);
+
+            cell.innerHTML = "No data found";
+        }
+
         for (let i = 0; i < data.length; i++) {
             let row = tableBody.insertRow(0);
             let tokenCell = row.insertCell(0);
@@ -314,6 +503,10 @@ class DataVisualizer extends React.Component {
             let data = this.props.data[POS_TAGS_API_DESC];
             data = this.groupPosTags(data);
 
+            if (data === null) {
+                return null;
+            }
+
             // sort pos-tag data by count, with highest count at index[0]
             data = data.sort(function (a, b) {
                     if (a.count > b.count) {
@@ -331,6 +524,9 @@ class DataVisualizer extends React.Component {
 
     groupPosTags(data) {
         let groupedPosTags = [];
+        if (data === null) {
+            return null;
+        }
         for (const tag of data) {
             let entry = {
                 token: tag[0],
@@ -377,8 +573,7 @@ class DataVisualizer extends React.Component {
         )
     }
 
-    renderReadability() {
-        let data = this.getElementsFromResponse(this.props.data[READABILITY_API_DESC], COLUMN_CHART);
+    renderReadability(data) {
 
         const options = {
             animationEnabled: true,
@@ -479,8 +674,32 @@ class DataVisualizer extends React.Component {
         }
     }
 
+    renderPerDocElement(values, description, elementVisualization, elementDescription) {
+        let visualization = this.props[elementVisualization];
+        let elements = "";
+
+        switch (visualization) {
+            case BAR_CHART:
+                elements = this.getElementsFromResponse(values, BAR_CHART);
+                return (this.renderBarChart(elements, description, description, elementDescription));
+
+            case WORDCLOUD:
+                elements = this.getElementsFromResponse(values, WORDCLOUD);
+                return (this.renderWordcloud(elements, description, elementDescription));
+
+            case DOWNLOAD:
+                this.downloadData(this.getElementsFromResponse(elements, WORDCLOUD), description);
+                break;
+
+            default:
+                return null;
+        }
+    }
+
+
     // sort the elements from the response body into arrays that the visualization libraries can read
     getElementsFromResponse(array, visualization) {
+        console.debug(array);
         let returnData = [];
         if (!this.isIterable(array)) {
             let value = array;
@@ -584,7 +803,7 @@ class DataVisualizer extends React.Component {
                                 theme: "light-border"
                             },
                             rotationAngles: [0]
-                            // colors: ["blue", "black"], TODO pos tagging mit farben repräsentieren
+                            // colors: ["blue", "black"],
                         }}
                     />
                 </div>
@@ -601,7 +820,6 @@ class DataVisualizer extends React.Component {
 
     downloadData(data, description) {
         // initialize a new html element that downloads the values
-        // TODO maybe instead render a button that lets the user download on click, instead of instantly downloading?
         let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
         let dl = document.createElement('a');
         dl.setAttribute('href', dataStr);
@@ -612,15 +830,15 @@ class DataVisualizer extends React.Component {
     downloadRawTableData() {
         let data = {};
         if (this.state.tokenCount) {
-            data.tokenCount = this.props.data["token count"];
+            data.tokenCount = this.props.data[TOKEN_COUNT_API_DESC];
         }
 
         if (this.state.wordCount) {
-            data.wordCount = this.props.data["word count"];
+            data.wordCount = this.props.data[WORD_COUNT_API_DESC];
         }
 
         if (this.state.sentenceCount) {
-            data.sentenceCount = this.props.data["sentence count"];
+            data.sentenceCount = this.props.data[SENTENCE_COUNT_API_DESC];
         }
 
         console.debug(data);
@@ -631,6 +849,8 @@ class DataVisualizer extends React.Component {
         dl.setAttribute("download", "raw_data.json");
         dl.click();
     }
+
+
 }
 
 export default DataVisualizer;

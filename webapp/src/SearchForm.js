@@ -44,10 +44,13 @@ class SearchForm extends React.Component {
             n: "",
             readabilityOptions: false,
             tokensOptions: false,
+            tokensPerDoc: false,
             tokensOptionsLimit: "",
             tokenCountOptions: false,
             tokensOptionsRemoveStopWords: false,
             tokensOptionsRemovePunctuation: false,
+            readabilityPerDoc: false,
+            posTagsPerDoc: false,
             wordCountOptions: false,
             wordCountOptionsRemoveStopWords: false,
             mostFrequentWordsOptions: false,
@@ -245,7 +248,13 @@ class SearchForm extends React.Component {
                         name: "readabilityOptions",
                         id: "readabilityOptions",
                         description: READABILITY,
-                        options: null,
+                        options: [{
+                            perDoc: {
+                                inputType: "checkbox",
+                                description: "Per Document",
+                                name: "readabilityPerDoc"
+                            }
+                        }],
                         visualizationOptions: null
                     },
 
@@ -268,6 +277,11 @@ class SearchForm extends React.Component {
                                 inputType: "number",
                                 description: "Limit",
                                 name: "tokensOptionsLimit"
+                            },
+                            perDoc: {
+                                inputType: "checkbox",
+                                description: "Per Document",
+                                name: "tokensPerDoc"
                             }
                         }],
                         visualizationOptions: [WORDCLOUD, BAR_CHART]
@@ -339,7 +353,13 @@ class SearchForm extends React.Component {
                         name: "posTagsOptions",
                         id: "posTagsOptions",
                         description: POS_TAGS,
-                        options: null,
+                        options: [{
+                            perDoc: {
+                                inputType: "checkbox",
+                                description: "Per Document",
+                                name: "posTagsPerDoc"
+                            }
+                        }],
                         visualizationOptions: null
                     }
 
@@ -419,7 +439,7 @@ class SearchForm extends React.Component {
         // json.corpus = this.getSearchInputValues();
         json.corpus = this.getFilterValues();
         json.analysis = this.addAnalysisOptionsToJson();
-        if (json.analysis.length === 0) {
+        if (json.analysis.length <= 1) {
             document.getElementById('analysis-hint').setAttribute("style", "color: #b81d1d");
             return;
         }
@@ -431,6 +451,7 @@ class SearchForm extends React.Component {
         let analysisTypes = [];
 
         for (const element of this.state.currentAddedAnalysisOptions) {
+            console.debug(this.state.currentAddedAnalysisOptions);
             switch (element.description) {
                 case N_GRAMS:
                     if (this.state.n === "") {
@@ -446,24 +467,40 @@ class SearchForm extends React.Component {
                     break;
 
                 case READABILITY:
-                    analysisTypes.push({
-                        type: "readability"
-                    });
+                    if (this.state.readabilityPerDoc) {
+                        analysisTypes.push({
+                            type: "readability_per_doc"
+                        });
+                    } else {
+                        analysisTypes.push({
+                            type: "readability"
+                        });
+                    }
+
                     break;
 
                 case TOKENS:
-                    analysisTypes.push({
-                        type: "tokens",
-                        "remove stop words": this.state.tokensOptionsRemoveStopWords,
-                        "remove punctuation": this.state.tokensOptionsRemovePunctuation,
-                        limit: parseInt(this.state.tokensOptionsLimit)
-                    });
+                    if (this.state.tokensPerDoc) {
+                        analysisTypes.push({
+                            type: "tokens_per_doc",
+                            "remove_stop_words": this.state.tokensOptionsRemoveStopWords,
+                            "remove_punctuation": this.state.tokensOptionsRemovePunctuation,
+                            limit: parseInt(this.state.tokensOptionsLimit)
+                        });
+                    } else {
+                        analysisTypes.push({
+                            type: "tokens",
+                            "remove_stop_words": this.state.tokensOptionsRemoveStopWords,
+                            "remove_punctuation": this.state.tokensOptionsRemovePunctuation,
+                            limit: parseInt(this.state.tokensOptionsLimit)
+                        });
+                    }
                     break;
 
                 case MOST_FREQUENT_WORDS:
                     analysisTypes.push({
-                        type: "most frequent words",
-                        "remove stop words": this.state.mostFrequentWordsOptionsRemoveStopWords,
+                        type: "most_frequent_words",
+                        "remove_stop_words": this.state.mostFrequentWordsOptionsRemoveStopWords,
                         lemmatise: this.state.mostFrequentWordsOptionsLemmatise,
                         limit: parseInt(this.state.mostFrequentWordsOptionsLimit)
                     });
@@ -471,27 +508,33 @@ class SearchForm extends React.Component {
 
                 case SENTENCE_COUNT:
                     analysisTypes.push({
-                        type: "sentence count"
+                        type: "sentence_count"
                     });
                     break;
 
                 case TOKEN_COUNT:
                     analysisTypes.push({
-                        type: "token count"
+                        type: "token_count"
                     })
                     break;
 
                 case WORD_COUNT:
                     analysisTypes.push({
-                        type: "word count",
-                        "remove stop words": this.state.wordCountOptionsRemoveStopWords
+                        type: "word_count",
+                        "remove_stop_words": this.state.wordCountOptionsRemoveStopWords
                     })
                     break;
 
                 case POS_TAGS:
-                    analysisTypes.push({
-                        type: "pos tags"
-                    })
+                    if (this.state.posTagsPerDoc) {
+                        analysisTypes.push({
+                            type: "pos_tags_per_doc"
+                        })
+                    } else {
+                        analysisTypes.push({
+                            type: "pos_tags"
+                        })
+                    }
                     break;
 
                 case SENTENCES:
@@ -504,6 +547,10 @@ class SearchForm extends React.Component {
                     console.info("No matching analysis option found.")
             }
         }
+
+        analysisTypes.push({
+            type: "celex_numbers"
+        })
 
         return analysisTypes;
     }
@@ -560,14 +607,28 @@ class SearchForm extends React.Component {
             }
 
             if (input.key === "celex") {
-                this.props.setCelexNumber(this.state["celex"]);
+                let celexValue = this.getCelexFilterEntry();
+                this.props.setCelexNumber(celexValue);
+                entry = {
+                    column: "celex",
+                    value: celexValue
+                }
+            }
+
+            if (input.key === "ecli") {
+                let ecliValue = this.getEcliFilterEntry();
+
+                entry = {
+                    column: "ecli",
+                    value: ecliValue
+                }
             }
 
             if (operator !== "") {
                 entry.operator = operator;
             }
 
-            if (entry.value !== undefined && entry.value.trim() !== "") {
+            if (entry.value !== undefined) {
                 corpus.push(entry);
             }
         }
@@ -583,24 +644,36 @@ class SearchForm extends React.Component {
         return corpus;
     }
 
+    getEcliFilterEntry() {
+        let ecliRegex = new RegExp('ECLI:\\w{2}:\\w{1,7}:\\d{4}:[\\d.]{1,25}', 'g');
+
+        return this.state.ecli.match(ecliRegex);
+    }
+
+    getCelexFilterEntry() {
+        let celexRegex = new RegExp('[\\dCE]\\d{4}\\w{1,2}\\d{4,}', 'g');
+
+        return this.state.celex.match(celexRegex);
+    }
+
     addQuickSearchToCorpus(corpus) {
         if (this.state.quickSearch === undefined || this.state.quickSearch === "") {
             return;
         }
 
-        let ecliRegex = new RegExp('ECLI:\\w{2}:\\w{1,7}:\\d{4}:[\\d.]{1,25}');
-        let celexRegex = new RegExp('[\\dCE]\\d{4}\\w{1,2}\\d{4,}');
+        let ecliRegex = new RegExp('ECLI:\\w{2}:\\w{1,7}:\\d{4}:[\\d.]{1,25}', 'g');
+        let celexRegex = new RegExp('[\\dCE]\\d{4}\\w{1,2}\\d{4,}', 'g');
         let entry;
 
         if (ecliRegex.test(this.state.quickSearch)) {
             entry = {
                 column: "ecli",
-                value: this.state.quickSearch.match(ecliRegex)[0]
+                value: this.state.quickSearch.match(ecliRegex)
             };
         } else if (celexRegex.test(this.state.quickSearch)) {
             entry = {
                 column: "celex",
-                value: this.state.quickSearch.match(celexRegex)[0]
+                value: this.state.quickSearch.match(celexRegex)
             };
             this.props.setCelexNumber(this.state.quickSearch.match(celexRegex)[0]);
         } else {

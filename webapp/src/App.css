@@ -489,6 +489,9 @@ input[type="number"] {
   background: green;
 }
 
+.per-document-selector {
+  width: 15%;
+}
 
 /************************************
  * RAW DATA TABLE                   *
