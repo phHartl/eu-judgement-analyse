@@ -527,7 +527,7 @@ class DataVisualizer extends React.Component {
 
             documentCell.appendChild(documentLink);
 
-            
+
             // add the counted tag appearances to the table
             for (let j = 0; j < UNIVERSAL_POS_TAGS.length; j++) {
                 let tagCell = row.insertCell(j + 1);
@@ -632,15 +632,12 @@ class DataVisualizer extends React.Component {
                 return null;
             }
 
-            console.debug(data);
             for (const document of data) {
-                console.debug(document);
                 let tags = document.tags;
                 tags.sort(function (a,b) {
                     return a.posTag.localeCompare(b.posTag);
                 })
             }
-            console.debug(data);
 
             return data;
         }
@@ -652,8 +649,6 @@ class DataVisualizer extends React.Component {
         if (data === null) {
             return null;
         }
-
-        console.debug(data);
 
         for (let i = 0; i < data.length; i++) {
             let document = data[i];

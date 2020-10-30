@@ -451,7 +451,6 @@ class SearchForm extends React.Component {
         let analysisTypes = [];
 
         for (const element of this.state.currentAddedAnalysisOptions) {
-            console.debug(this.state.currentAddedAnalysisOptions);
             switch (element.description) {
                 case N_GRAMS:
                     if (this.state.n === "") {
