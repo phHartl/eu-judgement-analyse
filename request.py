@@ -10,6 +10,8 @@ from mongo import insert_doc
 from plugin import prevent_escaping_characters_in_cdata
 from request_parser import parse_response_for_mongo
 
+import csv_export
+
 WRITE_TO_FILE_DEBUG = 0
 
 config = configparser.ConfigParser()
@@ -62,7 +64,7 @@ def request_data(page_size=1, page=1, language='en'):
     # We need to use a raw request here (https://stackoverflow.com/questions/57730340/how-to-fix-str-object-has-no-attribute-keys-in-python-zeep-module)
     with client.settings(raw_response=True):
         response = client.service.doQuery(
-            expertQuery="<![CDATA[SELECT TI_DISPLAY, TE, IX, I1, I2, VS , MO, CO, DI, DN, AU, CT, RJ, RJ_NEW,  ECLI, DD,  AJ,  LB, AP, DF, CD, PR WHERE DTS_SUBDOM = EU_CASE_LAW AND (EMBEDDED_MANIFESTATION-TYPE = html OR xhtml or pdf) AND CASE_LAW_SUMMARY = false AND (DTT=C? AND DTS = 6) AND (FM_CODED = JUDG) ORDER BY DN ASC]]>",
+            expertQuery="<![CDATA[SELECT TI_DISPLAY, TE, IX, I1, I2, VS , MO, CO, DI, DN, AU, CT, RJ, RJ_NEW,  ECLI, DD,  AJ,  LB, AP, DF, CD, PR WHERE DTS_SUBDOM = EU_CASE_LAW AND (EMBEDDED_MANIFESTATION-TYPE = html OR xhtml or pdf) AND CASE_LAW_SUMMARY = false AND (DTT=C? AND DTS = 6) AND (FM_CODED = JUDG) ORDER BY DD ASC]]>",
             page=page,
             pageSize=page_size,
             searchLanguage=language,
@@ -71,7 +73,7 @@ def request_data(page_size=1, page=1, language='en'):
         return response
 
 
-def request_all_data_for_language(lang):
+def request_all_data_for_language(lang, to_csv):
     # Find out how much data we need to crawl for our query. Doesn't really make sense to convert to a dict here.
     response = request_data(1, 1, lang)
     root = bs(response.content, "lxml", from_encoding="UTF-8")
@@ -80,21 +82,24 @@ def request_all_data_for_language(lang):
     for i in range(1, math.ceil(int(total_documents) / 100) + 1):
         response = request_data(page_size=100, page=i, language=lang)
         docs = parse_response_for_mongo(response)
-        for doc in docs:
-            insert_doc(doc, lang)
+        if to_csv:
+            csv_export.export_to_csv(docs, "corpus_" + lang + ".csv")
+        else:
+            for doc in docs:
+                insert_doc(doc, lang)
 
 
 # This function can be called to crawl judgments at once automatically. Use with caution!
 # accepts a single language or an array of languages to request all docs for. default: only english
-def request_all_data(languages=['en']):
+def request_all_data(languages=['en'], to_csv=False):
     if isinstance(languages, list):
         for current_lang in languages:
             if current_lang not in AVAILABLE_LANGUAGES:
                 print("REQUEST: '", current_lang, "' is not a valid language.")
             else:
-                request_all_data_for_language(current_lang)
+                request_all_data_for_language(current_lang, to_csv)
     elif type(languages, str):
-        request_all_data_for_language(languages)
+        request_all_data_for_language(languages, to_csv)
     else:
         print("REQUEST: request_all_data(): the specified argument is not of type 'list' or 'str'")
 
@@ -135,11 +140,10 @@ if WRITE_TO_FILE_DEBUG:
     response_file = open("response.txt", "w+", encoding="UTF8")
     response_file.write(str(root.prettify()))
 
-## Benchmark section:
-# t1 = timeit.Timer(functools.partial(parse_response_for_mongo, response))
-# print(t1.timeit(100))
-# t2 = timeit.Timer(functools.partial(parse_response_for_mongo_xml, response))
-# print(t2.timeit(100))
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     # main()
+#     response = request_data(20, 1, 'en')
+#     docs = parse_response_for_mongo(response)
+#     for doc in docs:
+#         csv_export.export_to_csv(doc)

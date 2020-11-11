@@ -8,9 +8,6 @@ from request import request_all_data
 import functools
 import timeit
 
-client = MongoClient('localhost', 27017)
-db = client.judgment_corpus
-collection = client.judgment_corpus.judgments_en    # english as default language
 AVAILABLE_LANGUAGES = {
     'Bulgarian' : 'bg',
     'Croatian' : 'hr',
@@ -49,7 +46,19 @@ style = style_from_dict({
 })
 
 
-
+def query_save_destination():
+    questions = [{
+        'type': 'list',
+        'name': 'destination',
+        'message': 'Do you want to create a corpus in a database or export it to .csv?',
+        'choices': [
+            {'name': 'Database (MongoDB)'},
+            {'name': 'Export to corpus.csv'},
+            ],
+        'default': 'Database (MongoDB)',
+        }]
+    answers = prompt(questions, style=style)
+    return answers.get('destination')
 
 def query_data_options():
     questions = [{
@@ -111,14 +120,13 @@ def confirm_data_acquisition():
     questions = [{
         'type': 'confirm',
         'name': 'request data confirmation',
-        'message': 'Do you want to acquire corpus data from EUR-Lex? WARNING: This can take a very long time!',
+        'message': 'Do you want to acquire corpus data from EUR-Lex? WARNING: This can take several minutes per language.',
     }]
     answers = prompt(questions, style=style)
     return answers.get('request data confirmation')
 
-
-def main():
-    print('First: Initialise database for your data:')
+def determine_scope():
+    print('Please specify which languages your dataset should contain:')
     data_size = query_data_options()
     if data_size == 'single language':
         answer = query_single_language()
@@ -127,27 +135,34 @@ def main():
         corpus_scope = list(AVAILABLE_LANGUAGES.keys())
     elif data_size == 'specify languages':
         corpus_scope = query_specific_languages()
-        # corpus_scope = []
-        # for item in verbose_languages:
-        #     corpus_scope.append(AVAILABLE_LANGUAGES.get(item))
 
     corpus_confirmation = confirm_corpus_scope(corpus_scope)
-    if corpus_confirmation: # initialise database based on input using language identifiers in AVAILABLE_LANGUAGES
+    if corpus_confirmation: # determine language list based on input using language identifiers in AVAILABLE_LANGUAGES
         lang_list = []
         for item in corpus_scope:
             lang_list.append(AVAILABLE_LANGUAGES.get(item))
+        return lang_list
+    else:
+        return None
+
+def main():
+    to_csv = False
+    
+    print('This setup will guide you to creating your corpus of judgments from the European Court of Justice.')
+    lang_list = determine_scope()
+    if not lang_list:
+        return None
+    destination = query_save_destination()
+    if destination == 'Database (MongoDB)':
         init_db(lang_list)
+    elif destination == 'Export to corpus.csv':
+        to_csv = True
 
     print('')
     acquire_data = confirm_data_acquisition()
     if acquire_data:
-        request_all_data(lang_list)
-        ## benchmark:
-        # print('Data acquisition started. Completion time will be printed once finished')
-        # t1 = timeit.Timer(functools.partial(request_all_data, lang_list))
-        # time_needed = t1.timeit(1)
-        # print('Requested and parsed all documents. Completion time:')
-        # print(time_needed)
+        request_all_data(lang_list, to_csv)
+        print("The corpus has been successfully created.")
 
 
 if __name__ == "__main__":
