@@ -25,7 +25,7 @@ def execute_analyser(corpus_args, analysis_args, language):
 
 @app.route('/eu-judgments/api/data', methods=['POST'])
 def query():
-    req = request.get_json()
+    req = request.get_json(force=True)
     language = req.get('language')
     corpus_args = req.get('corpus')
     analysis_args = req.get('analysis')

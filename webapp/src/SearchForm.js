@@ -482,14 +482,14 @@ class SearchForm extends React.Component {
                     if (this.state.tokensPerDoc) {
                         analysisTypes.push({
                             type: "tokens_per_doc",
-                            "remove_stop_words": this.state.tokensOptionsRemoveStopWords,
+                            "remove_stopwords": this.state.tokensOptionsRemoveStopWords,
                             "remove_punctuation": this.state.tokensOptionsRemovePunctuation,
                             limit: parseInt(this.state.tokensOptionsLimit)
                         });
                     } else {
                         analysisTypes.push({
                             type: "tokens",
-                            "remove_stop_words": this.state.tokensOptionsRemoveStopWords,
+                            "remove_stopwords": this.state.tokensOptionsRemoveStopWords,
                             "remove_punctuation": this.state.tokensOptionsRemovePunctuation,
                             limit: parseInt(this.state.tokensOptionsLimit)
                         });
@@ -499,7 +499,7 @@ class SearchForm extends React.Component {
                 case MOST_FREQUENT_WORDS:
                     analysisTypes.push({
                         type: "most_frequent_words",
-                        "remove_stop_words": this.state.mostFrequentWordsOptionsRemoveStopWords,
+                        "remove_stopwords": this.state.mostFrequentWordsOptionsRemoveStopWords,
                         lemmatise: this.state.mostFrequentWordsOptionsLemmatise,
                         limit: parseInt(this.state.mostFrequentWordsOptionsLimit)
                     });
@@ -520,7 +520,7 @@ class SearchForm extends React.Component {
                 case WORD_COUNT:
                     analysisTypes.push({
                         type: "word_count",
-                        "remove_stop_words": this.state.wordCountOptionsRemoveStopWords
+                        "remove_stopwords": this.state.wordCountOptionsRemoveStopWords
                     })
                     break;
 
