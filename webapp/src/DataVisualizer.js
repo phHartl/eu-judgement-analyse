@@ -7,11 +7,11 @@ import {
     DOWNLOAD,
     MOST_FREQUENT_WORD_VISUALIZATION,
     MOST_FREQUENT_WORDS,
-    N_GRAMS, NO_DATA_FOUND, POS_TAGS_API_DESC,
+    N_GRAMS, NAMED_ENTITIES, NAMED_ENTITIES_API_DESC, NO_DATA_FOUND, POS_TAGS_API_DESC,
     READABILITY,
     READABILITY_API_DESC,
     SENTENCE_COUNT,
-    SENTENCE_COUNT_API_DESC,
+    SENTENCE_COUNT_API_DESC, SENTIMENT, SENTIMENT_API_DESC, SIMILARITY, SIMILARITY_API_DESC,
     TOKEN_COUNT,
     TOKEN_COUNT_API_DESC,
     TOKENS, UNIVERSAL_POS_TAGS, UNIVERSAL_POS_TAGS_HINTS,
@@ -25,6 +25,7 @@ import 'tippy.js/animations/scale.css';
 import DownloadDataButton from "./DownloadDataButton";
 import PerDocSelector from "./PerDocSelector";
 import PosTagsTableHeader from "./PosTagsTableHeader";
+import NamedEntitiesTable from "./NamedEntities/NamedEntitiesTable";
 
 var CanvasJS = CanvasJSReact.CanvasJS;
 var CanvasJSChart = CanvasJSReact.CanvasJSChart;
@@ -40,6 +41,7 @@ class DataVisualizer extends React.Component {
             readability: false,
             tokens: false,
             mostFrequentWords: false,
+            namedEntities: false,
             tokenCount: false,
             wordCount: false,
             sentenceCount: false,
@@ -127,6 +129,19 @@ class DataVisualizer extends React.Component {
                 this.setState({posTagsPerDoc: true});
                 break;
 
+            case "sentiment":
+                this.setState({sentiment: true});
+                this.setState({rawTableData: true});
+                break;
+
+            case "similarity":
+                this.setState({similarity: true});
+                this.setState({rawTableData: true});
+                break;
+
+            case "named_entities":
+                this.setState({namedEntities: true});
+                break;
 
             default:
 
@@ -172,6 +187,20 @@ class DataVisualizer extends React.Component {
                         </div>
                     </div>
 
+                    <div id={"named-entities"} style={{display: this.state.namedEntities === false ? 'none' : ''}}>
+                        <div>
+                            {/*{this.renderNamedEntities()}*/}
+                            <NamedEntitiesTable data={this.props.data[NAMED_ENTITIES_API_DESC]}/>
+                        </div>
+                        <div>
+                            <DownloadDataButton
+                                description={NAMED_ENTITIES}
+                                data={this.getDataFromProps(NAMED_ENTITIES_API_DESC)}
+                                downloadData={(data) => this.downloadData(data, NAMED_ENTITIES)}
+                            />
+                        </div>
+                    </div>
+
                     <div id={"readability"} style={{display: this.state.readability === false ? 'none' : ''}}>
                         <div>
                             {this.renderReadability(this.getElementsFromResponse(this.props.data[READABILITY_API_DESC], COLUMN_CHART))}
@@ -196,7 +225,7 @@ class DataVisualizer extends React.Component {
                     <div id={"mostFrequentWords"}
                          style={{display: this.state.mostFrequentWords === false ? 'none' : ''}}>
                         <div>
-                            {this.renderElement('most frequent words', 'mostFrequentWordVisualization', MOST_FREQUENT_WORDS, "Words")}
+                            {this.renderElement('most_frequent_words', 'mostFrequentWordVisualization', MOST_FREQUENT_WORDS, "Words")}
                         </div>
                     </div>
 
@@ -424,7 +453,15 @@ class DataVisualizer extends React.Component {
         }
 
         if (this.state.sentenceCount) {
-            this.insertRawDataTableRow(SENTENCE_COUNT, SENTENCE_COUNT_API_DESC);
+            this.insertRawDataTableRow(SENTENCE_COUNT, SENTIMENT_API_DESC);
+        }
+
+        if (this.state.sentiment) {
+            this.insertRawDataTableRow(SENTIMENT, SENTIMENT_API_DESC);
+        }
+
+        if (this.state.similarity) {
+            this.insertRawDataTableRow(SIMILARITY, SIMILARITY_API_DESC);
         }
 
     }
@@ -471,7 +508,34 @@ class DataVisualizer extends React.Component {
         let valueCell = row.insertCell(1);
 
         typeCell.innerHTML = description;
-        valueCell.innerHTML = this.props.data[apiKey]
+        valueCell.innerHTML = this.props.data[apiKey];
+
+        if (description === SENTIMENT) {
+            let value;
+            switch (this.props.data[apiKey]) {
+                case 0:
+                    value = "Negative";
+                    break;
+
+                case 1:
+                    value = "Neutral";
+                    break;
+
+                case 2:
+                    value = "Positive";
+                    break;
+
+                default:
+                    value = "No value found"
+            }
+            valueCell.innerHTML = value;
+        }
+
+        if (description === SIMILARITY) {
+            if (this.props.data[apiKey] === -1) {
+                valueCell.innerHTML = "Error: Can only compare exactly two documents"
+            }
+        }
 
         if (this.props.data[apiKey] === 0) {
             valueCell.innerHTML = NO_DATA_FOUND;
@@ -623,6 +687,7 @@ class DataVisualizer extends React.Component {
         }
         return null;
     }
+
     getPosTagsPerDocFromData() {
         if (this.props.data.hasOwnProperty('pos_tags_per_doc')) {
             let data = this.props.data['pos_tags_per_doc'];
@@ -634,7 +699,7 @@ class DataVisualizer extends React.Component {
 
             for (const document of data) {
                 let tags = document.tags;
-                tags.sort(function (a,b) {
+                tags.sort(function (a, b) {
                     return a.posTag.localeCompare(b.posTag);
                 })
             }
@@ -797,6 +862,17 @@ class DataVisualizer extends React.Component {
                 {/*You can get reference to the chart instance as shown above using onRef. This allows you to access all chart properties and methods*/}
             </div>
         );
+    }
+
+    renderNamedEntities() {
+        let data = this.props.data[NAMED_ENTITIES_API_DESC];
+
+        for (const entry of data) {
+            console.debug(entry);
+
+        }
+
+        return null;
     }
 
     renderElement(element, elementVisualization, description, shortDescription = description) {

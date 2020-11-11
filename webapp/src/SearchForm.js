@@ -5,24 +5,53 @@ import {
     AUTHOR,
     AUTHOR_API_DESC,
     BAR_CHART,
-    CASE_AFFECTING_API_DESC, CASE_LAW_DIRECTORY, CASE_LAW_DIRECTORY_API_DESC,
+    CASE_AFFECTING_API_DESC,
+    CASE_LAW_DIRECTORY,
+    CASE_LAW_DIRECTORY_API_DESC,
     CELEX,
     CELEX_API_DESC,
     DATE,
-    DATE_API_DESC, DECISIONS_ON_COST,
-    DECISIONS_ON_COST_API_DESC, DEFENDANT, DEFENDANT_API_DESC,
-    DOWNLOAD, ECLI, ECLI_API_DESC,
-    END_DATE_API_DESC, ENDORSEMENTS, ENDORSEMENTS_API_DESC, GROUNDS, GROUNDS_API_DESC, KEYWORDS, KEYWORDS_API_DESC,
-    MOST_FREQUENT_WORD_VISUALIZATION, MOST_FREQUENT_WORDS,
-    N_GRAM_VISUALIZATION, N_GRAMS, OPERATIVE_PART, OPERATIVE_PART_API_DESC,
+    DATE_API_DESC,
+    DECISIONS_ON_COST,
+    DECISIONS_ON_COST_API_DESC,
+    DEFENDANT,
+    DEFENDANT_API_DESC,
+    DOWNLOAD,
+    ECLI,
+    ECLI_API_DESC,
+    END_DATE_API_DESC,
+    ENDORSEMENTS,
+    ENDORSEMENTS_API_DESC,
+    GROUNDS,
+    GROUNDS_API_DESC,
+    KEYWORDS,
+    KEYWORDS_API_DESC,
+    MOST_FREQUENT_WORD_VISUALIZATION,
+    MOST_FREQUENT_WORDS,
+    N_GRAM_VISUALIZATION,
+    N_GRAMS, NAMED_ENTITIES,
+    OPERATIVE_PART,
+    OPERATIVE_PART_API_DESC,
     PARTIES,
-    PARTIES_API_DESC, POS_TAGS, PROCEDURE_TYPE, PROCEDURE_TYPE_API_DESC, READABILITY, SENTENCE_COUNT, SENTENCES,
+    PARTIES_API_DESC,
+    POS_TAGS,
+    PROCEDURE_TYPE,
+    PROCEDURE_TYPE_API_DESC,
+    READABILITY,
+    SENTENCE_COUNT,
+    SENTENCES,
+    SENTIMENT, SIMILARITY,
     START_DATE_API_DESC,
     SUBJECT,
-    SUBJECT_API_DESC, SUBJECT_MATTER, SUBJECT_MATTER_API_DESC,
+    SUBJECT_API_DESC,
+    SUBJECT_MATTER,
+    SUBJECT_MATTER_API_DESC,
     TITLE,
-    TITLE_API_DESC, TOKEN_COUNT,
-    TOKEN_VISUALIZATION, TOKENS, WORD_COUNT,
+    TITLE_API_DESC,
+    TOKEN_COUNT,
+    TOKEN_VISUALIZATION,
+    TOKENS,
+    WORD_COUNT,
     WORDCLOUD
 } from "./Constants";
 import FilterDropdownParent from "./FilterDropdown/FilterDropdownParent";
@@ -40,17 +69,30 @@ class SearchForm extends React.Component {
             language: "english",
             quickSearch: "",
             nGramsOptions: false,
-            nLimit: "",
             n: "",
+            nOptionsLimit: "",
+            nOptionsFilterNumbers: true,
+            nOptionsMinOccurrence: 5,
+            nOptionsRemoveStopWords: true,
             readabilityOptions: false,
             tokensOptions: false,
             tokensPerDoc: false,
             tokensOptionsLimit: "",
             tokenCountOptions: false,
+            tokenCountOptionsMinFrequency: 5,
+            tokenCountOptionsExcludePosTags: null,
+            tokenCountOptionsIncludePosTags: null,
+            tokenCountOptionsRemovePunctuation: false,
+            tokenCountOptionsRemoveStopWords: false,
             tokensOptionsRemoveStopWords: false,
             tokensOptionsRemovePunctuation: false,
+            tokensOptionsIncludePosTags: null,
+            tokensOptionsExcludePosTags: null,
+            tokensOptionsMinFrequency: 5,
             readabilityPerDoc: false,
             posTagsPerDoc: false,
+            posTagsOptionsIncludePosTags: null,
+            posTagsOptionsExcludePosTags: null,
             wordCountOptions: false,
             wordCountOptionsRemoveStopWords: false,
             mostFrequentWordsOptions: false,
@@ -240,6 +282,21 @@ class SearchForm extends React.Component {
                                 inputType: "number",
                                 description: "Limit",
                                 name: "nOptionsLimit"
+                            },
+                            removeStopWords: {
+                                inputType: "checkbox",
+                                description: "Remove Stop Words",
+                                name: "nOptionsRemoveStopWords"
+                            },
+                            filterNums: {
+                                inputType: "checkbox",
+                                description: "Filter Numbers",
+                                name: "nOptionsFilterNumbers"
+                            },
+                            minFrequency: {
+                                inputType: "number",
+                                description: "Min. occurrence",
+                                name: "nOptionsMinOccurrence"
                             }
                         }],
                         visualizationOptions: [WORDCLOUD, BAR_CHART]
@@ -282,6 +339,21 @@ class SearchForm extends React.Component {
                                 inputType: "checkbox",
                                 description: "Per Document",
                                 name: "tokensPerDoc"
+                            },
+                            includePosTags: {
+                                inputType: "text",
+                                description: "Include PoS-Tags",
+                                name: "tokensOptionsIncludePosTags"
+                            },
+                            excludePosTags: {
+                                inputType: "text",
+                                description: "Exclude PoS-Tags",
+                                name: "tokensOptionsExcludePosTags"
+                            },
+                            minFrequency: {
+                                input: "number",
+                                description : "Min. Frequency",
+                                name: "tokensOptionsMinFrequency"
                             }
                         }],
                         visualizationOptions: [WORDCLOUD, BAR_CHART]
@@ -291,19 +363,31 @@ class SearchForm extends React.Component {
                         name: "tokenCountOptions",
                         id: "tokenCountOptions",
                         description: TOKEN_COUNT,
-                        options: null,
-                        visualizationOptions: null
-                    },
-
-                    wordCount: {
-                        name: "wordCountOptions",
-                        id: "wordCountOptions",
-                        description: WORD_COUNT,
                         options: [{
                             removeStopWords: {
                                 inputType: "checkbox",
                                 description: "Remove Stop Words",
-                                name: "wordCountOptionsRemoveStopWords"
+                                name: "tokenCountOptionsRemoveStopWords"
+                            },
+                            removePunctuation: {
+                                inputType: "checkbox",
+                                description: "Remove Punctuation",
+                                name: "tokenCountOptionsRemovePunctuation"
+                            },
+                            includePosTags: {
+                                inputType: "text",
+                                description: "Include PoS-Tags",
+                                name: "tokenCountOptionsIncludePosTags"
+                            },
+                            excludePosTags: {
+                                inputType: "text",
+                                description: "Exclude PoS-Tags",
+                                name: "tokenCountOptionsExcludePosTags"
+                            },
+                            minFrequency: {
+                                inputType: "number",
+                                description : "Min. Frequency",
+                                name: "tokenCountOptionsMinFrequency"
                             }
                         }],
                         visualizationOptions: null
@@ -358,8 +442,42 @@ class SearchForm extends React.Component {
                                 inputType: "checkbox",
                                 description: "Per Document",
                                 name: "posTagsPerDoc"
+                            },
+                            includePosTags: {
+                                inputType: "text",
+                                description: "Include PoS-Tags",
+                                name: "posTagsOptionsIncludePosTags"
+                            },
+                            excludePosTags: {
+                                inputType: "text",
+                                description: "Exclude PoS-Tags",
+                                name: "posTagsOptionsExcludePosTags"
                             }
                         }],
+                        visualizationOptions: null
+                    },
+
+                    sentiment: {
+                        name: "sentimentOptions",
+                        id: "sentimentOptions",
+                        description: SENTIMENT,
+                        options: null,
+                        visualizationOptions: null
+                    },
+
+                    similarity: {
+                        name: "similarityOptions",
+                        id: "similarityOptions",
+                        description: SIMILARITY,
+                        options: null,
+                        visualizationOptions: null
+                    },
+
+                    namedEntities: {
+                        name: "namedEntitiesOptions",
+                        id: "namedEntitiesOptions",
+                        description: NAMED_ENTITIES,
+                        options: null,
                         visualizationOptions: null
                     }
 
@@ -460,7 +578,10 @@ class SearchForm extends React.Component {
                     analysisTypes.push({
                         type: "n-grams",
                         n: parseInt(this.state.n),
-                        limit: parseInt(this.state.nGramsLimit)
+                        limit: parseInt(this.state.nOptionsLimit),
+                        remove_stopwords: this.state.nOptionsRemoveStopWords,
+                        filter_nums: this.state.nOptionsFilterNumbers,
+                        min_frequency: this.state.nOptionsMinOccurrence
                     });
 
                     break;
@@ -482,15 +603,21 @@ class SearchForm extends React.Component {
                     if (this.state.tokensPerDoc) {
                         analysisTypes.push({
                             type: "tokens_per_doc",
-                            "remove_stopwords": this.state.tokensOptionsRemoveStopWords,
-                            "remove_punctuation": this.state.tokensOptionsRemovePunctuation,
+                            remove_stopwords: this.state.tokensOptionsRemoveStopWords,
+                            remove_punctuation: this.state.tokensOptionsRemovePunctuation,
+                            include_pos: this.state.tokensOptionsIncludePosTags,
+                            exclude_pos: this.state.tokensOptionsExcludePosTags,
+                            min_freq_per_doc: this.state.tokensOptionsMinFrequency,
                             limit: parseInt(this.state.tokensOptionsLimit)
                         });
                     } else {
                         analysisTypes.push({
                             type: "tokens",
-                            "remove_stopwords": this.state.tokensOptionsRemoveStopWords,
-                            "remove_punctuation": this.state.tokensOptionsRemovePunctuation,
+                            remove_stopwords: this.state.tokensOptionsRemoveStopWords,
+                            remove_punctuation: this.state.tokensOptionsRemovePunctuation,
+                            include_pos: this.state.tokensOptionsIncludePosTags,
+                            exclude_pos: this.state.tokensOptionsExcludePosTags,
+                            min_freq_per_doc: this.state.tokensOptionsMinFrequency,
                             limit: parseInt(this.state.tokensOptionsLimit)
                         });
                     }
@@ -499,7 +626,7 @@ class SearchForm extends React.Component {
                 case MOST_FREQUENT_WORDS:
                     analysisTypes.push({
                         type: "most_frequent_words",
-                        "remove_stopwords": this.state.mostFrequentWordsOptionsRemoveStopWords,
+                        remove_stopwords: this.state.mostFrequentWordsOptionsRemoveStopWords,
                         lemmatise: this.state.mostFrequentWordsOptionsLemmatise,
                         limit: parseInt(this.state.mostFrequentWordsOptionsLimit)
                     });
@@ -513,7 +640,12 @@ class SearchForm extends React.Component {
 
                 case TOKEN_COUNT:
                     analysisTypes.push({
-                        type: "token_count"
+                        type: "token_count",
+                        remove_stopwords: this.state.tokenCountOptionsRemoveStopWords,
+                        remove_punctuation: this.state.tokenCountOptionsRemovePunctuation,
+                        include_pos: this.state.tokenCountOptionsIncludePosTags === "" ? null : this.state.tokenCountOptionsIncludePosTags,
+                        exclude_pos: this.state.tokenCountOptionsExcludePosTags  === "" ? null : this.state.tokenCountOptionsExcludePosTags,
+                        min_freq_per_doc: parseInt(this.state.tokenCountOptionsMinFrequency),
                     })
                     break;
 
@@ -527,11 +659,15 @@ class SearchForm extends React.Component {
                 case POS_TAGS:
                     if (this.state.posTagsPerDoc) {
                         analysisTypes.push({
-                            type: "pos_tags_per_doc"
+                            type: "pos_tags_per_doc",
+                            include_pos: this.state.posTagsOptionsIncludePosTags === "" ? null : this.state.posTagsOptionsIncludePosTags,
+                            exclude_pos: this.state.posTagsOptionsExcludePosTags === "" ? null : this.state.posTagsOptionsExcludePosTags
                         })
                     } else {
                         analysisTypes.push({
-                            type: "pos_tags"
+                            type: "pos_tags",
+                            include_pos: this.state.posTagsOptionsIncludePosTags === "" ? null : this.state.posTagsOptionsIncludePosTags,
+                            exclude_pos: this.state.posTagsOptionsExcludePosTags === "" ? null : this.state.posTagsOptionsExcludePosTags
                         })
                     }
                     break;
@@ -539,6 +675,24 @@ class SearchForm extends React.Component {
                 case SENTENCES:
                     analysisTypes.push({
                         type: "sentences"
+                    })
+                    break;
+
+                case SENTIMENT:
+                    analysisTypes.push({
+                        type: "sentiment"
+                    })
+                    break;
+
+                case SIMILARITY:
+                    analysisTypes.push({
+                        type: "similarity"
+                    })
+                    break;
+
+                case NAMED_ENTITIES:
+                    analysisTypes.push({
+                        type: "named_entities"
                     })
                     break;
 
@@ -608,9 +762,11 @@ class SearchForm extends React.Component {
             if (input.key === "celex") {
                 let celexValue = this.getCelexFilterEntry();
                 this.props.setCelexNumber(celexValue);
-                entry = {
-                    column: "celex",
-                    value: celexValue
+                if (celexValue !== undefined && celexValue !== null) {
+                    entry = {
+                        column: "celex",
+                        value: celexValue
+                    }
                 }
             }
 
@@ -651,6 +807,10 @@ class SearchForm extends React.Component {
 
     getCelexFilterEntry() {
         let celexRegex = new RegExp('[\\dCE]\\d{4}\\w{1,2}\\d{4,}', 'g');
+
+        if (this.state.celex === undefined) {
+            return null;
+        }
 
         return this.state.celex.match(celexRegex);
     }

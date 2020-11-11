@@ -33,6 +33,9 @@ export const DEFENDANT = 'Defendant';
 export const PROCEDURE_TYPE = 'Procedure Type';
 export const POS_TAGS = 'PoS-Tags';
 export const SENTENCES = 'Sentences';
+export const SENTIMENT = 'Sentiment';
+export const SIMILARITY = 'Similarity';
+export const NAMED_ENTITIES = 'Named Entities';
 
 export const TOKEN_COUNT_API_DESC = 'token_count';
 export const WORD_COUNT_API_DESC = 'word_count';
@@ -59,6 +62,9 @@ export const APPLICANT_API_DESC = 'applicant';
 export const DEFENDANT_API_DESC = 'Defendant';
 export const PROCEDURE_TYPE_API_DESC = 'procedure_type';
 export const POS_TAGS_API_DESC = 'pos_tags';
+export const SENTIMENT_API_DESC = 'sentiment';
+export const SIMILARITY_API_DESC = 'similarity';
+export const NAMED_ENTITIES_API_DESC = 'named_entities';
 
 export const NO_DATA_FOUND = 'No Data has been found';
 

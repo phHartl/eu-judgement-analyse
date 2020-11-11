@@ -102,11 +102,20 @@ input, select {
   width: 5%;
 }
 
+.col-12 {
+  float: left;
+  width: 12%;
+}
+
 .col-15 {
   float: left;
   width: 15%;
 }
 
+.col-20 {
+  float: left;
+  width: 20%;
+}
 
 /* Floating column for labels: 25% width */
 .col-25 {
@@ -519,6 +528,16 @@ th {
 
 .pos-tags-document-link {
   color: white;
+}
+
+.named-entity-container {
+  /*font-size: 20px;*/
+}
+
+.named-entity-list-item {
+  font-size: 16px;
+  text-align: center;
+  list-style-type: disc;
 }
 
 /************************************
