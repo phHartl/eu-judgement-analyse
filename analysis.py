@@ -831,7 +831,8 @@ class CorpusAnalysis():
             when the corpus has not two but any other number of documents
         """
         if self.corpus.n_docs != 2:
-            raise ValueError("Document vector similarity only makes sense on two single documents")
+            print("Document vector similarity only makes sense on two single documents")
+            return -1
         return self.corpus[0].similarity(self.corpus[1])
 
     def get_keywords(self, top_n=10):
