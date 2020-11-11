@@ -160,7 +160,7 @@ def __run_analysis(analyser, args):
     elif arg_type == 'pos_tags_per_doc':
         results = []
         docs = analyser.get_pos_tags_per_doc(
-            **__get_local_kwargs(args, ("remove_stopwords", "include_pos", "exclude_pos")))
+            **__get_local_kwargs(args, ("include_pos", "exclude_pos")))
         for doc_result in docs:
             results.append(__to_tuple_list(doc_result))
         analysis_data = results
