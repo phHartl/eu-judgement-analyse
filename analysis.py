@@ -325,7 +325,7 @@ class CorpusAnalysis():
             tokens_per_doc = [token.text for token in tokens_per_doc if token.pos_ in include_pos]
             if min_freq_per_doc != 1:
                 tokens_to_filter = [key for key, value in Counter(tokens_per_doc).items() if value >= min_freq_per_doc]
-                tokens_per_doc = [token for token in tokens_per_doc if token not in tokens_to_filter]
+                tokens_per_doc = [token for token in tokens_per_doc if token in tokens_to_filter]
             tokens.append(tokens_per_doc)
         return tokens
 
@@ -711,7 +711,7 @@ class CorpusAnalysis():
         """
         return statistics.mean(self.get_readability_score_per_doc())
 
-    def get_n_grams(self, n=2, filter_stop_words=True, filter_nums=True, min_freq=5):
+    def get_n_grams(self, n=2, remove_stopwords=True, filter_nums=True, min_freq=5):
         """
         This functions calculates a set of all n-grams (e.g. n=2 (bigram) 'the court').
         This corresponds to simple word collocations in the corpus.
@@ -739,9 +739,9 @@ class CorpusAnalysis():
         with self.nlp.disable_pipes("tagger", "parser", "ner"):
             self.nlp.max_length = 100000000
             doc = self.nlp(merged_text)
-        return list([token.text for token in textacy.extract.ngrams(doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
+        return list([token.text for token in textacy.extract.ngrams(doc, n, filter_stops=remove_stopwords, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq)])
 
-    def get_n_grams_per_doc(self, n=2, filter_stop_words=True, filter_nums=True, min_freq_per_doc=2):
+    def get_n_grams_per_doc(self, n=2, remove_stopwords=True, filter_nums=True, min_freq_per_doc=2):
         """
         This functions calculates a set of all n-grams (e.g. n=2 (bigram) 'the court').
         This corresponds to simple word collocations in the corpus.
@@ -765,7 +765,7 @@ class CorpusAnalysis():
         n_grams_per_doc = []
         for doc in self.corpus:
             n_grams = list([token.text for token in textacy.extract.ngrams(
-                doc, n, filter_stops=filter_stop_words, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq_per_doc)])
+                doc, n, filter_stops=remove_stopwords, filter_punct=True, filter_nums=filter_nums, min_freq=min_freq_per_doc)])
             n_grams_per_doc.append(n_grams)
         return n_grams_per_doc
 
