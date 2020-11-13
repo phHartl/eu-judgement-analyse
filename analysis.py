@@ -41,10 +41,6 @@ UNIVERSAL_POS_TAGS = ("ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN"
 # Pre-processing methods
 
 
-def __remove_punctuation(sentence):
-    sentence = re.sub(r'[^\w\s\/]', '', sentence)
-    return sentence
-
 # https://regex101.com/r/2AgRRW/2
 
 
@@ -111,9 +107,6 @@ def normalize(language, text):
     text = __remove_old_french_header_text(text)
     return text.lower().strip()
 
-# TODO: Topic modeling (static, works basically but needs more parameter optimization aka running time) - on corpus basis,
-# judgment classification (probably quite hard),
-
 
 class CorpusAnalysis():
     """
@@ -137,7 +130,7 @@ class CorpusAnalysis():
             raise ValueError("Language not supported")
         else:
             self.language = language
-        
+
         config = configparser.ConfigParser()
         config.read("config.ini")
         self.threads = int(config.get("analysis", "threads"))
@@ -195,7 +188,7 @@ class CorpusAnalysis():
                 if (platform.startswith('win32')):
                     partitions = minibatch(texts, math.ceil(len(texts) / cpu_count()))
                 else:
-                    from os import sched_getaffinity                    
+                    from os import sched_getaffinity
                     partitions = minibatch(texts, math.ceil(len(texts) / len(sched_getaffinity(0))))
             else:
                 partitions = minibatch(texts, math.ceil(len(texts) / self.threads))
@@ -215,8 +208,8 @@ class CorpusAnalysis():
                 disabled_components.append("merge_entities")
                 disabled_components.append("CompoundCases")
         if not any(component in pipeline_components for component in ("tokens", "token_count", "word_count", "average_token_length", "average_word_length",
-                                                                      "most_frequent_words", "most_frequent_words_per_doc", "tokens_per_doc", "pos_tags", 
-                                                                      "pos_tags_per_doc", "lemmata", "lemmata_per_doc", "unique_tokens", 
+                                                                      "most_frequent_words", "most_frequent_words_per_doc", "tokens_per_doc", "pos_tags",
+                                                                      "pos_tags_per_doc", "lemmata", "lemmata_per_doc", "unique_tokens",
                                                                       "unique_tokens_per_doc", "keywords", "keywords_per_doc")):
             disabled_components.append("tagger")
             if self.language == "de":
