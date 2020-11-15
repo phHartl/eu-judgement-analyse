@@ -25,7 +25,13 @@ Run `setup.py` and follow the prompts on the CLI to create a corpus of judgments
 Run `server.py` to start the server  on `localhost:5000`. Once running, you can send corpus and analysis requests via HTTP requests with JSON body.
 
 ### Progressive web application
-Run `npm start`inside the webapp subfolder to start the webapplication on `localhost:3000`. Once running, you can open the website on your web browser of choice.
+- Install [nodejs](https://nodejs.org/en/), which comes with npm pre-packed
+- Open a command line and navigate to the [webapp](./webapp) folder
+- Install the required node modules with `npm install` (this only needs to be performed once for the first time install)
+- Start the node server with `npm start`
+
+After starting the server, the webapp can be reached on `localhost:3000` on your preferred browser by default. 
+Make sure the python - Server is running as well, since it handles the queries sent through the webapp (see [Analysis](#analysis)).
 
 ## Server API
 The API accepts a JSON-body when requesting data and returns results as JSON.
@@ -197,15 +203,6 @@ applicant | { ids : string[ ], labels : string[ ] } | Entity, who submitted the 
 defendant | { ids : string[ ], labels : string[ ] } | Entity defending
 procedure_type | { ids : string[ ], labels : string[ ] } | Nature and outcome (where possible) of the proceedings
 
-## Running the Web-App
-
-- Install [nodejs](https://nodejs.org/en/), which comes with npm pre-packed
-- Open a command line and navigate to the [webapp](./webapp) folder
-- Install the required node modules with `npm install` (this only needs to be performed once for the first time install)
-- Start the node server with `npm start`
-
-After starting the server, the webapp can be reached on `localhost:3000` on your preferred browser by default. 
-Make sure the python - Server is running as well, since it handles the queries sent through the webapp (see [Analysis](#analysis)).
 
 
 
