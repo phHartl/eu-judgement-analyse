@@ -79,83 +79,83 @@ This downloaded data was queried over three documents, specified by CELEX number
 
 ```
 {
-celex_numbers: [
-"61955CJ0008",
-"61955CJ0010",
-"61957CJ0018"
-],
-n-grams: [
-[
-"high authority",
-63
-],
-[
-"probationary period",
-24
-],
-[
-"general decision",
-15
-],
-[
-"powers affecting",
-14
-],
-[
-"ecsc treaty",
-11
-],
-[
-"production costs",
-10
-],
-[
-"general decisions",
-10
-]
-],
-tokens: [
-[
-"applicant",
-92
-],
-[
-"authority",
-71
-],
-[
-"decision",
-67
-],
-[
-"court",
-63
-],
-[
-"high",
-63
-],
-[
-"decisions",
-56
-],
-[
-"article",
-52
-],
-[
-"period",
-42
-],
-[
-"application",
-41
-],
-[
-"general",
-40
-]
-]
+  celex_numbers: [
+    "61955CJ0008",
+    "61955CJ0010",
+    "61957CJ0018"
+  ],
+  n-grams: [
+    [
+      "high authority",
+      63
+    ],
+    [
+      "probationary period",
+      24
+    ],
+    [
+      "general decision",
+      15
+    ],
+    [
+      "powers affecting",
+      14
+    ],
+    [
+      "ecsc treaty",
+      11
+    ],
+    [
+      "production costs",
+      10
+    ],
+    [
+      "general decisions",
+      10
+    ]
+  ],
+  tokens: [
+    [
+      "applicant",
+      92
+    ],
+    [
+      "authority",
+      71
+    ],
+    [
+      "decision",
+      67
+    ],
+    [
+      "court",
+      63
+    ],
+    [
+      "high",
+      63
+    ],
+    [
+      "decisions",
+      56
+    ],
+    [
+      "article",
+      52
+    ],
+    [
+      "period",
+      42
+    ],
+    [
+      "application",
+      41
+    ],
+    [
+      "general",
+      40
+    ]
+  ]
 }
 ```
 
