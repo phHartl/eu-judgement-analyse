@@ -78,7 +78,8 @@ After a brief processing time (dependent on the size of the corpus and the chose
 
 ### "Per Document" Analysis
 Some Analysis Options can be interpreted *per document*. This means, that if the user's query matches multiple documents, each document will be evaluated separetly. The user will then be able to view the results for each document by selecting its respective CELEX number via a dropdown menu in the results option. If the query matches multiple documents and *per document* analysis is **disabled**, the result will instead include the combined values (or in some cases, like *readability*, the average) of all documents.
-In the example below, two documents were matched. The user can then choose which document's results to view via the dropdown menu.
+
+In the example below, two documents were matched. The user can then choose which document's results to view via the dropdown menu. The screenshot also shows the *Wordcloud* visualization option. Hovering over entries shows additional information.
 
 ![Per Document result example](./demo_screenshots/per_document_result.png)
 
