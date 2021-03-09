@@ -65,7 +65,7 @@ By clicking on the *+ Add Analysis Option* button, the user can open a menu that
 
 Some Analysis Options include customizable parameters that can be interacted with. For example, the "Token Count" option provides toggles for removing stop words and punctuation, as well as inclusion or exclusion of certain PoS tags.
 
-For a full explanation of all available options see the documentation in the repository's root folder.
+For a full explanation of all available options see [here](https://github.com/phHartl/eu-judgement-analyse/tree/webapp-doku#analysis-metrics-whole-corpus).
 
 ![Analysis Options Parameter Example](./demo_screenshots/analysis_options_2.png)
 
