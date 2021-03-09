@@ -173,3 +173,25 @@ This downloaded data was queried over three documents, specified by CELEX number
 ### View Fulltext
 
 Via the *View Fulltext* button, the user can view the document's contents on [EUR-Lex](https://eur-lex.europa.eu/). Should the query consist of multiple documents, this will link to the first returned document.
+
+## Example Use Case
+
+### Search Filter
+In the following example, the user searched for all documents released between 01. Jan 2009 and 31. Dec 2009, that are *not* part of Case Law Directories 'F' and 'B' (IDs for 'Staff Cases' and 'European Community (EEC/EC) before the Lisbon Treaty, see [here]https://eur-lex.europa.eu/browse/directories/case-law.html) for info). The *not* option is toggled by the include/exclude button, and the search for IDs instead of full labels is toggled by the ID/Label switch.
+
+### Analysis Options
+For Analysis Options, the user chose *Token Count* with removed stop words and punctuation, and *N-Grams* with N = 2, removed stop words and filtered numbers, limited to the 10 most common occurences and visualized as a bar chart.
+
+The entered information for the *Search Filters* and *Analysis Options* can be seen on the screenshot below.
+
+![Demo query parameters](./demo_screenshots/demo_query_parameters.png)
+
+### Results
+
+The results of the query can be seen below.
+
+![Demo query results](./demo_screenshots/demo_query_results.png)
+
+
+
+
