@@ -1,8 +1,10 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
 
-In the project directory, you can run:
+# Run the Web-App
+
+-	Open a command line and navigate to the repository's ./webapp/ folder
+-	Run `npm install` in order to install all needed node modules
+-	Run `npm start` (see below)
 
 ### `npm start`
 
@@ -12,57 +14,62 @@ Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 The page will reload if you make edits.<br />
 You will also see any lint errors in the console.
 
-### `npm test`
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# Available Functions
 
-### `npm run build`
+The Web-App will look like this:
+![startpage](./demo_screenshots/home.png)
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+It features **two main views**: the **Search Filter** view and the **Analysis Options** view. A new query is submitted by clicking the *Submit Query* button.
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+## Search Filter view
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+By default the Search Filter view contains two inputs: *Quick Search* and *Language*. 
 
-### `npm run eject`
+### Quick Search
+*Quick Search* can be used to quickly search the database for *Document Titles*, European Case Law Identifier (*ECLI*) and *CELEX* number. The Web App will intelligently match the entered parameters, so separation or trailing typos do not influence the search. Leave the Quick Search empty if you do not wish to include any of these modifiers in your search.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+#### Example Quick Search:
+A user wants to quickly search for two documents they have bookmarked. They enter their CELEX numbers into the Quick Search:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+![Quick Search Example 1](./demo_screenshots/quick_search_example_1.png)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+The Web App identifies the entered paramters as CELEX numbers and returns the matching documents from the database. In this case, the user separated the two parameters using a comma. The parameter matching function is able to handle many ways of input seperation, including typos. For example, the following query would match and return the same results as the previous one:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+![Quick Search Example 2](./demo_screenshots/quick_search_example_2.png)
 
-## Learn More
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Language
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+The *Language* dropdown allows the user to switch between matching English and German documents.
 
-### Code Splitting
+![Language Selection Example](./demo_screenshots/quick_search_language.png)
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+### Advanced Search Filters
+By clicking the *+ Add Search Filter Button*, the user can open a menu that allows adding additional filters to the search.
 
-### Analyzing the Bundle Size
+![Advanced Search Filters](./demo_screenshots/advanced_filters_1.png)
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+A new filter is added by clicking on its respective Button. In the following example, a new *Subject* filter was added:
+![Added Subject Filter](./demo_screenshots/advanced_filters_subject.png)
 
-### Making a Progressive Web App
+These advanced filters offer additional actions: they can be removed from the query by clicking the *trash can* icon, and they can be negated/excluded by clicking the *Include* toggle. Including a filter means all documents that match the filter will be returned, while excluding a filter means that all documents that do *not* match the filter will be returned.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+## Analysis Options
 
-### Advanced Configuration
+By clicking on the *+ Add Analysis Option* button, the user can open a menu that allows adding different kinds of text analysis options to the query. Every query must contain at least one selected Analysis Option.
+![Analysis Options](./demo_screenshots/analysis_options_1.png)
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+Some Analysis Options include customizable parameters that can be interacted with. For example, the "Token Count" option provides toggles for removing stop words and punctuation, as well as inclusion or exclusion of certain PoS tags.
 
-### Deployment
+For a full explanation of all available options see the documentation in the repository's root folder.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
+![Analysis Options Parameter Example](./demo_screenshots/analysis_options_2.png)
 
-### `npm run build` fails to minify
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+## Results
+
+After a brief processing time (dependent on the size of the corpus and the chosen Analysis Options) the results will be shown at the bottom of the page. Some options allow the user to choose a visualization style, for example N-Grams can be viewed as either a wordcloud (recommended for a large set of data) or a bar chart.
+
+The user can also *Download* the entire result set by clicking the *Download* button, or download only a single result by clicking its respective button (e.g. "Download N-Grams" button to download only the N-Grams result). The downloaded file will be a .json file that contains all retrieved information.
+
