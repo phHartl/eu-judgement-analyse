@@ -18,6 +18,7 @@ You will also see any lint errors in the console.
 # Available Functions
 
 The Web-App will look like this:
+
 ![startpage](./demo_screenshots/home.png)
 
 It features **two main views**: the **Search Filter** view and the **Analysis Options** view. A new query is submitted by clicking the *Submit Query* button.
@@ -51,6 +52,7 @@ By clicking the *+ Add Search Filter Button*, the user can open a menu that allo
 ![Advanced Search Filters](./demo_screenshots/advanced_filters_1.png)
 
 A new filter is added by clicking on its respective Button. In the following example, a new *Subject* filter was added:
+
 ![Added Subject Filter](./demo_screenshots/advanced_filters_subject.png)
 
 These advanced filters offer additional actions: they can be removed from the query by clicking the *trash can* icon, and they can be negated/excluded by clicking the *Include* toggle. Including a filter means all documents that match the filter will be returned, while excluding a filter means that all documents that do *not* match the filter will be returned.
@@ -70,7 +72,14 @@ For a full explanation of all available options see the documentation in the rep
 ## Results
 
 After a brief processing time (dependent on the size of the corpus and the chosen Analysis Options) the results will be shown at the bottom of the page. Some options allow the user to choose a visualization style, for example N-Grams can be viewed as either a wordcloud (recommended for a large set of data) or a bar chart. Below is an example of a bar chart illustration.
+
 ![N-Grams results as bar chart](./demo_screenshots/results_ngrams_bar.png)
+
+### "Per Document" Analysis
+Some Analysis Options can be interpreted *per document*. This means, that if the user's query matches multiple documents, each document will be evaluated separetly. The user will then be able to view the results for each document by selecting its respective CELEX number via a dropdown menu in the results option. If the query matches multiple documents and *per document* analysis is **disabled**, the result will instead include the combined values (or in some cases, like *readability*, the average) of all documents.
+In the example below, two documents were matched. The user can then choose which document's results to view via the dropdown menu.
+
+![Per Document result example](./demo_screenshots/per_document_result.png)
 
 The user can also *Download* the entire result set by clicking the *Download all results* button, or download only a single analysis result by clicking its respective button (e.g. "Download N-Grams" button to download only the N-Grams result). The downloaded file will be a .json file that contains all retrieved information and can be used by the user to create their own data illustrations.
 
@@ -159,3 +168,6 @@ This downloaded data was queried over three documents, specified by CELEX number
 }
 ```
 
+### View Fulltext
+
+Via the *View Fulltext* button, the user can view the document's contents on eur-lex.europa.eu . Should the query consist of multiple documents, this will link to the first returned document.
