@@ -60,6 +60,7 @@ These advanced filters offer additional actions: they can be removed from the qu
 ## Analysis Options
 
 By clicking on the *+ Add Analysis Option* button, the user can open a menu that allows adding different kinds of text analysis options to the query. Every query must contain at least one selected Analysis Option.
+
 ![Analysis Options](./demo_screenshots/analysis_options_1.png)
 
 Some Analysis Options include customizable parameters that can be interacted with. For example, the "Token Count" option provides toggles for removing stop words and punctuation, as well as inclusion or exclusion of certain PoS tags.
