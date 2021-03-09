@@ -69,7 +69,93 @@ For a full explanation of all available options see the documentation in the rep
 
 ## Results
 
-After a brief processing time (dependent on the size of the corpus and the chosen Analysis Options) the results will be shown at the bottom of the page. Some options allow the user to choose a visualization style, for example N-Grams can be viewed as either a wordcloud (recommended for a large set of data) or a bar chart.
+After a brief processing time (dependent on the size of the corpus and the chosen Analysis Options) the results will be shown at the bottom of the page. Some options allow the user to choose a visualization style, for example N-Grams can be viewed as either a wordcloud (recommended for a large set of data) or a bar chart. Below is an example of a bar chart illustration.
+![N-Grams results as bar chart](./demo_screenshots/results_ngrams_bar.png)
 
-The user can also *Download* the entire result set by clicking the *Download* button, or download only a single result by clicking its respective button (e.g. "Download N-Grams" button to download only the N-Grams result). The downloaded file will be a .json file that contains all retrieved information.
+The user can also *Download* the entire result set by clicking the *Download all results* button, or download only a single analysis result by clicking its respective button (e.g. "Download N-Grams" button to download only the N-Grams result). The downloaded file will be a .json file that contains all retrieved information and can be used by the user to create their own data illustrations.
+
+### Example .json download data
+This downloaded data was queried over three documents, specified by CELEX numbers. Requested analysis options were *bigrams* (N-Grams with N = 2) and the 10 most used *Tokens* with removed stopwords and punctuation.
+
+```
+{
+celex_numbers: [
+"61955CJ0008",
+"61955CJ0010",
+"61957CJ0018"
+],
+n-grams: [
+[
+"high authority",
+63
+],
+[
+"probationary period",
+24
+],
+[
+"general decision",
+15
+],
+[
+"powers affecting",
+14
+],
+[
+"ecsc treaty",
+11
+],
+[
+"production costs",
+10
+],
+[
+"general decisions",
+10
+]
+],
+tokens: [
+[
+"applicant",
+92
+],
+[
+"authority",
+71
+],
+[
+"decision",
+67
+],
+[
+"court",
+63
+],
+[
+"high",
+63
+],
+[
+"decisions",
+56
+],
+[
+"article",
+52
+],
+[
+"period",
+42
+],
+[
+"application",
+41
+],
+[
+"general",
+40
+]
+]
+}
+```
 
