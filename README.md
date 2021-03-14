@@ -12,7 +12,7 @@
 
 ## Usage
 ### Accquire an EU account & get access to the EUR-Lex API
-Create an official Europian Union account [here]((https://webgate.ec.europa.eu/cas/login) via 'Create an account'. Afterwards head to https://eur-lex.europa.eu/homepage.html and login with your EU account. Then navigate to https://eur-lex.europa.eu/protected/web-service-registration.html and apply for API access. Your request will then be approved or rejected by an EU official. You will get an e-mail if your access is granted with you API password. To get your API username go to https://eur-lex.europa.eu/protected/user-account.html and use the name under the section "User name". Use this username & password combinination in the next step.
+Create an official Europian Union account [here](https://webgate.ec.europa.eu/cas/login) via 'Create an account'. Afterwards head to https://eur-lex.europa.eu/homepage.html and login with your EU account. Then navigate to https://eur-lex.europa.eu/protected/web-service-registration.html and apply for API access. Your request will then be approved or rejected by an EU official. You will get an e-mail if your access is granted with you API password. To get your API username go to https://eur-lex.europa.eu/protected/user-account.html and use the name under the section "User name". Use this username & password combinination in the next step.
 
 ### EUR-LEX access
 Create a file called `eur_lex.ini` in the root directory of the project with your EUR-LEX username and password specified as follows:
