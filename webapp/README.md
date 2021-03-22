@@ -172,7 +172,7 @@ This downloaded data was queried over three documents, specified by CELEX number
 
 ### View Fulltext
 
-Via the *View Fulltext* button, the user can view the document's contents on [EUR-Lex](https://eur-lex.europa.eu/). Should the query consist of multiple documents, this will link to the first returned document.
+Via the *View Fulltext* button, the user can view the document's contents on [EUR-Lex](https://eur-lex.europa.eu/). Should the query consist of multiple documents, the user can include a 'per document' analysis option. The button then links to the document which is selected in the dropdown menu.
 
 ## Example Use Case
 
