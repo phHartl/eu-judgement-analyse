@@ -35,6 +35,7 @@ Run `server.py` to start the server  on `localhost:5000`. Once running, you can 
 
 After starting the server, the webapp can be reached on `localhost:3000` on your preferred browser by default. 
 Make sure the python - Server is running as well, since it handles the queries sent through the webapp (see [Analysis](#analysis)).
+For a detailed explanation with screenshots please refer to the separate web app documentation inside the [webapp](./webapp) folder.
 
 ## Server API
 The API accepts a JSON-body when requesting data and returns results as JSON.
