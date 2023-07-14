@@ -11,13 +11,13 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
-    "node-sass": "^4.14.1",
+    "node-sass": "^9.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-hook-form": "^6.8.4",
     "react-loader-spinner": "^3.1.14",
     "react-promise-tracker": "^2.1.0",
-    "react-scripts": "3.4.3",
+    "react-scripts": "5.0.1",
     "react-wordcloud": "^1.2.7"
   },
   "scripts": {
